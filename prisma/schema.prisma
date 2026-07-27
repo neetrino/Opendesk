@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CardType {
+  question
+  task
+}
+
+enum CardStatus {
+  new
+  in_progress
+  answered
+  done
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invites      Invite[]
+  participants Participant[]
+  cards        Card[]
+}
+
+model Invite {
+  id            String    @id @default(cuid())
+  token         String    @unique
+  boardId       String
+  claimedAt     DateTime?
+  participantId String?   @unique
+  createdAt     DateTime  @default(now())
+
+  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  participant Participant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+
+  @@index([boardId])
+}
+
+model Participant {
+  id          String   @id @default(cuid())
+  boardId     String
+  displayName String
+  createdAt   DateTime @default(now())
+
+  board    Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  invite   Invite?
+  cards    Card[]
+  comments Comment[]
+
+  @@index([boardId])
+}
+
+model Card {
+  id          String     @id @default(cuid())
+  boardId     String
+  authorId    String
+  type        CardType
+  status      CardStatus @default(new)
+  title       String
+  description String     @default("")
+  position    Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  board    Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  author   Participant @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  comments Comment[]
+
+  @@index([boardId, status])
+  @@index([boardId, status, position])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  cardId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  card   Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  author Participant @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([cardId, createdAt])
+}
