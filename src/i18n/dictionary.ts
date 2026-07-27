@@ -10,8 +10,6 @@ export type Dictionary = {
     title: string;
     titlePlaceholder: string;
     titleDefault: string;
-    yourName: string;
-    namePlaceholder: string;
     creating: string;
     create: string;
     createdEyebrow: string;
@@ -19,7 +17,6 @@ export type Dictionary = {
     createdLede: string;
     linkLabel: string;
     copyLink: string;
-    openBoard: string;
   };
   board: {
     youAre: string;
@@ -137,23 +134,20 @@ export const en: Dictionary = {
   },
   home: {
     eyebrow: "No registration",
-    lede: "One shared board for questions and tasks. Create a board, tap Invite — copy the permanent link, send it to a teammate. Same name = same person.",
+    lede: "One shared board for questions and tasks. Create a board, save the permanent link, open it and enter your name — same for everyone.",
   },
   boardForm: {
     title: "Board name",
     titlePlaceholder: "e.g. Sprint Q3",
     titleDefault: "Project discussions",
-    yourName: "Your name",
-    namePlaceholder: "How others see you on the board",
     creating: "Creating…",
     create: "Create board",
     createdEyebrow: "Board ready",
     createdTitle: "Save this link",
     createdLede:
-      "This is the permanent entry link. Bookmark it or send it to teammates. Same name = same person — including you after redeploy.",
+      "Everyone enters through this link — including you. Copy it, open it, and enter a name. Same name = same person.",
     linkLabel: "Join link",
     copyLink: "Copy link",
-    openBoard: "Open board",
   },
   board: {
     youAre: "Signed in as",

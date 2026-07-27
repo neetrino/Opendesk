@@ -12,7 +12,6 @@ describe("validation schemas", () => {
   it("accepts a valid board payload", () => {
     const parsed = createBoardSchema.safeParse({
       title: "Sprint",
-      organizerName: "Anna",
     });
     expect(parsed.success).toBe(true);
   });

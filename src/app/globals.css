@@ -281,10 +281,20 @@ textarea {
   margin: 0 0 1rem;
 }
 
-.save-link-actions {
+.join-link-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.join-link-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.join-link-copy {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .invite-hint {

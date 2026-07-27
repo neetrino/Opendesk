@@ -30,7 +30,6 @@ export async function createBoardAction(
   const errors = await tErrors();
   const parsed = createBoardSchema.safeParse({
     title: formData.get("title"),
-    organizerName: formData.get("organizerName"),
   });
 
   if (!parsed.success) {
@@ -45,26 +44,7 @@ export async function createBoardAction(
       data: {
         title: parsed.data.title,
         joinToken: createJoinToken(),
-        participants: {
-          create: {
-            displayName: parsed.data.organizerName,
-          },
-        },
       },
-      include: {
-        participants: true,
-      },
-    });
-
-    const organizer = board.participants[0];
-    if (!organizer) {
-      return { ok: false, error: errors.createOrganizer };
-    }
-
-    await setSessionCookie({
-      boardId: board.id,
-      participantId: organizer.id,
-      displayName: organizer.displayName,
     });
 
     return {
