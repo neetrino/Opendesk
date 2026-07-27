@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import type { Card, Comment, Participant } from "@prisma/client";
+import type { Card, CardStatus, Comment, Participant } from "@prisma/client";
 import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
 import { MoveCardControls } from "@/components/move-card-controls";
@@ -23,6 +23,12 @@ type CardSheetProps = {
   card: SheetCard;
   locale: string;
   onClose: () => void;
+  onStatusChange: (cardId: string, status: CardStatus) => void;
+  onStatusRollback: (
+    cardId: string,
+    status: CardStatus,
+    error: string,
+  ) => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
   onCommentSend: (body: string, tempId: string) => void;
   onCommentRollback: (tempId: string) => void;
@@ -33,6 +39,8 @@ export function CardSheet({
   card,
   locale,
   onClose,
+  onStatusChange,
+  onStatusRollback,
   onUrgentChange,
   onCommentSend,
   onCommentRollback,
@@ -217,6 +225,8 @@ export function CardSheet({
                 boardId={boardId}
                 cardId={card.id}
                 currentStatus={card.status}
+                onStatusChange={onStatusChange}
+                onStatusRollback={onStatusRollback}
               />
             </div>
           </div>

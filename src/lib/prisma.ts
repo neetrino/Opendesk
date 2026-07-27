@@ -41,14 +41,20 @@ function createPrismaClient(): PrismaClient {
   );
   const lockTimeoutMs = Number(process.env.DATABASE_LOCK_TIMEOUT_MS ?? "5000");
 
+  const needsSsl =
+    connectionString.includes("sslmode=require") ||
+    connectionString.includes("sslmode=verify-full") ||
+    isProduction;
+  // Neon works with public CAs. Set DATABASE_SSL_REJECT_UNAUTHORIZED=false only
+  // as a temporary escape hatch (e.g. corporate MITM proxies in local dev).
+  const rejectUnauthorized =
+    process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false";
+
   const poolConfig: ConstructorParameters<typeof Pool>[0] = {
     connectionString,
     max: connectionLimit,
     connectionTimeoutMillis: poolTimeout * 1000,
-    ssl:
-      connectionString.includes("sslmode=require") || isProduction
-        ? { rejectUnauthorized: false }
-        : undefined,
+    ssl: needsSsl ? { rejectUnauthorized } : undefined,
   };
 
   if (shouldApplySessionOptions(connectionString)) {

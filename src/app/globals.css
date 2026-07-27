@@ -314,6 +314,17 @@ textarea {
   padding: 0.85rem 0 1rem;
 }
 
+.board-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.board-move-error {
+  margin: 0 0 0.75rem;
+}
+
 .board-top-main {
   min-width: 0;
 }

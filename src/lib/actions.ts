@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { requireBoardSession, setSessionCookie } from "@/lib/session";
+import {
+  clearSessionCookie,
+  requireBoardSession,
+  setSessionCookie,
+} from "@/lib/session";
 import { createInviteToken } from "@/lib/tokens";
 import {
   addCommentSchema,
@@ -122,24 +126,42 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
     throw new Error(errors.inviteUsed);
   }
 
-  const participant = await prisma.$transaction(async (tx) => {
-    const created = await tx.participant.create({
-      data: {
-        boardId: invite.boardId,
-        displayName: parsed.data.displayName,
-      },
-    });
+  let participant: { id: string; displayName: string };
+  try {
+    participant = await prisma.$transaction(async (tx) => {
+      const created = await tx.participant.create({
+        data: {
+          boardId: invite.boardId,
+          displayName: parsed.data.displayName,
+        },
+      });
 
-    await tx.invite.update({
-      where: { id: invite.id },
-      data: {
-        claimedAt: new Date(),
-        participantId: created.id,
-      },
-    });
+      // Atomic one-time claim: only the first concurrent winner updates the row.
+      const claimed = await tx.invite.updateMany({
+        where: {
+          id: invite.id,
+          claimedAt: null,
+          participantId: null,
+        },
+        data: {
+          claimedAt: new Date(),
+          participantId: created.id,
+        },
+      });
 
-    return created;
-  });
+      if (claimed.count !== 1) {
+        throw new Error("INVITE_CLAIM_CONFLICT");
+      }
+
+      return created;
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVITE_CLAIM_CONFLICT") {
+      throw new Error(errors.inviteUsed);
+    }
+    logger.error("claimInviteAction failed", error);
+    throw new Error(errors.joinFailed);
+  }
 
   await setSessionCookie({
     boardId: invite.boardId,
@@ -148,6 +170,11 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
   });
 
   redirect(`/b/${invite.boardId}`);
+}
+
+export async function logoutAction(): Promise<void> {
+  await clearSessionCookie();
+  redirect("/");
 }
 
 export async function createCardAction(
@@ -292,7 +319,7 @@ export async function setCardUrgentAction(
       return { ok: false, error: errors.unauthorized };
     }
     logger.error("setCardUrgentAction failed", error);
-    return { ok: false, error: errors.createCard };
+    return { ok: false, error: errors.updateCard };
   }
 }
 
@@ -339,7 +366,7 @@ export async function updateCardContentAction(
       return { ok: false, error: errors.unauthorized };
     }
     logger.error("updateCardContentAction failed", error);
-    return { ok: false, error: errors.createCard };
+    return { ok: false, error: errors.updateCard };
   }
 }
 

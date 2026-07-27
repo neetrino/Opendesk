@@ -3,6 +3,7 @@ import { InviteButton } from "@/components/invite-button";
 import { KanbanBoard } from "@/components/kanban-board";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
+import { logoutAction } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -49,7 +50,14 @@ export default async function BoardPage({ params }: BoardPageProps) {
             {t.board.youAre} {session.displayName}
           </p>
         </div>
-        <InviteButton boardId={board.id} compact />
+        <div className="board-top-actions">
+          <InviteButton boardId={board.id} compact />
+          <form action={logoutAction}>
+            <button type="submit" className="button-ghost">
+              {t.board.logout}
+            </button>
+          </form>
+        </div>
       </div>
       <KanbanBoard
         boardId={board.id}

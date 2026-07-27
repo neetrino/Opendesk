@@ -61,6 +61,7 @@ export function KanbanBoard({
   const [dragOverStatus, setDragOverStatus] = useState<CardStatus | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [activeStatus, setActiveStatus] = useState<CardStatus>("new");
+  const [moveError, setMoveError] = useState<string | null>(null);
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
 
@@ -155,17 +156,22 @@ export function KanbanBoard({
     const fromStatus = dragPayload.current?.fromStatus;
     dragPayload.current = null;
 
-    if (!cardId || fromStatus === status) {
+    if (!cardId || fromStatus === undefined || fromStatus === status) {
       return;
     }
 
+    setMoveError(null);
     startTransition(async () => {
       setOptimisticCards({ kind: "status", cardId, status });
       const formData = new FormData();
       formData.set("boardId", boardId);
       formData.set("cardId", cardId);
       formData.set("status", status);
-      await moveCardAction(formData);
+      const result = await moveCardAction(formData);
+      if (!result.ok) {
+        setOptimisticCards({ kind: "status", cardId, status: fromStatus });
+        setMoveError(result.error);
+      }
     });
   }
 
@@ -179,6 +185,8 @@ export function KanbanBoard({
 
   return (
     <>
+      {moveError ? <p className="form-error board-move-error">{moveError}</p> : null}
+
       <nav className="board-stage-nav" aria-label={t.board.stagesNav}>
         {CARD_STATUSES.map((status) => {
           const count = optimisticCards.filter(
@@ -296,6 +304,14 @@ export function KanbanBoard({
           card={selectedCard}
           locale={locale}
           onClose={() => setSelectedCardId(null)}
+          onStatusChange={(cardId, status) => {
+            setMoveError(null);
+            setOptimisticCards({ kind: "status", cardId, status });
+          }}
+          onStatusRollback={(cardId, status, error) => {
+            setOptimisticCards({ kind: "status", cardId, status });
+            setMoveError(error);
+          }}
           onUrgentChange={(cardId, urgent) => {
             setOptimisticCards({ kind: "urgent", cardId, urgent });
           }}

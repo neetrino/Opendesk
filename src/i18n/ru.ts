@@ -24,6 +24,7 @@ export const ru: Dictionary = {
     copied: "Скопировано",
     replies: "{n} ответов",
     stagesNav: "Этапы доски",
+    logout: "Выйти",
   },
   columns: {
     new: "Новое",
@@ -99,6 +100,7 @@ export const ru: Dictionary = {
     createCard: "Не удалось создать карточку",
     cardNotFound: "Карточка не найдена",
     moveCard: "Не удалось переместить карточку",
+    updateCard: "Не удалось обновить карточку",
     addComment: "Не удалось добавить комментарий",
     joinFailed: "Не удалось войти",
     titleShort: "Название слишком короткое",

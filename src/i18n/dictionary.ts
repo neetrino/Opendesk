@@ -22,6 +22,7 @@ export type Dictionary = {
     copied: string;
     replies: string;
     stagesNav: string;
+    logout: string;
   };
   columns: {
     new: string;
@@ -96,6 +97,7 @@ export type Dictionary = {
     createCard: string;
     cardNotFound: string;
     moveCard: string;
+    updateCard: string;
     addComment: string;
     joinFailed: string;
     titleShort: string;
@@ -131,6 +133,7 @@ export const en: Dictionary = {
     copied: "Copied",
     replies: "{n} replies",
     stagesNav: "Board stages",
+    logout: "Log out",
   },
   columns: {
     new: "New",
@@ -205,6 +208,7 @@ export const en: Dictionary = {
     createCard: "Could not create card",
     cardNotFound: "Card not found",
     moveCard: "Could not move card",
+    updateCard: "Could not update card",
     addComment: "Could not add comment",
     joinFailed: "Could not join",
     titleShort: "Name is too short",

@@ -24,6 +24,7 @@ export const hy: Dictionary = {
     copied: "Պատճենված է",
     replies: "{n} պատասխան",
     stagesNav: "Տախտակի փուլեր",
+    logout: "Դուրս գալ",
   },
   columns: {
     new: "Նոր",
@@ -99,6 +100,7 @@ export const hy: Dictionary = {
     createCard: "Չհաջողվեց ստեղծել քարտ",
     cardNotFound: "Քարտը չի գտնվել",
     moveCard: "Չհաջողվեց տեղափոխել քարտը",
+    updateCard: "Չհաջողվեց թարմացնել քարտը",
     addComment: "Չհաջողվեց ավելացնել մեկնաբանություն",
     joinFailed: "Չհաջողվեց մտնել",
     titleShort: "Անունը չափազանց կարճ է",

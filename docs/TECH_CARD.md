@@ -51,7 +51,7 @@
 | 3.1 | Тип | Next.js Route Handlers + Server Actions | ✅ | |
 | 3.2 | Валидация | Zod | ✅ | |
 | 3.3 | API формат | Server Actions | ✅ | |
-| 3.4 | Rate limiting | middleware (базовый) | ✅ | |
+| 3.4 | Rate limiting | middleware (базовый) | ✅ | in-memory per isolate; best-effort на Vercel |
 | 3.5 | API docs | не нужно | ➖ | |
 | 3.6 | CRON | не нужно | ➖ | |
 | 3.7 | Файлы | не нужно | ➖ | |
