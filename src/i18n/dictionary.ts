@@ -23,6 +23,11 @@ export type Dictionary = {
     replies: string;
     stagesNav: string;
     logout: string;
+    participantsAria: string;
+    participantsTitle: string;
+    participantsEmpty: string;
+    joinedAt: string;
+    closeParticipants: string;
   };
   columns: {
     new: string;
@@ -92,6 +97,7 @@ export type Dictionary = {
     invalidBoard: string;
     unauthorized: string;
     createInvite: string;
+    boardFull: string;
     inviteNotFound: string;
     inviteUsed: string;
     createCard: string;
@@ -134,6 +140,11 @@ export const en: Dictionary = {
     replies: "{n} replies",
     stagesNav: "Board stages",
     logout: "Log out",
+    participantsAria: "People on this board",
+    participantsTitle: "People on the board",
+    participantsEmpty: "No one has joined yet.",
+    joinedAt: "Joined",
+    closeParticipants: "Close",
   },
   columns: {
     new: "New",
@@ -203,6 +214,7 @@ export const en: Dictionary = {
     invalidBoard: "Invalid board",
     unauthorized: "No access to this board",
     createInvite: "Could not create invite",
+    boardFull: "Board is full (20 people)",
     inviteNotFound: "Invite not found",
     inviteUsed: "This invite has already been used",
     createCard: "Could not create card",

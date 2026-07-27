@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { InviteButton } from "@/components/invite-button";
 import { KanbanBoard } from "@/components/kanban-board";
+import { ParticipantsPanel } from "@/components/participants-panel";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
 import { logoutAction } from "@/lib/actions";
+import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -24,6 +26,14 @@ export default async function BoardPage({ params }: BoardPageProps) {
   const board = await prisma.board.findUnique({
     where: { id: boardId },
     include: {
+      participants: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          displayName: true,
+          createdAt: true,
+        },
+      },
       cards: {
         include: {
           author: true,
@@ -41,6 +51,8 @@ export default async function BoardPage({ params }: BoardPageProps) {
     redirect("/");
   }
 
+  const boardFull = board.participants.length >= MAX_BOARD_PARTICIPANTS;
+
   return (
     <section className="board-page">
       <div className="board-top">
@@ -51,7 +63,11 @@ export default async function BoardPage({ params }: BoardPageProps) {
           </p>
         </div>
         <div className="board-top-actions">
-          <InviteButton boardId={board.id} compact />
+          <ParticipantsPanel
+            participants={board.participants}
+            locale={locale}
+          />
+          <InviteButton boardId={board.id} compact disabled={boardFull} />
           <form action={logoutAction}>
             <button type="submit" className="button-ghost">
               {t.board.logout}

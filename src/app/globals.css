@@ -321,6 +321,78 @@ textarea {
   flex-shrink: 0;
 }
 
+.participants-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.15rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.participants-count:hover {
+  border-color: rgba(22, 35, 28, 0.22);
+  color: var(--ink);
+  background: #f7f8f6;
+}
+
+.participants-sheet-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.participants-sheet-count {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  background: rgba(22, 35, 28, 0.06);
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.participants-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.participants-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fafbfa;
+}
+
+.participants-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.participants-joined {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
 .board-move-error {
   margin: 0 0 0.75rem;
 }
@@ -1374,8 +1446,14 @@ textarea {
     font-size: 1.25rem;
   }
 
+  .board-top-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
   .invite-actions.compact {
-    width: 100%;
+    width: auto;
+    flex: 1 1 auto;
   }
 
   .invite-actions.compact .button-invite {

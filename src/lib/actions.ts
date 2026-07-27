@@ -10,6 +10,7 @@ import {
   requireBoardSession,
   setSessionCookie,
 } from "@/lib/session";
+import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { createInviteToken } from "@/lib/tokens";
 import {
   addCommentSchema,
@@ -86,6 +87,13 @@ export async function createInviteLinkAction(
 
   try {
     await requireBoardSession(parsed.data.boardId);
+    const participantCount = await prisma.participant.count({
+      where: { boardId: parsed.data.boardId },
+    });
+    if (participantCount >= MAX_BOARD_PARTICIPANTS) {
+      return { ok: false, error: errors.boardFull };
+    }
+
     const token = createInviteToken();
     await prisma.invite.create({
       data: {
@@ -129,6 +137,13 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
   let participant: { id: string; displayName: string };
   try {
     participant = await prisma.$transaction(async (tx) => {
+      const participantCount = await tx.participant.count({
+        where: { boardId: invite.boardId },
+      });
+      if (participantCount >= MAX_BOARD_PARTICIPANTS) {
+        throw new Error("BOARD_FULL");
+      }
+
       const created = await tx.participant.create({
         data: {
           boardId: invite.boardId,
@@ -156,6 +171,9 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
       return created;
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "BOARD_FULL") {
+      throw new Error(errors.boardFull);
+    }
     if (error instanceof Error && error.message === "INVITE_CLAIM_CONFLICT") {
       throw new Error(errors.inviteUsed);
     }

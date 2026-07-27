@@ -7,15 +7,23 @@ import { useI18n } from "@/i18n/provider";
 type InviteButtonProps = {
   boardId: string;
   compact?: boolean;
+  disabled?: boolean;
 };
 
-export function InviteButton({ boardId, compact = false }: InviteButtonProps) {
+export function InviteButton({
+  boardId,
+  compact = false,
+  disabled = false,
+}: InviteButtonProps) {
   const { t } = useI18n();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function onInvite(): void {
+    if (disabled) {
+      return;
+    }
     setError(null);
     setMessage(null);
     startTransition(async () => {
@@ -42,7 +50,7 @@ export function InviteButton({ boardId, compact = false }: InviteButtonProps) {
         type="button"
         className="button button-invite"
         onClick={onInvite}
-        disabled={isPending}
+        disabled={isPending || disabled}
       >
         {isPending ? t.board.inviting : message ?? t.board.invite}
       </button>

@@ -77,7 +77,7 @@
 
 - `Board` — id, title, createdAt
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId?
-- `Participant` — id, boardId, displayName, createdAt
+- `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
 - `Card` — id, boardId, type (`question` \| `task`), status, title, description, authorId, position
 - `Comment` — id, cardId, authorId, body, createdAt
 
