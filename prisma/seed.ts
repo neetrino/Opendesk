@@ -2,7 +2,6 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
-import { createInviteToken } from "../src/lib/tokens";
 
 async function main(): Promise<void> {
   const connectionString = process.env.DATABASE_URL;
@@ -21,21 +20,17 @@ async function main(): Promise<void> {
       return;
     }
 
-    const tokens = Array.from({ length: 5 }, () => createInviteToken());
     const board = await prisma.board.create({
       data: {
         title: "OpenDesk — обсуждения проекта",
-        invites: {
-          create: tokens.map((token) => ({ token })),
+        participants: {
+          create: { displayName: "Организатор" },
         },
       },
     });
 
     console.info("Seeded board:", board.id);
-    console.info("Invite tokens:");
-    for (const token of tokens) {
-      console.info(`  /invite/${token}`);
-    }
+    console.info("Open / and create invites from the board Invite button");
   } finally {
     await prisma.$disconnect();
     await pool.end();

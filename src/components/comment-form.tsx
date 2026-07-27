@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { addCommentAction } from "@/lib/actions";
+import { useI18n } from "@/i18n/provider";
 
 type CommentFormProps = {
   boardId: string;
@@ -9,6 +10,7 @@ type CommentFormProps = {
 };
 
 export function CommentForm({ boardId, cardId }: CommentFormProps) {
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -40,11 +42,11 @@ export function CommentForm({ boardId, cardId }: CommentFormProps) {
         required
         rows={3}
         maxLength={2000}
-        placeholder="Напишите ответ или комментарий…"
+        placeholder={t.comment.placeholder}
       />
       {error ? <p className="form-error">{error}</p> : null}
       <button className="button" type="submit" disabled={isPending}>
-        {isPending ? "Отправляем…" : "Отправить"}
+        {isPending ? t.comment.sending : t.comment.send}
       </button>
     </form>
   );

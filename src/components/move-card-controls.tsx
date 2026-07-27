@@ -3,7 +3,8 @@
 import { useTransition } from "react";
 import type { CardStatus } from "@prisma/client";
 import { moveCardAction } from "@/lib/actions";
-import { CARD_COLUMNS } from "@/lib/constants";
+import { CARD_STATUSES } from "@/lib/constants";
+import { useI18n } from "@/i18n/provider";
 
 type MoveCardControlsProps = {
   boardId: string;
@@ -16,9 +17,13 @@ export function MoveCardControls({
   cardId,
   currentStatus,
 }: MoveCardControlsProps) {
+  const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
 
-  function moveTo(status: CardStatus): void {
+  function onChange(status: string): void {
+    if (status === currentStatus) {
+      return;
+    }
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", cardId);
@@ -29,22 +34,18 @@ export function MoveCardControls({
   }
 
   return (
-    <div className="move-controls">
-      {CARD_COLUMNS.map((column) => (
-        <button
-          key={column.status}
-          type="button"
-          className={
-            column.status === currentStatus
-              ? "chip chip-active"
-              : "chip"
-          }
-          disabled={isPending || column.status === currentStatus}
-          onClick={() => moveTo(column.status)}
-        >
-          {column.label}
-        </button>
+    <select
+      className="stage-select"
+      value={currentStatus}
+      disabled={isPending}
+      onChange={(event) => onChange(event.target.value)}
+      aria-label={t.common.stageAria}
+    >
+      {CARD_STATUSES.map((status) => (
+        <option key={status} value={status}>
+          {t.columns[status]}
+        </option>
       ))}
-    </div>
+    </select>
   );
 }

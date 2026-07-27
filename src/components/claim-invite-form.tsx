@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { claimInviteAction } from "@/lib/actions";
+import { useI18n } from "@/i18n/provider";
 
 type ClaimInviteFormProps = {
   token: string;
 };
 
 export function ClaimInviteForm({ token }: ClaimInviteFormProps) {
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -28,7 +30,7 @@ export function ClaimInviteForm({ token }: ClaimInviteFormProps) {
           return;
         }
         const message =
-          err instanceof Error ? err.message : "Не удалось войти";
+          err instanceof Error ? err.message : t.errors.joinFailed;
         setError(message);
       }
     });
@@ -38,19 +40,19 @@ export function ClaimInviteForm({ token }: ClaimInviteFormProps) {
     <form action={onSubmit} className="create-form animate-rise">
       <input type="hidden" name="token" value={token} />
       <label className="field">
-        <span>Ваше имя на доске</span>
+        <span>{t.invitePage.nameLabel}</span>
         <input
           name="displayName"
           required
           minLength={1}
           maxLength={40}
-          placeholder="Как к вам обращаться"
+          placeholder={t.invitePage.namePlaceholder}
           autoFocus
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
       <button className="button" type="submit" disabled={isPending}>
-        {isPending ? "Входим…" : "Войти на доску"}
+        {isPending ? t.invitePage.joining : t.invitePage.join}
       </button>
     </form>
   );

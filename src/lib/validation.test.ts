@@ -9,9 +9,8 @@ import {
 describe("validation schemas", () => {
   it("accepts a valid board payload", () => {
     const parsed = createBoardSchema.safeParse({
-      title: "Спринт",
-      organizerName: "Аня",
-      inviteCount: "5",
+      title: "Sprint",
+      organizerName: "Anna",
     });
     expect(parsed.success).toBe(true);
   });

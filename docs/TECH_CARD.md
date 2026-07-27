@@ -36,7 +36,7 @@
 | 2.4 | State | useState / Server Components | ✅ | |
 | 2.5 | Формы | Server Actions + Zod | ✅ | |
 | 2.6 | Data fetching | Server Components + Server Actions | ✅ | |
-| 2.7 | i18n | не нужно | ➖ | UI на русском |
+| 2.7 | i18n | EN / RU / HY (cookie) | ✅ | LanguageSwitcher в header |
 | 2.8 | SEO | Metadata API (минимум) | ✅ | |
 | 2.9 | Тёмная тема | не нужно | ➖ | |
 | 2.10 | Анимации | CSS transitions | ✅ | |

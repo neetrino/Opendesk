@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-import { BoardColumn } from "@/components/board-column";
-import { CreateCardForm } from "@/components/create-card-form";
-import { CARD_COLUMNS } from "@/lib/constants";
+import { InviteButton } from "@/components/invite-button";
+import { KanbanBoard } from "@/components/kanban-board";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { getLocale } from "@/i18n/locale";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -12,6 +13,8 @@ type BoardPageProps = {
 export default async function BoardPage({ params }: BoardPageProps) {
   const { boardId } = await params;
   const session = await getSession();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   if (!session || session.boardId !== boardId) {
     redirect("/");
@@ -21,7 +24,13 @@ export default async function BoardPage({ params }: BoardPageProps) {
     where: { id: boardId },
     include: {
       cards: {
-        include: { author: true },
+        include: {
+          author: true,
+          comments: {
+            include: { author: true },
+            orderBy: { createdAt: "asc" },
+          },
+        },
         orderBy: [{ status: "asc" }, { position: "asc" }, { createdAt: "asc" }],
       },
     },
@@ -32,25 +41,17 @@ export default async function BoardPage({ params }: BoardPageProps) {
   }
 
   return (
-    <section>
-      <div className="board-top animate-rise">
-        <div>
-          <p className="eyebrow">Доска</p>
+    <section className="board-page">
+      <div className="board-top">
+        <div className="board-top-main">
           <h1>{board.title}</h1>
-          <p className="muted">Вы вошли как {session.displayName}</p>
+          <p className="muted">
+            {t.board.youAre} {session.displayName}
+          </p>
         </div>
-        <CreateCardForm boardId={board.id} />
+        <InviteButton boardId={board.id} compact />
       </div>
-      <div className="board-grid">
-        {CARD_COLUMNS.map((column) => (
-          <BoardColumn
-            key={column.status}
-            boardId={board.id}
-            label={column.label}
-            cards={board.cards.filter((card) => card.status === column.status)}
-          />
-        ))}
-      </div>
+      <KanbanBoard boardId={board.id} cards={board.cards} locale={locale} />
     </section>
   );
 }
