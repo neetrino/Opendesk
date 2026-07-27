@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { InviteButton } from "@/components/invite-button";
 import { KanbanBoard } from "@/components/kanban-board";
+import { LogoutButton } from "@/components/logout-button";
 import { ParticipantsPanel } from "@/components/participants-panel";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
-import { logoutAction } from "@/lib/actions";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -68,12 +68,8 @@ export default async function BoardPage({ params }: BoardPageProps) {
             locale={locale}
           />
           <InviteButton boardId={board.id} compact disabled={boardFull} />
-          <form action={logoutAction}>
-            <button type="submit" className="button-ghost">
-              {t.board.logout}
-            </button>
-          </form>
         </div>
+        <LogoutButton />
       </div>
       <KanbanBoard
         boardId={board.id}
