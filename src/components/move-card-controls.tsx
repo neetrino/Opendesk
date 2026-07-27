@@ -20,7 +20,7 @@ export function MoveCardControls({
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
 
-  function onChange(status: string): void {
+  function onChange(status: CardStatus): void {
     if (status === currentStatus) {
       return;
     }
@@ -34,18 +34,22 @@ export function MoveCardControls({
   }
 
   return (
-    <select
-      className="stage-select"
-      value={currentStatus}
-      disabled={isPending}
-      onChange={(event) => onChange(event.target.value)}
-      aria-label={t.common.stageAria}
-    >
+    <div className="stage-pills" role="group" aria-label={t.common.stageAria}>
       {CARD_STATUSES.map((status) => (
-        <option key={status} value={status}>
+        <button
+          key={status}
+          type="button"
+          className={
+            status === currentStatus
+              ? `stage-pill is-active stage-${status}`
+              : `stage-pill stage-${status}`
+          }
+          disabled={isPending || status === currentStatus}
+          onClick={() => onChange(status)}
+        >
           {t.columns[status]}
-        </option>
+        </button>
       ))}
-    </select>
+    </div>
   );
 }

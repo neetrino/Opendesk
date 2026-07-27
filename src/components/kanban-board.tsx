@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Card, CardStatus, Comment, Participant } from "@prisma/client";
 import { CardSheet } from "@/components/card-sheet";
+import { FireIcon } from "@/components/fire-icon";
 import { QuickCreateCard } from "@/components/quick-create-card";
 import { moveCardAction } from "@/lib/actions";
 import { CARD_STATUSES } from "@/lib/constants";
@@ -140,7 +141,7 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
                 {columnCards.map((card) => (
                   <article
                     key={card.id}
-                    className={`card-tile ${card.type}`}
+                    className={`card-tile ${card.type}${card.urgent ? " is-urgent" : ""}`}
                     draggable
                     onDragStart={(event) =>
                       onDragStart(event, card.id, card.status)
@@ -151,7 +152,14 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
                       <span className="type-pill">
                         {t.cardTypes[card.type]}
                       </span>
-                      <span className="author">{card.author.displayName}</span>
+                      <span className="card-meta-right">
+                        {card.urgent ? (
+                          <span className="fire-badge" title={t.quickAdd.urgent}>
+                            <FireIcon />
+                          </span>
+                        ) : null}
+                        <span className="author">{card.author.displayName}</span>
+                      </span>
                     </div>
                     <h3 className="card-title">{card.title}</h3>
                     <p

@@ -42,12 +42,33 @@ export const createCardSchema = z.object({
     .min(2, "cardTitleShort")
     .max(MAX_TITLE_LENGTH),
   description: z.string().trim().max(MAX_DESCRIPTION_LENGTH).default(""),
+  urgent: z
+    .union([z.literal("on"), z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((value) => value === true || value === "on" || value === "true"),
 });
 
 export const moveCardSchema = z.object({
   boardId: z.string().cuid(),
   cardId: z.string().cuid(),
   status: z.enum(["new", "in_progress", "answered", "done"]),
+});
+
+export const setCardUrgentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  urgent: z.coerce.boolean(),
+});
+
+export const updateCardContentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  title: z
+    .string()
+    .trim()
+    .min(2, "cardTitleShort")
+    .max(MAX_TITLE_LENGTH),
+  description: z.string().trim().max(MAX_DESCRIPTION_LENGTH).default(""),
 });
 
 export const addCommentSchema = z.object({

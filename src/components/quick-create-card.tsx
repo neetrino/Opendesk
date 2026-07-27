@@ -43,7 +43,11 @@ export function QuickCreateCard({ boardId, status }: QuickCreateCardProps) {
   }
 
   return (
-    <form action={onSubmit} className="quick-add-form animate-rise">
+    <form
+      action={onSubmit}
+      className="quick-add-form animate-rise"
+      autoComplete="off"
+    >
       <input type="hidden" name="boardId" value={boardId} />
       <input type="hidden" name="status" value={status} />
 
@@ -57,13 +61,16 @@ export function QuickCreateCard({ boardId, status }: QuickCreateCardProps) {
           minLength={2}
           maxLength={120}
           placeholder={t.quickAdd.titlePlaceholder}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           autoFocus
         />
       </label>
 
       <label className="quick-field">
         <span>{t.quickAdd.type}</span>
-        <select name="type" defaultValue="question">
+        <select name="type" defaultValue="question" autoComplete="off">
           <option value="question">{t.cardTypes.question}</option>
           <option value="task">{t.cardTypes.task}</option>
         </select>
@@ -76,7 +83,13 @@ export function QuickCreateCard({ boardId, status }: QuickCreateCardProps) {
           rows={2}
           maxLength={4000}
           placeholder={t.quickAdd.descriptionPlaceholder}
+          autoComplete="off"
         />
+      </label>
+
+      <label className="quick-check">
+        <input type="checkbox" name="urgent" />
+        <span>{t.quickAdd.urgent}</span>
       </label>
 
       {error ? <p className="form-error">{error}</p> : null}

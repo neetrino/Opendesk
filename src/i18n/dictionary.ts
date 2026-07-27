@@ -39,6 +39,7 @@ export type Dictionary = {
     type: string;
     description: string;
     descriptionPlaceholder: string;
+    urgent: string;
     saving: string;
     save: string;
     cancel: string;
@@ -58,8 +59,15 @@ export type Dictionary = {
     close: string;
     noDescription: string;
     stage: string;
+    priority: string;
+    markUrgent: string;
+    clearUrgent: string;
     discussion: string;
     emptyThread: string;
+    editTitle: string;
+    editDescription: string;
+    saveChanges: string;
+    savingChanges: string;
   };
   comment: {
     placeholder: string;
@@ -138,6 +146,7 @@ export const en: Dictionary = {
     type: "Type",
     description: "Description",
     descriptionPlaceholder: "Optional",
+    urgent: "Urgent / important",
     saving: "Saving…",
     save: "Save",
     cancel: "Cancel",
@@ -157,8 +166,15 @@ export const en: Dictionary = {
     close: "Close",
     noDescription: "No description yet.",
     stage: "Stage",
+    priority: "Priority",
+    markUrgent: "Mark as urgent",
+    clearUrgent: "Remove urgency",
     discussion: "Discussion",
     emptyThread: "No replies yet. Write the first one.",
+    editTitle: "Title",
+    editDescription: "Description",
+    saveChanges: "Save changes",
+    savingChanges: "Saving…",
   },
   comment: {
     placeholder: "Write a reply or comment…",

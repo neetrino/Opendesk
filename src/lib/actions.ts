@@ -14,6 +14,8 @@ import {
   createCardSchema,
   createInviteSchema,
   moveCardSchema,
+  setCardUrgentSchema,
+  updateCardContentSchema,
 } from "@/lib/validation";
 import type { ActionResult } from "@/types/actions";
 
@@ -158,6 +160,7 @@ export async function createCardAction(
     status: formData.get("status") ?? "new",
     title: formData.get("title"),
     description: formData.get("description") ?? "",
+    urgent: formData.get("urgent") ?? false,
   });
 
   if (!parsed.success) {
@@ -182,6 +185,7 @@ export async function createCardAction(
         title: parsed.data.title,
         description: parsed.data.description,
         status: parsed.data.status,
+        urgent: parsed.data.urgent,
         position: (maxPosition._max.position ?? -1) + 1,
       },
     });
@@ -246,6 +250,96 @@ export async function moveCardAction(
     }
     logger.error("moveCardAction failed", error);
     return { ok: false, error: errors.moveCard };
+  }
+}
+
+export async function setCardUrgentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const errors = await tErrors();
+  const parsed = setCardUrgentSchema.safeParse({
+    boardId: formData.get("boardId"),
+    cardId: formData.get("cardId"),
+    urgent: formData.get("urgent"),
+  });
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
+  }
+
+  try {
+    await requireBoardSession(parsed.data.boardId);
+    const card = await prisma.card.findFirst({
+      where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
+    });
+
+    if (!card) {
+      return { ok: false, error: errors.cardNotFound };
+    }
+
+    await prisma.card.update({
+      where: { id: card.id },
+      data: { urgent: parsed.data.urgent },
+    });
+
+    revalidatePath(`/b/${parsed.data.boardId}`);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: errors.unauthorized };
+    }
+    logger.error("setCardUrgentAction failed", error);
+    return { ok: false, error: errors.createCard };
+  }
+}
+
+export async function updateCardContentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const errors = await tErrors();
+  const parsed = updateCardContentSchema.safeParse({
+    boardId: formData.get("boardId"),
+    cardId: formData.get("cardId"),
+    title: formData.get("title"),
+    description: formData.get("description") ?? "",
+  });
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
+  }
+
+  try {
+    await requireBoardSession(parsed.data.boardId);
+    const card = await prisma.card.findFirst({
+      where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
+    });
+
+    if (!card) {
+      return { ok: false, error: errors.cardNotFound };
+    }
+
+    await prisma.card.update({
+      where: { id: card.id },
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description,
+      },
+    });
+
+    revalidatePath(`/b/${parsed.data.boardId}`);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: errors.unauthorized };
+    }
+    logger.error("updateCardContentAction failed", error);
+    return { ok: false, error: errors.createCard };
   }
 }
 
