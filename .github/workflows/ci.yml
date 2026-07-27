@@ -11,10 +11,11 @@ concurrency:
 
 env:
   NODE_VERSION: "22"
-  PNPM_VERSION: "9"
-  # Dummy values so prisma generate / next build can load config in CI
-  DATABASE_URL: "postgresql://opendesk:opendesk@localhost:54329/opendesk?schema=public"
+  PNPM_VERSION: "11"
+  DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
   SESSION_SECRET: "ci-session-secret-at-least-32-characters-long"
+  DATABASE_SESSION_OPTIONS: "false"
+  DATABASE_CONNECTION_LIMIT: "1"
 
 jobs:
   quality:
