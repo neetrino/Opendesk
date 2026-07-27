@@ -22,7 +22,7 @@ OpenDesk даёт команде одну общую доску: вход по �
 ### Пользователи
 
 - **Организатор** — создаёт доску, сохраняет постоянную join-ссылку
-- **Участник** — открывает `/join/:token`, указывает имя (так заходят все, включая создателя)
+- **Участник** — открывает `/b/:slug/:joinToken`, указывает имя (так заходят все, включая создателя)
 
 ---
 
@@ -88,12 +88,14 @@ docs/
 ### Join по постоянной ссылке
 
 ```
-1. GET /join/:token → форма имени
+1. GET /b/:slug/:joinToken → форма имени
 2. Server Action joinBoardByToken(token, name)
 3. Если Participant с таким именем есть → rejoin (новая cookie)
 4. Иначе создать Participant (если < 20), cookie
 5. Redirect → /b/:boardId
 ```
+
+Legacy: `GET /join/:token` редиректит на `/b/:slug/:token`.
 
 ### Legacy: Join по one-time invite
 
@@ -119,7 +121,7 @@ docs/
 
 | Entity | Описание |
 |--------|----------|
-| Board | Доска + постоянный `joinToken` |
+| Board | Доска + `slug` + постоянный `joinToken` |
 | Invite | Legacy одноразовый токен |
 | Participant | Участник (displayName) |
 | Card | question \| task + status + position |

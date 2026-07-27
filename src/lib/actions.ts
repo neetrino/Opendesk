@@ -11,6 +11,7 @@ import {
   setSessionCookie,
 } from "@/lib/session";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
+import { allocateBoardSlug } from "@/lib/allocate-board-slug";
 import { createJoinToken } from "@/lib/tokens";
 import {
   addCommentSchema,
@@ -26,7 +27,7 @@ import type { ActionResult } from "@/types/actions";
 
 export async function createBoardAction(
   formData: FormData,
-): Promise<ActionResult<{ boardId: string; joinToken: string }>> {
+): Promise<ActionResult<{ boardId: string; joinToken: string; slug: string }>> {
   const errors = await tErrors();
   const parsed = createBoardSchema.safeParse({
     title: formData.get("title"),
@@ -40,16 +41,22 @@ export async function createBoardAction(
   }
 
   try {
+    const slug = await allocateBoardSlug(parsed.data.title);
     const board = await prisma.board.create({
       data: {
         title: parsed.data.title,
+        slug,
         joinToken: createJoinToken(),
       },
     });
 
     return {
       ok: true,
-      data: { boardId: board.id, joinToken: board.joinToken },
+      data: {
+        boardId: board.id,
+        joinToken: board.joinToken,
+        slug: board.slug,
+      },
     };
   } catch (error) {
     logger.error("createBoardAction failed", error);

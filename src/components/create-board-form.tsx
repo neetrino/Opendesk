@@ -3,10 +3,12 @@
 import { useState, useTransition } from "react";
 import { createBoardAction } from "@/lib/actions";
 import { useI18n } from "@/i18n/provider";
+import { buildJoinPath } from "@/lib/join-url";
 
 type CreatedBoard = {
   boardId: string;
   joinToken: string;
+  slug: string;
 };
 
 export function CreateBoardForm() {
@@ -16,12 +18,12 @@ export function CreateBoardForm() {
   const [created, setCreated] = useState<CreatedBoard | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
-  function joinUrl(joinToken: string): string {
-    return `${window.location.origin}/join/${joinToken}`;
+  function joinUrl(slug: string, joinToken: string): string {
+    return `${window.location.origin}${buildJoinPath(slug, joinToken)}`;
   }
 
-  async function copyJoinLink(joinToken: string): Promise<void> {
-    const url = joinUrl(joinToken);
+  async function copyJoinLink(slug: string, joinToken: string): Promise<void> {
+    const url = joinUrl(slug, joinToken);
     try {
       await navigator.clipboard.writeText(url);
       setCopyMessage(t.board.copied);
@@ -45,7 +47,7 @@ export function CreateBoardForm() {
   }
 
   if (created) {
-    const url = joinUrl(created.joinToken);
+    const url = joinUrl(created.slug, created.joinToken);
     return (
       <div className="create-form animate-rise">
         <p className="eyebrow">{t.boardForm.createdEyebrow}</p>
@@ -64,7 +66,7 @@ export function CreateBoardForm() {
               type="button"
               className="button-secondary join-link-copy"
               onClick={() => {
-                void copyJoinLink(created.joinToken);
+                void copyJoinLink(created.slug, created.joinToken);
               }}
             >
               {copyMessage ?? t.boardForm.copyLink}

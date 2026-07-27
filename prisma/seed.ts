@@ -25,6 +25,7 @@ async function main(): Promise<void> {
     const board = await prisma.board.create({
       data: {
         title: "OpenDesk — обсуждения проекта",
+        slug: "opendesk-obsuzhdeniya-proekta",
         joinToken,
         participants: {
           create: { displayName: "Организатор" },
@@ -33,7 +34,7 @@ async function main(): Promise<void> {
     });
 
     console.info("Seeded board:", board.id);
-    console.info("Join link: /join/" + board.joinToken);
+    console.info(`Join link: /b/${board.slug}/${board.joinToken}`);
   } finally {
     await prisma.$disconnect();
     await pool.end();
