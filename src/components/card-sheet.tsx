@@ -126,6 +126,7 @@ export function CardSheet({
         aria-modal="true"
         aria-labelledby={`card-sheet-title-${card.id}`}
       >
+        <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
           <div className="sheet-badges">
             <span className="type-pill">{t.cardTypes[card.type]}</span>

@@ -23,6 +23,7 @@ export const hy: Dictionary = {
     inviting: "…",
     copied: "Պատճենված է",
     replies: "{n} պատասխան",
+    stagesNav: "Տախտակի փուլեր",
   },
   columns: {
     new: "Նոր",

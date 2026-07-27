@@ -37,7 +37,6 @@ export function CommentForm({
     const tempId = `optimistic-${crypto.randomUUID()}`;
     textarea.value = "";
     setError(null);
-    onOptimisticSend(body, tempId);
 
     const formData = new FormData();
     formData.set("boardId", boardId);
@@ -45,6 +44,7 @@ export function CommentForm({
     formData.set("body", body);
 
     startTransition(async () => {
+      onOptimisticSend(body, tempId);
       const response = await addCommentAction(formData);
       if (!response.ok) {
         onOptimisticRollback(tempId);

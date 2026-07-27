@@ -23,6 +23,7 @@ export const ru: Dictionary = {
     inviting: "…",
     copied: "Скопировано",
     replies: "{n} ответов",
+    stagesNav: "Этапы доски",
   },
   columns: {
     new: "Новое",

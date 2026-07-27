@@ -21,6 +21,7 @@ export type Dictionary = {
     inviting: string;
     copied: string;
     replies: string;
+    stagesNav: string;
   };
   columns: {
     new: string;
@@ -129,6 +130,7 @@ export const en: Dictionary = {
     inviting: "…",
     copied: "Copied",
     replies: "{n} replies",
+    stagesNav: "Board stages",
   },
   columns: {
     new: "New",

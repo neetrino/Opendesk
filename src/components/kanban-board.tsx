@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useMemo,
   useOptimistic,
   useRef,
   useState,
@@ -23,16 +22,14 @@ export type BoardCard = Card & {
   comments: CommentWithAuthor[];
 };
 
-type BoardUser = {
-  participantId: string;
-  displayName: string;
-};
-
 type KanbanBoardProps = {
   boardId: string;
   cards: BoardCard[];
   locale: string;
-  currentUser: BoardUser;
+  currentUser: {
+    participantId: string;
+    displayName: string;
+  };
 };
 
 type DragPayload = {
@@ -40,33 +37,18 @@ type DragPayload = {
   fromStatus: CardStatus;
 };
 
-type CardPatch = {
-  cardId: string;
-  status?: CardStatus;
-  urgent?: boolean;
-};
-
-function mergePendingComments(
-  card: BoardCard,
-  pending: CommentWithAuthor[],
-): CommentWithAuthor[] {
-  if (pending.length === 0) {
-    return card.comments;
-  }
-
-  const stillPending = pending.filter(
-    (pendingComment) =>
-      !card.comments.some(
-        (comment) =>
-          comment.authorId === pendingComment.authorId &&
-          comment.body === pendingComment.body,
-      ),
-  );
-
-  return stillPending.length === 0
-    ? card.comments
-    : [...card.comments, ...stillPending];
-}
+type OptimisticUpdate =
+  | { kind: "status"; cardId: string; status: CardStatus }
+  | { kind: "urgent"; cardId: string; urgent: boolean }
+  | {
+      kind: "comment-add";
+      cardId: string;
+      tempId: string;
+      body: string;
+      authorId: string;
+      displayName: string;
+    }
+  | { kind: "comment-rollback"; cardId: string; tempId: string };
 
 export function KanbanBoard({
   boardId,
@@ -78,39 +60,68 @@ export function KanbanBoard({
   const [isPending, startTransition] = useTransition();
   const [dragOverStatus, setDragOverStatus] = useState<CardStatus | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [pendingComments, setPendingComments] = useState<
-    Record<string, CommentWithAuthor[]>
-  >({});
+  const [activeStatus, setActiveStatus] = useState<CardStatus>("new");
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
 
   const [optimisticCards, setOptimisticCards] = useOptimistic(
     cards,
-    (current, update: CardPatch) =>
-      current.map((card) =>
+    (current, update: OptimisticUpdate) => {
+      if (update.kind === "status") {
+        return current.map((card) =>
+          card.id === update.cardId
+            ? { ...card, status: update.status }
+            : card,
+        );
+      }
+
+      if (update.kind === "urgent") {
+        return current.map((card) =>
+          card.id === update.cardId
+            ? { ...card, urgent: update.urgent }
+            : card,
+        );
+      }
+
+      if (update.kind === "comment-add") {
+        const optimisticComment: CommentWithAuthor = {
+          id: update.tempId,
+          cardId: update.cardId,
+          authorId: update.authorId,
+          body: update.body,
+          createdAt: new Date(),
+          author: {
+            id: update.authorId,
+            boardId,
+            displayName: update.displayName,
+            createdAt: new Date(),
+          },
+        };
+
+        return current.map((card) =>
+          card.id === update.cardId
+            ? { ...card, comments: [...card.comments, optimisticComment] }
+            : card,
+        );
+      }
+
+      return current.map((card) =>
         card.id === update.cardId
           ? {
               ...card,
-              ...(update.status !== undefined ? { status: update.status } : {}),
-              ...(update.urgent !== undefined ? { urgent: update.urgent } : {}),
+              comments: card.comments.filter(
+                (comment) => comment.id !== update.tempId,
+              ),
             }
           : card,
-      ),
-  );
-
-  const displayCards = useMemo(
-    () =>
-      optimisticCards.map((card) => ({
-        ...card,
-        comments: mergePendingComments(card, pendingComments[card.id] ?? []),
-      })),
-    [optimisticCards, pendingComments],
+      );
+    },
   );
 
   const selectedCard =
     selectedCardId === null
       ? null
-      : (displayCards.find((card) => card.id === selectedCardId) ?? null);
+      : (optimisticCards.find((card) => card.id === selectedCardId) ?? null);
 
   function onDragStart(
     event: DragEvent<HTMLElement>,
@@ -149,7 +160,7 @@ export function KanbanBoard({
     }
 
     startTransition(async () => {
-      setOptimisticCards({ cardId, status });
+      setOptimisticCards({ kind: "status", cardId, status });
       const formData = new FormData();
       formData.set("boardId", boardId);
       formData.set("cardId", cardId);
@@ -166,66 +177,48 @@ export function KanbanBoard({
     setSelectedCardId(cardId);
   }
 
-  function onCommentSend(body: string, tempId: string): void {
-    if (!selectedCardId) {
-      return;
-    }
-
-    const now = new Date();
-    const optimisticComment: CommentWithAuthor = {
-      id: tempId,
-      cardId: selectedCardId,
-      authorId: currentUser.participantId,
-      body,
-      createdAt: now,
-      author: {
-        id: currentUser.participantId,
-        boardId,
-        displayName: currentUser.displayName,
-        createdAt: now,
-      },
-    };
-
-    setPendingComments((current) => ({
-      ...current,
-      [selectedCardId]: [...(current[selectedCardId] ?? []), optimisticComment],
-    }));
-  }
-
-  function onCommentRollback(tempId: string): void {
-    if (!selectedCardId) {
-      return;
-    }
-
-    setPendingComments((current) => {
-      const nextForCard = (current[selectedCardId] ?? []).filter(
-        (comment) => comment.id !== tempId,
-      );
-      const next = { ...current };
-      if (nextForCard.length === 0) {
-        delete next[selectedCardId];
-      } else {
-        next[selectedCardId] = nextForCard;
-      }
-      return next;
-    });
-  }
-
   return (
     <>
-      <div className={`board-grid ${isPending ? "is-moving" : ""}`}>
+      <nav className="board-stage-nav" aria-label={t.board.stagesNav}>
         {CARD_STATUSES.map((status) => {
-          const columnCards = displayCards.filter(
+          const count = optimisticCards.filter(
+            (card) => card.status === status,
+          ).length;
+
+          return (
+            <button
+              key={status}
+              type="button"
+              className={
+                activeStatus === status
+                  ? `board-stage-tab stage-${status} is-active`
+                  : `board-stage-tab stage-${status}`
+              }
+              onClick={() => setActiveStatus(status)}
+            >
+              <span className="board-stage-label">{t.columns[status]}</span>
+              <span className="board-stage-count">{count}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <div
+        className={`board-grid focus-${activeStatus}${isPending ? " is-moving" : ""}`}
+      >
+        {CARD_STATUSES.map((status) => {
+          const columnCards = optimisticCards.filter(
             (card) => card.status === status,
           );
+          const isFocused = activeStatus === status;
 
           return (
             <section
               key={status}
               className={
                 dragOverStatus === status
-                  ? `board-column column-${status} is-drop-target`
-                  : `board-column column-${status}`
+                  ? `board-column column-${status} is-drop-target${isFocused ? " is-focused" : ""}`
+                  : `board-column column-${status}${isFocused ? " is-focused" : ""}`
               }
               onDragOver={(event) => onDragOver(event, status)}
               onDragLeave={onDragLeave}
@@ -255,7 +248,10 @@ export function KanbanBoard({
                       </span>
                       <span className="card-meta-right">
                         {card.urgent ? (
-                          <span className="fire-badge" title={t.quickAdd.urgent}>
+                          <span
+                            className="fire-badge"
+                            title={t.quickAdd.urgent}
+                          >
                             <FireIcon size={15} />
                           </span>
                         ) : null}
@@ -301,10 +297,25 @@ export function KanbanBoard({
           locale={locale}
           onClose={() => setSelectedCardId(null)}
           onUrgentChange={(cardId, urgent) => {
-            setOptimisticCards({ cardId, urgent });
+            setOptimisticCards({ kind: "urgent", cardId, urgent });
           }}
-          onCommentSend={onCommentSend}
-          onCommentRollback={onCommentRollback}
+          onCommentSend={(body, tempId) => {
+            setOptimisticCards({
+              kind: "comment-add",
+              cardId: selectedCard.id,
+              tempId,
+              body,
+              authorId: currentUser.participantId,
+              displayName: currentUser.displayName,
+            });
+          }}
+          onCommentRollback={(tempId) => {
+            setOptimisticCards({
+              kind: "comment-rollback",
+              cardId: selectedCard.id,
+              tempId,
+            });
+          }}
         />
       ) : null}
     </>
