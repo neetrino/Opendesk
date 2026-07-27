@@ -25,6 +25,7 @@ export const hy: Dictionary = {
     replies: "{n} պատասխան",
     stagesNav: "Տախտակի փուլեր",
     logout: "Դուրս գալ",
+    logoutConfirm: "Դուրս գա՞լ այս տախտակից։",
     participantsAria: "Տախտակի մասնակիցներ",
     participantsTitle: "Տախտակի մասնակիցներ",
     participantsEmpty: "Դեռ ոչ ոք չի միացել։",

@@ -25,6 +25,7 @@ export const ru: Dictionary = {
     replies: "{n} ответов",
     stagesNav: "Этапы доски",
     logout: "Выйти",
+    logoutConfirm: "Выйти с этой доски?",
     participantsAria: "Участники доски",
     participantsTitle: "Участники доски",
     participantsEmpty: "Пока никто не подключился.",

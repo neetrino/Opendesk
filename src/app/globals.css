@@ -319,6 +319,36 @@ textarea {
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
+  margin-left: auto;
+}
+
+.board-logout {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.board-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0.2rem 0.35rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 140ms ease, color 140ms ease;
+}
+
+.board-logout-btn:hover {
+  opacity: 1;
+  color: var(--ink);
 }
 
 .participants-count {
@@ -1436,8 +1466,8 @@ textarea {
   }
 
   .board-top {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
+    align-items: flex-start;
     gap: 0.65rem;
     padding: 0.55rem 0 0.75rem;
   }
@@ -1446,9 +1476,21 @@ textarea {
     font-size: 1.25rem;
   }
 
+  .board-top-main {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .board-logout {
+    order: -1;
+    margin-left: auto;
+  }
+
   .board-top-actions {
+    flex: 1 1 100%;
     flex-wrap: wrap;
     justify-content: flex-start;
+    margin-left: 0;
   }
 
   .invite-actions.compact {

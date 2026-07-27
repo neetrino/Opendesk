@@ -23,6 +23,7 @@ export type Dictionary = {
     replies: string;
     stagesNav: string;
     logout: string;
+    logoutConfirm: string;
     participantsAria: string;
     participantsTitle: string;
     participantsEmpty: string;
@@ -140,6 +141,7 @@ export const en: Dictionary = {
     replies: "{n} replies",
     stagesNav: "Board stages",
     logout: "Log out",
+    logoutConfirm: "Log out of this board?",
     participantsAria: "People on this board",
     participantsTitle: "People on the board",
     participantsEmpty: "No one has joined yet.",
