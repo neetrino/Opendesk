@@ -746,8 +746,8 @@ textarea {
 }
 
 .sheet-icon-btn {
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -772,7 +772,7 @@ textarea {
 }
 
 .sheet-urgent {
-  color: #c4c9c6;
+  color: #b0b7b3;
 }
 
 .sheet-urgent:hover:not(:disabled) {
@@ -782,14 +782,30 @@ textarea {
 }
 
 .sheet-urgent.is-on {
-  color: #e2410d;
-  background: #fff4ec;
-  border-color: rgba(226, 65, 13, 0.3);
+  color: #fff;
+  background: #e2410d;
+  border-color: transparent;
+  box-shadow: 0 6px 14px rgba(226, 65, 13, 0.28);
 }
 
 .sheet-urgent.is-on:hover:not(:disabled) {
+  color: #fff;
+  background: #c2410c;
+}
+
+.urgent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: #c2410c;
-  background: #ffece0;
+  background: #fff1e8;
+  border: 1px solid rgba(194, 65, 12, 0.2);
 }
 
 .sheet-scroll {

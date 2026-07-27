@@ -23,9 +23,16 @@ type CardSheetProps = {
   card: SheetCard;
   locale: string;
   onClose: () => void;
+  onUrgentChange: (cardId: string, urgent: boolean) => void;
 };
 
-export function CardSheet({ boardId, card, locale, onClose }: CardSheetProps) {
+export function CardSheet({
+  boardId,
+  card,
+  locale,
+  onClose,
+  onUrgentChange,
+}: CardSheetProps) {
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
   const [cardId, setCardId] = useState(card.id);
@@ -59,12 +66,21 @@ export function CardSheet({ boardId, card, locale, onClose }: CardSheetProps) {
     title.trim() !== card.title || description !== card.description;
 
   function toggleUrgent(): void {
+    const nextUrgent = !card.urgent;
+    setError(null);
+
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
-    formData.set("urgent", card.urgent ? "false" : "true");
+    formData.set("urgent", nextUrgent ? "true" : "false");
+
     startTransition(async () => {
-      await setCardUrgentAction(formData);
+      onUrgentChange(card.id, nextUrgent);
+      const response = await setCardUrgentAction(formData);
+      if (!response.ok) {
+        onUrgentChange(card.id, !nextUrgent);
+        setError(response.error);
+      }
     });
   }
 
@@ -100,6 +116,12 @@ export function CardSheet({ boardId, card, locale, onClose }: CardSheetProps) {
         <header className="sheet-header">
           <div className="sheet-badges">
             <span className="type-pill">{t.cardTypes[card.type]}</span>
+            {card.urgent ? (
+              <span className="urgent-pill">
+                <FireIcon size={13} />
+                {t.cardPage.urgentBadge}
+              </span>
+            ) : null}
             <span className="sheet-author">{card.author.displayName}</span>
           </div>
           <div className="sheet-actions">
@@ -120,7 +142,7 @@ export function CardSheet({ boardId, card, locale, onClose }: CardSheetProps) {
                 card.urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
               }
             >
-              <FireIcon />
+              <FireIcon size={18} />
             </button>
             <button
               type="button"

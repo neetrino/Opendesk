@@ -62,6 +62,7 @@ export type Dictionary = {
     priority: string;
     markUrgent: string;
     clearUrgent: string;
+    urgentBadge: string;
     discussion: string;
     emptyThread: string;
     editTitle: string;
@@ -169,6 +170,7 @@ export const en: Dictionary = {
     priority: "Priority",
     markUrgent: "Mark as urgent",
     clearUrgent: "Remove urgency",
+    urgentBadge: "Urgent",
     discussion: "Discussion",
     emptyThread: "No replies yet. Write the first one.",
     editTitle: "Title",

@@ -65,6 +65,7 @@ export const hy: Dictionary = {
     priority: "Առաջնահերթություն",
     markUrgent: "Նշել որպես շտապ",
     clearUrgent: "Հանել շտապությունը",
+    urgentBadge: "Շտապ",
     discussion: "Քննարկում",
     emptyThread: "Դեռ պատասխաններ չկան։ Գրեք առաջինը։",
     editTitle: "Անվանում",

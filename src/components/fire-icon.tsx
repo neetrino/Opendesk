@@ -1,10 +1,15 @@
-export function FireIcon({ className }: { className?: string }) {
+type FireIconProps = {
+  className?: string;
+  size?: number;
+};
+
+export function FireIcon({ className, size = 16 }: FireIconProps) {
   return (
     <svg
       className={className}
       viewBox="0 0 24 24"
-      width="14"
-      height="14"
+      width={size}
+      height={size}
       aria-hidden="true"
       focusable="false"
     >

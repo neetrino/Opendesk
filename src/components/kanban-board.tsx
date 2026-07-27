@@ -43,9 +43,18 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
 
   const [optimisticCards, setOptimisticCards] = useOptimistic(
     cards,
-    (current, update: { cardId: string; status: CardStatus }) =>
+    (
+      current,
+      update: { cardId: string; status?: CardStatus; urgent?: boolean },
+    ) =>
       current.map((card) =>
-        card.id === update.cardId ? { ...card, status: update.status } : card,
+        card.id === update.cardId
+          ? {
+              ...card,
+              ...(update.status !== undefined ? { status: update.status } : {}),
+              ...(update.urgent !== undefined ? { urgent: update.urgent } : {}),
+            }
+          : card,
       ),
   );
 
@@ -155,7 +164,7 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
                       <span className="card-meta-right">
                         {card.urgent ? (
                           <span className="fire-badge" title={t.quickAdd.urgent}>
-                            <FireIcon />
+                            <FireIcon size={15} />
                           </span>
                         ) : null}
                         <span className="author">{card.author.displayName}</span>
@@ -193,6 +202,9 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
           card={selectedCard}
           locale={locale}
           onClose={() => setSelectedCardId(null)}
+          onUrgentChange={(cardId, urgent) => {
+            setOptimisticCards({ cardId, urgent });
+          }}
         />
       ) : null}
     </>

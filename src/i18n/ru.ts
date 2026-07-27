@@ -65,6 +65,7 @@ export const ru: Dictionary = {
     priority: "Приоритет",
     markUrgent: "Отметить как срочное",
     clearUrgent: "Снять срочность",
+    urgentBadge: "Срочно",
     discussion: "Обсуждение",
     emptyThread: "Пока нет ответов. Напишите первый.",
     editTitle: "Название",

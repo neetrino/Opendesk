@@ -57,7 +57,9 @@ export const moveCardSchema = z.object({
 export const setCardUrgentSchema = z.object({
   boardId: z.string().cuid(),
   cardId: z.string().cuid(),
-  urgent: z.coerce.boolean(),
+  urgent: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .transform((value) => value === true || value === "true"),
 });
 
 export const updateCardContentSchema = z.object({
