@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
@@ -20,9 +21,11 @@ async function main(): Promise<void> {
       return;
     }
 
+    const joinToken = randomBytes(24).toString("base64url");
     const board = await prisma.board.create({
       data: {
         title: "OpenDesk — обсуждения проекта",
+        joinToken,
         participants: {
           create: { displayName: "Организатор" },
         },
@@ -30,7 +33,7 @@ async function main(): Promise<void> {
     });
 
     console.info("Seeded board:", board.id);
-    console.info("Open / and create invites from the board Invite button");
+    console.info("Join link: /join/" + board.joinToken);
   } finally {
     await prisma.$disconnect();
     await pool.end();

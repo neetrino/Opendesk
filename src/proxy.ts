@@ -14,7 +14,8 @@ export function proxy(request: NextRequest) {
     "unknown";
 
   const path = request.nextUrl.pathname;
-  const isInviteJoin = path.startsWith("/invite/");
+  const isInviteJoin =
+    path.startsWith("/invite/") || path.startsWith("/join/");
   const isBoardMutation =
     request.method === "POST" && path.startsWith("/b/");
 
@@ -44,5 +45,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/invite/:path*", "/b/:path*"],
+  matcher: ["/invite/:path*", "/join/:path*", "/b/:path*"],
 };

@@ -3,6 +3,7 @@ import {
   claimInviteSchema,
   createBoardSchema,
   createCardSchema,
+  joinBoardSchema,
   moveCardSchema,
   setCardUrgentSchema,
 } from "@/lib/validation";
@@ -22,6 +23,14 @@ describe("validation schemas", () => {
       displayName: "   ",
     });
     expect(parsed.success).toBe(false);
+  });
+
+  it("accepts a valid permanent join payload", () => {
+    const parsed = joinBoardSchema.safeParse({
+      token: "abcdefghijklmnop",
+      displayName: "Anna",
+    });
+    expect(parsed.success).toBe(true);
   });
 
   it("rejects short card title", () => {

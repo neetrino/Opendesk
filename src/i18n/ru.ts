@@ -2,11 +2,11 @@ import type { Dictionary } from "@/i18n/dictionary";
 
 export const ru: Dictionary = {
   meta: {
-    description: "Публичная Kanban-доска по invite без регистрации",
+    description: "Публичная Kanban-доска по постоянной ссылке без регистрации",
   },
   home: {
     eyebrow: "Без регистрации",
-    lede: "Одна общая доска для вопросов и задач. Создайте доску, нажмите Invite — ссылка скопируется, отправьте её участнику.",
+    lede: "Одна общая доска для вопросов и задач. Создайте доску, нажмите Invite — постоянная ссылка скопируется. То же имя = тот же участник.",
   },
   boardForm: {
     title: "Название доски",
@@ -16,11 +16,19 @@ export const ru: Dictionary = {
     namePlaceholder: "Как вас видят на доске",
     creating: "Создаём…",
     create: "Создать доску",
+    createdEyebrow: "Доска готова",
+    createdTitle: "Сохраните ссылку",
+    createdLede:
+      "Это постоянная ссылка для входа. Сохраните или отправьте участникам. То же имя = тот же человек — и вы тоже после redeploy.",
+    linkLabel: "Ссылка для входа",
+    copyLink: "Скопировать",
+    openBoard: "Открыть доску",
   },
   board: {
     youAre: "Вы вошли как",
-    invite: "Invite",
+    invite: "Ссылка",
     inviting: "…",
+    inviteHint: "Постоянная ссылка — то же имя = снова вы",
     copied: "Скопировано",
     replies: "{n} ответов",
     stagesNav: "Этапы доски",
@@ -65,6 +73,15 @@ export const ru: Dictionary = {
     joining: "Входим…",
     join: "Войти на доску",
   },
+  joinPage: {
+    eyebrow: "Ссылка на доску",
+    joinLede:
+      "Укажите имя. То же имя, что раньше — продолжите как вы. Ссылку можно открывать сколько угодно раз.",
+    nameLabel: "Ваше имя на доске",
+    namePlaceholder: "Как к вам обращаться",
+    joining: "Входим…",
+    join: "Открыть доску",
+  },
   cardPage: {
     back: "← К доске",
     close: "Закрыть",
@@ -88,7 +105,7 @@ export const ru: Dictionary = {
   },
   notFound: {
     title: "Страница не найдена",
-    body: "Ссылка устарела или доска / приглашение не существует.",
+    body: "Ссылка устарела или доска не существует.",
     home: "На главную",
   },
   common: {

@@ -1,6 +1,6 @@
 # Архитектура — OpenDesk
 
-> Публичная Kanban-доска по invite-токену без регистрации.
+> Публичная Kanban-доска по постоянной join-ссылке без регистрации.
 
 **Размер проекта.** A  
 **Обновлено.** 2026-07-27
@@ -9,20 +9,20 @@
 
 ## Назначение
 
-OpenDesk даёт команде одну общую доску: вход по уникальному invite + имя, карточки (вопрос / задача), 4 колонки, комментарии с автором.
+OpenDesk даёт команде одну общую доску: вход по постоянной ссылке + имя, карточки (вопрос / задача), 4 колонки, комментарии с автором.
 
 ### Основные возможности
 
-- Создание доски и генерация уникальных invite-ссылок
-- Вход без регистрации (токен + display name)
+- Создание доски с постоянным join-токеном
+- Вход без регистрации (ссылка + display name; то же имя = тот же участник)
 - Kanban: `new` → `in_progress` → `answered` → `done`
 - Типы карточек: `question` | `task`
 - Тред комментариев внутри карточки
 
 ### Пользователи
 
-- **Организатор** — создаёт доску, копирует invite-ссылки
-- **Участник** — claim invite, создаёт/двигает карточки, пишет комментарии
+- **Организатор** — создаёт доску, копирует постоянную join-ссылку
+- **Участник** — открывает `/join/:token`, указывает имя, создаёт/двигает карточки, пишет комментарии
 
 ---
 
@@ -71,9 +71,9 @@ OpenDesk даёт команде одну общую доску: вход по �
 
 ```
 src/
-  app/                 # routes: /, /invite/[token], /b/[boardId], /b/[boardId]/c/[cardId]
+  app/                 # routes: /, /join/[token], /invite/[token], /b/[boardId], …
   components/          # UI: board, card, forms
-  lib/                 # prisma, session, auth, validation, logger, constants
+  lib/                 # prisma, session, validation, logger, constants
   types/               # shared types
 prisma/
   schema.prisma
@@ -85,7 +85,17 @@ docs/
 
 ## Потоки данных
 
-### Join по invite
+### Join по постоянной ссылке
+
+```
+1. GET /join/:token → форма имени
+2. Server Action joinBoardByToken(token, name)
+3. Если Participant с таким именем есть → rejoin (новая cookie)
+4. Иначе создать Participant (если < 20), cookie
+5. Redirect → /b/:boardId
+```
+
+### Legacy: Join по one-time invite
 
 ```
 1. GET /invite/:token → форма имени
@@ -109,8 +119,8 @@ docs/
 
 | Entity | Описание |
 |--------|----------|
-| Board | Доска |
-| Invite | Уникальный одноразовый токен |
+| Board | Доска + постоянный `joinToken` |
+| Invite | Legacy одноразовый токен |
 | Participant | Участник (displayName) |
 | Card | question \| task + status + position |
 | Comment | Сообщение в треде карточки |
@@ -128,12 +138,13 @@ Participant 1──* Comment (author)
 
 ## Безопасность
 
-- Invite: одноразовый claim
+- Join link: многоразовый; имя (case-insensitive) привязывает к participant
 - Cookie: httpOnly, secure (prod), signed HMAC
 - Доступ к доске только с валидной сессией участника этой доски
 - Zod на всех входах
 - Базовый rate limit на join / comment
 - Секреты только в env
+- Имя не является секретом: кто знает ссылку и имя — может войти как этот участник
 
 ---
 
@@ -150,12 +161,12 @@ Participant 1──* Comment (author)
 
 | Решение | Выбор | Почему |
 |---------|-------|--------|
-| Auth | Invite + cookie | Без регистрации (BRIEF) |
+| Auth | Permanent join + cookie | Без регистрации; rejoin после redeploy |
 | Backend | Server Actions | Size A, быстрее REST-слоя |
 | UI | Custom + Tailwind | Светлый минимализм без kit-оверкилла |
 | Realtime | Нет | Вне MVP |
 
 ---
 
-**Версия.** 1.0  
+**Версия.** 1.1  
 **Дата.** 2026-07-27

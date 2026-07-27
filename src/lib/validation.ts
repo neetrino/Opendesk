@@ -19,11 +19,7 @@ export const createBoardSchema = z.object({
     .max(MAX_DISPLAY_NAME_LENGTH, "nameLong"),
 });
 
-export const createInviteSchema = z.object({
-  boardId: z.string().cuid(),
-});
-
-export const claimInviteSchema = z.object({
+export const joinBoardSchema = z.object({
   token: z.string().trim().min(10).max(128),
   displayName: z
     .string()
@@ -31,6 +27,9 @@ export const claimInviteSchema = z.object({
     .min(1, "nameRequired")
     .max(MAX_DISPLAY_NAME_LENGTH, "nameLong"),
 });
+
+/** Legacy one-time invite claim — same shape as permanent join. */
+export const claimInviteSchema = joinBoardSchema;
 
 export const createCardSchema = z.object({
   boardId: z.string().cuid(),

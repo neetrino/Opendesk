@@ -271,6 +271,37 @@ textarea {
   margin: 0 0 0.75rem;
 }
 
+.save-link-title {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.save-link-lede {
+  margin: 0 0 1rem;
+}
+
+.save-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.invite-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  max-width: 14rem;
+}
+
+.invite-actions.compact .invite-hint {
+  display: none;
+}
+
+.board-join-hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+}
+
 .invite-list {
   list-style: none;
   padding: 0;

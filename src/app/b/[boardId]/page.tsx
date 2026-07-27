@@ -5,7 +5,6 @@ import { LogoutButton } from "@/components/logout-button";
 import { ParticipantsPanel } from "@/components/participants-panel";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
-import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -51,8 +50,6 @@ export default async function BoardPage({ params }: BoardPageProps) {
     redirect("/");
   }
 
-  const boardFull = board.participants.length >= MAX_BOARD_PARTICIPANTS;
-
   return (
     <section className="board-page">
       <div className="board-top">
@@ -61,13 +58,14 @@ export default async function BoardPage({ params }: BoardPageProps) {
           <p className="muted">
             {t.board.youAre} {session.displayName}
           </p>
+          <p className="muted board-join-hint">{t.board.inviteHint}</p>
         </div>
         <div className="board-top-actions">
           <ParticipantsPanel
             participants={board.participants}
             locale={locale}
           />
-          <InviteButton boardId={board.id} compact disabled={boardFull} />
+          <InviteButton joinToken={board.joinToken} compact />
         </div>
         <LogoutButton />
       </div>

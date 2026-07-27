@@ -75,8 +75,8 @@
 
 ### Модель данных (MVP)
 
-- `Board` — id, title, createdAt
-- `Invite` — id, boardId, token (unique), claimedAt?, participantId?
+- `Board` — id, title, joinToken (unique, постоянная ссылка), createdAt
+- `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
 - `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
 - `Card` — id, boardId, type (`question` \| `task`), status, title, description, authorId, position
 - `Comment` — id, cardId, authorId, body, createdAt
@@ -89,7 +89,7 @@
 
 | # | Параметр | Решение | Статус | Заметка |
 |---|----------|---------|--------|---------|
-| 5.1 | Решение | Invite token + signed cookie | ✅ | не Auth.js |
+| 5.1 | Решение | Permanent join link + signed cookie | ✅ | имя = тот же participant; one-time invite legacy |
 | 5.2 | Провайдеры | — | ➖ | |
 | 5.3 | Сессии | HTTP-only signed cookie | ✅ | |
 | 5.4 | RBAC | не нужно | ➖ | все равны |
