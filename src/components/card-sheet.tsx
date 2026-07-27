@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { Card, Comment, Participant } from "@prisma/client";
 import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
@@ -24,6 +24,8 @@ type CardSheetProps = {
   locale: string;
   onClose: () => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
+  onCommentSend: (body: string, tempId: string) => void;
+  onCommentRollback: (tempId: string) => void;
 };
 
 export function CardSheet({
@@ -32,6 +34,8 @@ export function CardSheet({
   locale,
   onClose,
   onUrgentChange,
+  onCommentSend,
+  onCommentRollback,
 }: CardSheetProps) {
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
@@ -39,6 +43,7 @@ export function CardSheet({
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description);
   const [error, setError] = useState<string | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
 
   if (card.id !== cardId) {
     setCardId(card.id);
@@ -61,6 +66,14 @@ export function CardSheet({
       document.body.style.overflow = previousOverflow;
     };
   }, [onClose]);
+
+  useEffect(() => {
+    const thread = threadRef.current;
+    if (!thread) {
+      return;
+    }
+    thread.scrollTop = thread.scrollHeight;
+  }, [card.id, card.comments.length]);
 
   const isDirty =
     title.trim() !== card.title || description !== card.description;
@@ -155,61 +168,63 @@ export function CardSheet({
           </div>
         </header>
 
-        <div className="sheet-scroll">
-          <label className="sheet-edit-field">
-            <span>{t.cardPage.editTitle}</span>
-            <input
-              id={`card-sheet-title-${card.id}`}
-              className="sheet-title-input"
-              value={title}
-              maxLength={120}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </label>
+        <div className="sheet-body">
+          <div className="sheet-details">
+            <label className="sheet-edit-field">
+              <span>{t.cardPage.editTitle}</span>
+              <input
+                id={`card-sheet-title-${card.id}`}
+                className="sheet-title-input"
+                value={title}
+                maxLength={120}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                onChange={(event) => setTitle(event.target.value)}
+              />
+            </label>
 
-          <label className="sheet-edit-field">
-            <span>{t.cardPage.editDescription}</span>
-            <textarea
-              className="sheet-description-input"
-              value={description}
-              rows={5}
-              maxLength={4000}
-              placeholder={t.cardPage.noDescription}
-              autoComplete="off"
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </label>
+            <label className="sheet-edit-field">
+              <span>{t.cardPage.editDescription}</span>
+              <textarea
+                className="sheet-description-input"
+                value={description}
+                rows={3}
+                maxLength={4000}
+                placeholder={t.cardPage.noDescription}
+                autoComplete="off"
+                onChange={(event) => setDescription(event.target.value)}
+              />
+            </label>
 
-          {error ? <p className="form-error">{error}</p> : null}
+            {error ? <p className="form-error">{error}</p> : null}
 
-          {isDirty ? (
-            <button
-              type="button"
-              className="button button-save sheet-save"
-              onClick={saveContent}
-              disabled={isPending}
-            >
-              {isPending ? t.cardPage.savingChanges : t.cardPage.saveChanges}
-            </button>
-          ) : null}
+            {isDirty ? (
+              <button
+                type="button"
+                className="button button-save sheet-save"
+                onClick={saveContent}
+                disabled={isPending}
+              >
+                {isPending ? t.cardPage.savingChanges : t.cardPage.saveChanges}
+              </button>
+            ) : null}
 
-          <div className="sheet-block">
-            <p className="eyebrow">{t.cardPage.stage}</p>
-            <MoveCardControls
-              boardId={boardId}
-              cardId={card.id}
-              currentStatus={card.status}
-            />
+            <div className="sheet-block">
+              <p className="eyebrow">{t.cardPage.stage}</p>
+              <MoveCardControls
+                boardId={boardId}
+                cardId={card.id}
+                currentStatus={card.status}
+              />
+            </div>
           </div>
 
-          <div className="sheet-block sheet-discussion">
+          <div className="sheet-discussion">
             <h3>{t.cardPage.discussion}</h3>
-            <div className="thread">
+            <div className="thread" ref={threadRef}>
               {card.comments.length === 0 ? (
-                <p className="muted">{t.cardPage.emptyThread}</p>
+                <p className="muted thread-empty">{t.cardPage.emptyThread}</p>
               ) : (
                 card.comments.map((comment) => (
                   <div key={comment.id} className="thread-item">
@@ -224,7 +239,14 @@ export function CardSheet({
                 ))
               )}
             </div>
-            <CommentForm boardId={boardId} cardId={card.id} />
+            <div className="sheet-composer">
+              <CommentForm
+                boardId={boardId}
+                cardId={card.id}
+                onOptimisticSend={onCommentSend}
+                onOptimisticRollback={onCommentRollback}
+              />
+            </div>
           </div>
         </div>
       </aside>

@@ -51,7 +51,15 @@ export default async function BoardPage({ params }: BoardPageProps) {
         </div>
         <InviteButton boardId={board.id} compact />
       </div>
-      <KanbanBoard boardId={board.id} cards={board.cards} locale={locale} />
+      <KanbanBoard
+        boardId={board.id}
+        cards={board.cards}
+        locale={locale}
+        currentUser={{
+          participantId: session.participantId,
+          displayName: session.displayName,
+        }}
+      />
     </section>
   );
 }

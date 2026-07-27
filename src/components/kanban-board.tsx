@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useMemo,
   useOptimistic,
   useRef,
   useState,
@@ -22,10 +23,16 @@ export type BoardCard = Card & {
   comments: CommentWithAuthor[];
 };
 
+type BoardUser = {
+  participantId: string;
+  displayName: string;
+};
+
 type KanbanBoardProps = {
   boardId: string;
   cards: BoardCard[];
   locale: string;
+  currentUser: BoardUser;
 };
 
 type DragPayload = {
@@ -33,20 +40,53 @@ type DragPayload = {
   fromStatus: CardStatus;
 };
 
-export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
+type CardPatch = {
+  cardId: string;
+  status?: CardStatus;
+  urgent?: boolean;
+};
+
+function mergePendingComments(
+  card: BoardCard,
+  pending: CommentWithAuthor[],
+): CommentWithAuthor[] {
+  if (pending.length === 0) {
+    return card.comments;
+  }
+
+  const stillPending = pending.filter(
+    (pendingComment) =>
+      !card.comments.some(
+        (comment) =>
+          comment.authorId === pendingComment.authorId &&
+          comment.body === pendingComment.body,
+      ),
+  );
+
+  return stillPending.length === 0
+    ? card.comments
+    : [...card.comments, ...stillPending];
+}
+
+export function KanbanBoard({
+  boardId,
+  cards,
+  locale,
+  currentUser,
+}: KanbanBoardProps) {
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
   const [dragOverStatus, setDragOverStatus] = useState<CardStatus | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [pendingComments, setPendingComments] = useState<
+    Record<string, CommentWithAuthor[]>
+  >({});
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
 
   const [optimisticCards, setOptimisticCards] = useOptimistic(
     cards,
-    (
-      current,
-      update: { cardId: string; status?: CardStatus; urgent?: boolean },
-    ) =>
+    (current, update: CardPatch) =>
       current.map((card) =>
         card.id === update.cardId
           ? {
@@ -58,10 +98,19 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
       ),
   );
 
+  const displayCards = useMemo(
+    () =>
+      optimisticCards.map((card) => ({
+        ...card,
+        comments: mergePendingComments(card, pendingComments[card.id] ?? []),
+      })),
+    [optimisticCards, pendingComments],
+  );
+
   const selectedCard =
     selectedCardId === null
       ? null
-      : (optimisticCards.find((card) => card.id === selectedCardId) ?? null);
+      : (displayCards.find((card) => card.id === selectedCardId) ?? null);
 
   function onDragStart(
     event: DragEvent<HTMLElement>,
@@ -117,11 +166,56 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
     setSelectedCardId(cardId);
   }
 
+  function onCommentSend(body: string, tempId: string): void {
+    if (!selectedCardId) {
+      return;
+    }
+
+    const now = new Date();
+    const optimisticComment: CommentWithAuthor = {
+      id: tempId,
+      cardId: selectedCardId,
+      authorId: currentUser.participantId,
+      body,
+      createdAt: now,
+      author: {
+        id: currentUser.participantId,
+        boardId,
+        displayName: currentUser.displayName,
+        createdAt: now,
+      },
+    };
+
+    setPendingComments((current) => ({
+      ...current,
+      [selectedCardId]: [...(current[selectedCardId] ?? []), optimisticComment],
+    }));
+  }
+
+  function onCommentRollback(tempId: string): void {
+    if (!selectedCardId) {
+      return;
+    }
+
+    setPendingComments((current) => {
+      const nextForCard = (current[selectedCardId] ?? []).filter(
+        (comment) => comment.id !== tempId,
+      );
+      const next = { ...current };
+      if (nextForCard.length === 0) {
+        delete next[selectedCardId];
+      } else {
+        next[selectedCardId] = nextForCard;
+      }
+      return next;
+    });
+  }
+
   return (
     <>
       <div className={`board-grid ${isPending ? "is-moving" : ""}`}>
         {CARD_STATUSES.map((status) => {
-          const columnCards = optimisticCards.filter(
+          const columnCards = displayCards.filter(
             (card) => card.status === status,
           );
 
@@ -130,18 +224,16 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
               key={status}
               className={
                 dragOverStatus === status
-                  ? "board-column is-drop-target"
-                  : "board-column"
+                  ? `board-column column-${status} is-drop-target`
+                  : `board-column column-${status}`
               }
               onDragOver={(event) => onDragOver(event, status)}
               onDragLeave={onDragLeave}
               onDrop={(event) => onDrop(event, status)}
             >
               <header className="column-header">
-                <h2>
-                  {t.columns[status]}
-                  <span className="count">{columnCards.length}</span>
-                </h2>
+                <h2>{t.columns[status]}</h2>
+                <span className="count">{columnCards.length}</span>
               </header>
 
               <QuickCreateCard boardId={boardId} status={status} />
@@ -180,7 +272,13 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
                     >
                       {card.description || "—"}
                     </p>
-                    <p className="card-foot">
+                    <p
+                      className={
+                        card.comments.length > 0
+                          ? "card-foot"
+                          : "card-foot is-empty"
+                      }
+                    >
                       {card.comments.length > 0
                         ? t.board.replies.replace(
                             "{n}",
@@ -205,6 +303,8 @@ export function KanbanBoard({ boardId, cards, locale }: KanbanBoardProps) {
           onUrgentChange={(cardId, urgent) => {
             setOptimisticCards({ cardId, urgent });
           }}
+          onCommentSend={onCommentSend}
+          onCommentRollback={onCommentRollback}
         />
       ) : null}
     </>
