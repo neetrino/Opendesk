@@ -12,11 +12,6 @@ export const createBoardSchema = z.object({
     .trim()
     .min(2, "titleShort")
     .max(80, "titleLong"),
-  organizerName: z
-    .string()
-    .trim()
-    .min(1, "nameRequired")
-    .max(MAX_DISPLAY_NAME_LENGTH, "nameLong"),
 });
 
 export const joinBoardSchema = z.object({

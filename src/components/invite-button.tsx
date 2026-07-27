@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useI18n } from "@/i18n/provider";
+import { buildJoinPath } from "@/lib/join-url";
 
 type InviteButtonProps = {
+  slug: string;
   joinToken: string;
   compact?: boolean;
 };
 
 export function InviteButton({
+  slug,
   joinToken,
   compact = false,
 }: InviteButtonProps) {
@@ -17,7 +20,7 @@ export function InviteButton({
 
   async function onInvite(): Promise<void> {
     setMessage(null);
-    const url = `${window.location.origin}/join/${joinToken}`;
+    const url = `${window.location.origin}${buildJoinPath(slug, joinToken)}`;
     try {
       await navigator.clipboard.writeText(url);
       setMessage(t.board.copied);

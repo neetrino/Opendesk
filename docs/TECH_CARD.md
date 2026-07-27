@@ -75,7 +75,8 @@
 
 ### Модель данных (MVP)
 
-- `Board` — id, title, joinToken (unique, постоянная ссылка), createdAt
+- `Board` — id, title, slug (unique), joinToken (unique), createdAt
+  - постоянная ссылка: `/b/{slug}/{joinToken}`
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
 - `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
 - `Card` — id, boardId, type (`question` \| `task`), status, title, description, authorId, position

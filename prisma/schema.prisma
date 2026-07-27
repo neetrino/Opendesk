@@ -21,6 +21,7 @@ enum CardStatus {
 model Board {
   id        String   @id @default(cuid())
   title     String
+  slug      String   @unique
   joinToken String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

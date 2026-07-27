@@ -65,7 +65,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
             participants={board.participants}
             locale={locale}
           />
-          <InviteButton joinToken={board.joinToken} compact />
+          <InviteButton slug={board.slug} joinToken={board.joinToken} compact />
         </div>
         <LogoutButton />
       </div>

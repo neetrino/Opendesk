@@ -1,29 +1,29 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createBoardAction } from "@/lib/actions";
 import { useI18n } from "@/i18n/provider";
+import { buildJoinPath } from "@/lib/join-url";
 
 type CreatedBoard = {
   boardId: string;
   joinToken: string;
+  slug: string;
 };
 
 export function CreateBoardForm() {
   const { t } = useI18n();
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [created, setCreated] = useState<CreatedBoard | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
-  function joinUrl(joinToken: string): string {
-    return `${window.location.origin}/join/${joinToken}`;
+  function joinUrl(slug: string, joinToken: string): string {
+    return `${window.location.origin}${buildJoinPath(slug, joinToken)}`;
   }
 
-  async function copyJoinLink(joinToken: string): Promise<void> {
-    const url = joinUrl(joinToken);
+  async function copyJoinLink(slug: string, joinToken: string): Promise<void> {
+    const url = joinUrl(slug, joinToken);
     try {
       await navigator.clipboard.writeText(url);
       setCopyMessage(t.board.copied);
@@ -42,12 +42,12 @@ export function CreateBoardForm() {
         return;
       }
       setCreated(response.data);
-      await copyJoinLink(response.data.joinToken);
+      setCopyMessage(null);
     });
   }
 
   if (created) {
-    const url = joinUrl(created.joinToken);
+    const url = joinUrl(created.slug, created.joinToken);
     return (
       <div className="create-form animate-rise">
         <p className="eyebrow">{t.boardForm.createdEyebrow}</p>
@@ -55,35 +55,24 @@ export function CreateBoardForm() {
         <p className="muted save-link-lede">{t.boardForm.createdLede}</p>
         <label className="field">
           <span>{t.boardForm.linkLabel}</span>
-          <input
-            readOnly
-            value={url}
-            onFocus={(event) => event.currentTarget.select()}
-            aria-label={t.boardForm.linkLabel}
-          />
+          <div className="join-link-row">
+            <input
+              readOnly
+              value={url}
+              onFocus={(event) => event.currentTarget.select()}
+              aria-label={t.boardForm.linkLabel}
+            />
+            <button
+              type="button"
+              className="button-secondary join-link-copy"
+              onClick={() => {
+                void copyJoinLink(created.slug, created.joinToken);
+              }}
+            >
+              {copyMessage ?? t.boardForm.copyLink}
+            </button>
+          </div>
         </label>
-        {copyMessage ? <p className="muted">{copyMessage}</p> : null}
-        <div className="save-link-actions">
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={() => {
-              void copyJoinLink(created.joinToken);
-            }}
-          >
-            {t.boardForm.copyLink}
-          </button>
-          <button
-            type="button"
-            className="button"
-            onClick={() => {
-              router.push(`/b/${created.boardId}`);
-              router.refresh();
-            }}
-          >
-            {t.boardForm.openBoard}
-          </button>
-        </div>
       </div>
     );
   }
@@ -99,16 +88,6 @@ export function CreateBoardForm() {
           maxLength={80}
           placeholder={t.boardForm.titlePlaceholder}
           defaultValue={t.boardForm.titleDefault}
-        />
-      </label>
-      <label className="field">
-        <span>{t.boardForm.yourName}</span>
-        <input
-          name="organizerName"
-          required
-          minLength={1}
-          maxLength={40}
-          placeholder={t.boardForm.namePlaceholder}
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}

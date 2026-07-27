@@ -14,12 +14,13 @@ export function proxy(request: NextRequest) {
     "unknown";
 
   const path = request.nextUrl.pathname;
-  const isInviteJoin =
+  const isLegacyJoin =
     path.startsWith("/invite/") || path.startsWith("/join/");
+  const isSlugJoin = /^\/b\/[^/]+\/[^/]+$/.test(path);
   const isBoardMutation =
     request.method === "POST" && path.startsWith("/b/");
 
-  if (isInviteJoin) {
+  if (isLegacyJoin || isSlugJoin) {
     const result = checkRateLimit(`invite:${ip}`, JOIN_LIMIT, JOIN_WINDOW_MS);
     if (!result.allowed) {
       return new NextResponse("Too many attempts. Try again in a minute.", {
