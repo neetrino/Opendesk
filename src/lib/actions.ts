@@ -11,13 +11,13 @@ import {
   setSessionCookie,
 } from "@/lib/session";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
-import { createInviteToken } from "@/lib/tokens";
+import { createJoinToken } from "@/lib/tokens";
 import {
   addCommentSchema,
   claimInviteSchema,
   createBoardSchema,
   createCardSchema,
-  createInviteSchema,
+  joinBoardSchema,
   moveCardSchema,
   setCardUrgentSchema,
   updateCardContentSchema,
@@ -26,7 +26,7 @@ import type { ActionResult } from "@/types/actions";
 
 export async function createBoardAction(
   formData: FormData,
-): Promise<ActionResult<{ boardId: string }>> {
+): Promise<ActionResult<{ boardId: string; joinToken: string }>> {
   const errors = await tErrors();
   const parsed = createBoardSchema.safeParse({
     title: formData.get("title"),
@@ -44,6 +44,7 @@ export async function createBoardAction(
     const board = await prisma.board.create({
       data: {
         title: parsed.data.title,
+        joinToken: createJoinToken(),
         participants: {
           create: {
             displayName: parsed.data.organizerName,
@@ -68,46 +69,11 @@ export async function createBoardAction(
 
     return {
       ok: true,
-      data: { boardId: board.id },
+      data: { boardId: board.id, joinToken: board.joinToken },
     };
   } catch (error) {
     logger.error("createBoardAction failed", error);
     return { ok: false, error: errors.createBoard };
-  }
-}
-
-export async function createInviteLinkAction(
-  boardId: string,
-): Promise<ActionResult<{ token: string }>> {
-  const errors = await tErrors();
-  const parsed = createInviteSchema.safeParse({ boardId });
-  if (!parsed.success) {
-    return { ok: false, error: errors.invalidBoard };
-  }
-
-  try {
-    await requireBoardSession(parsed.data.boardId);
-    const participantCount = await prisma.participant.count({
-      where: { boardId: parsed.data.boardId },
-    });
-    if (participantCount >= MAX_BOARD_PARTICIPANTS) {
-      return { ok: false, error: errors.boardFull };
-    }
-
-    const token = createInviteToken();
-    await prisma.invite.create({
-      data: {
-        boardId: parsed.data.boardId,
-        token,
-      },
-    });
-    return { ok: true, data: { token } };
-  } catch (error) {
-    if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return { ok: false, error: errors.unauthorized };
-    }
-    logger.error("createInviteLinkAction failed", error);
-    return { ok: false, error: errors.createInvite };
   }
 }
 
@@ -188,6 +154,79 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
   });
 
   redirect(`/b/${invite.boardId}`);
+}
+
+/**
+ * Permanent board link: rejoin existing participant by display name
+ * (case-insensitive), or create a new participant when the name is new.
+ */
+export async function joinBoardByTokenAction(formData: FormData): Promise<void> {
+  const errors = await tErrors();
+  const parsed = joinBoardSchema.safeParse({
+    token: formData.get("token"),
+    displayName: formData.get("displayName"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(await mapZodMessage(parsed.error.issues[0]?.message));
+  }
+
+  const board = await prisma.board.findUnique({
+    where: { joinToken: parsed.data.token },
+    select: { id: true },
+  });
+
+  if (!board) {
+    throw new Error(errors.inviteNotFound);
+  }
+
+  let participant: { id: string; displayName: string };
+  try {
+    participant = await prisma.$transaction(async (tx) => {
+      const existing = await tx.participant.findFirst({
+        where: {
+          boardId: board.id,
+          displayName: {
+            equals: parsed.data.displayName,
+            mode: "insensitive",
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+
+      if (existing) {
+        return existing;
+      }
+
+      const participantCount = await tx.participant.count({
+        where: { boardId: board.id },
+      });
+      if (participantCount >= MAX_BOARD_PARTICIPANTS) {
+        throw new Error("BOARD_FULL");
+      }
+
+      return tx.participant.create({
+        data: {
+          boardId: board.id,
+          displayName: parsed.data.displayName,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "BOARD_FULL") {
+      throw new Error(errors.boardFull);
+    }
+    logger.error("joinBoardByTokenAction failed", error);
+    throw new Error(errors.joinFailed);
+  }
+
+  await setSessionCookie({
+    boardId: board.id,
+    participantId: participant.id,
+    displayName: participant.displayName,
+  });
+
+  redirect(`/b/${board.id}`);
 }
 
 export async function logoutAction(): Promise<void> {

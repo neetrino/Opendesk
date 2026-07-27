@@ -1,6 +1,6 @@
 # OpenDesk
 
-Минимальная публичная Kanban-доска по invite-токену. Без регистрации.
+Минимальная публичная Kanban-доска по постоянной join-ссылке. Без регистрации.
 
 ## Стек
 
@@ -8,7 +8,7 @@
 - Tailwind CSS 4
 - Prisma 7 + PostgreSQL (Neon)
 - Server Actions + Zod
-- Invite + signed cookie session
+- Permanent `/join/:token` + signed cookie session (same name = same participant)
 
 ## Быстрый старт (local)
 

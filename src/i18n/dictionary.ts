@@ -14,11 +14,18 @@ export type Dictionary = {
     namePlaceholder: string;
     creating: string;
     create: string;
+    createdEyebrow: string;
+    createdTitle: string;
+    createdLede: string;
+    linkLabel: string;
+    copyLink: string;
+    openBoard: string;
   };
   board: {
     youAre: string;
     invite: string;
     inviting: string;
+    inviteHint: string;
     copied: string;
     replies: string;
     stagesNav: string;
@@ -56,6 +63,14 @@ export type Dictionary = {
     eyebrow: string;
     usedTitle: string;
     usedBody: string;
+    joinLede: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    joining: string;
+    join: string;
+  };
+  joinPage: {
+    eyebrow: string;
     joinLede: string;
     nameLabel: string;
     namePlaceholder: string;
@@ -118,11 +133,11 @@ export type Dictionary = {
 
 export const en: Dictionary = {
   meta: {
-    description: "Public Kanban board via invite — no registration",
+    description: "Public Kanban board via a reusable join link — no registration",
   },
   home: {
     eyebrow: "No registration",
-    lede: "One shared board for questions and tasks. Create a board, tap Invite — the link is copied, send it to a teammate.",
+    lede: "One shared board for questions and tasks. Create a board, tap Invite — copy the permanent link, send it to a teammate. Same name = same person.",
   },
   boardForm: {
     title: "Board name",
@@ -132,11 +147,19 @@ export const en: Dictionary = {
     namePlaceholder: "How others see you on the board",
     creating: "Creating…",
     create: "Create board",
+    createdEyebrow: "Board ready",
+    createdTitle: "Save this link",
+    createdLede:
+      "This is the permanent entry link. Bookmark it or send it to teammates. Same name = same person — including you after redeploy.",
+    linkLabel: "Join link",
+    copyLink: "Copy link",
+    openBoard: "Open board",
   },
   board: {
     youAre: "Signed in as",
-    invite: "Invite",
+    invite: "Copy link",
     inviting: "…",
+    inviteHint: "Permanent join link — same name rejoins",
     copied: "Copied",
     replies: "{n} replies",
     stagesNav: "Board stages",
@@ -180,6 +203,15 @@ export const en: Dictionary = {
     joining: "Joining…",
     join: "Join board",
   },
+  joinPage: {
+    eyebrow: "Board link",
+    joinLede:
+      "Enter your name. Use the same name as before to continue as yourself — unlimited times.",
+    nameLabel: "Your name on the board",
+    namePlaceholder: "How should we call you",
+    joining: "Joining…",
+    join: "Open board",
+  },
   cardPage: {
     back: "← Back to board",
     close: "Close",
@@ -203,7 +235,7 @@ export const en: Dictionary = {
   },
   notFound: {
     title: "Page not found",
-    body: "The link is outdated, or the board / invite does not exist.",
+    body: "The link is outdated, or the board does not exist.",
     home: "Home",
   },
   common: {
