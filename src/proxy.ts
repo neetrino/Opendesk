@@ -21,7 +21,7 @@ export function proxy(request: NextRequest) {
   if (isInviteJoin) {
     const result = checkRateLimit(`invite:${ip}`, JOIN_LIMIT, JOIN_WINDOW_MS);
     if (!result.allowed) {
-      return new NextResponse("Слишком много попыток. Подождите минуту.", {
+      return new NextResponse("Too many attempts. Try again in a minute.", {
         status: 429,
       });
     }
@@ -34,7 +34,7 @@ export function proxy(request: NextRequest) {
       MUTATION_WINDOW_MS,
     );
     if (!result.allowed) {
-      return new NextResponse("Слишком много запросов. Подождите минуту.", {
+      return new NextResponse("Too many requests. Try again in a minute.", {
         status: 429,
       });
     }

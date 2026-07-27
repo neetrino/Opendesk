@@ -1,50 +1,76 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { CardStatus } from "@prisma/client";
 import { moveCardAction } from "@/lib/actions";
-import { CARD_COLUMNS } from "@/lib/constants";
+import { CARD_STATUSES } from "@/lib/constants";
+import { useI18n } from "@/i18n/provider";
 
 type MoveCardControlsProps = {
   boardId: string;
   cardId: string;
   currentStatus: CardStatus;
+  onStatusChange: (cardId: string, status: CardStatus) => void;
+  onStatusRollback: (
+    cardId: string,
+    status: CardStatus,
+    error: string,
+  ) => void;
 };
 
 export function MoveCardControls({
   boardId,
   cardId,
   currentStatus,
+  onStatusChange,
+  onStatusRollback,
 }: MoveCardControlsProps) {
+  const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  function moveTo(status: CardStatus): void {
+  function onChange(status: CardStatus): void {
+    if (status === currentStatus) {
+      return;
+    }
+
+    const previousStatus = currentStatus;
+    setError(null);
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", cardId);
     formData.set("status", status);
+
     startTransition(async () => {
-      await moveCardAction(formData);
+      onStatusChange(cardId, status);
+      const result = await moveCardAction(formData);
+      if (!result.ok) {
+        onStatusRollback(cardId, previousStatus, result.error);
+        setError(result.error);
+      }
     });
   }
 
   return (
-    <div className="move-controls">
-      {CARD_COLUMNS.map((column) => (
-        <button
-          key={column.status}
-          type="button"
-          className={
-            column.status === currentStatus
-              ? "chip chip-active"
-              : "chip"
-          }
-          disabled={isPending || column.status === currentStatus}
-          onClick={() => moveTo(column.status)}
-        >
-          {column.label}
-        </button>
-      ))}
+    <div className="stage-move">
+      <div className="stage-pills" role="group" aria-label={t.common.stageAria}>
+        {CARD_STATUSES.map((status) => (
+          <button
+            key={status}
+            type="button"
+            className={
+              status === currentStatus
+                ? `stage-pill is-active stage-${status}`
+                : `stage-pill stage-${status}`
+            }
+            disabled={isPending || status === currentStatus}
+            onClick={() => onChange(status)}
+          >
+            {t.columns[status]}
+          </button>
+        ))}
+      </div>
+      {error ? <p className="form-error">{error}</p> : null}
     </div>
   );
 }

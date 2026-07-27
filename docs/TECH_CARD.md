@@ -36,7 +36,7 @@
 | 2.4 | State | useState / Server Components | ✅ | |
 | 2.5 | Формы | Server Actions + Zod | ✅ | |
 | 2.6 | Data fetching | Server Components + Server Actions | ✅ | |
-| 2.7 | i18n | не нужно | ➖ | UI на русском |
+| 2.7 | i18n | EN / RU / HY (cookie) | ✅ | LanguageSwitcher в header |
 | 2.8 | SEO | Metadata API (минимум) | ✅ | |
 | 2.9 | Тёмная тема | не нужно | ➖ | |
 | 2.10 | Анимации | CSS transitions | ✅ | |
@@ -51,7 +51,7 @@
 | 3.1 | Тип | Next.js Route Handlers + Server Actions | ✅ | |
 | 3.2 | Валидация | Zod | ✅ | |
 | 3.3 | API формат | Server Actions | ✅ | |
-| 3.4 | Rate limiting | middleware (базовый) | ✅ | |
+| 3.4 | Rate limiting | middleware (базовый) | ✅ | in-memory per isolate; best-effort на Vercel |
 | 3.5 | API docs | не нужно | ➖ | |
 | 3.6 | CRON | не нужно | ➖ | |
 | 3.7 | Файлы | не нужно | ➖ | |
@@ -77,7 +77,7 @@
 
 - `Board` — id, title, createdAt
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId?
-- `Participant` — id, boardId, displayName, createdAt
+- `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
 - `Card` — id, boardId, type (`question` \| `task`), status, title, description, authorId, position
 - `Comment` — id, cardId, authorId, body, createdAt
 

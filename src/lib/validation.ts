@@ -10,14 +10,17 @@ export const createBoardSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(2, "Название слишком короткое")
-    .max(80, "Название слишком длинное"),
+    .min(2, "titleShort")
+    .max(80, "titleLong"),
   organizerName: z
     .string()
     .trim()
-    .min(1, "Укажите ваше имя")
-    .max(MAX_DISPLAY_NAME_LENGTH, "Имя слишком длинное"),
-  inviteCount: z.coerce.number().int().min(1).max(20).default(5),
+    .min(1, "nameRequired")
+    .max(MAX_DISPLAY_NAME_LENGTH, "nameLong"),
+});
+
+export const createInviteSchema = z.object({
+  boardId: z.string().cuid(),
 });
 
 export const claimInviteSchema = z.object({
@@ -25,19 +28,24 @@ export const claimInviteSchema = z.object({
   displayName: z
     .string()
     .trim()
-    .min(1, "Укажите имя")
-    .max(MAX_DISPLAY_NAME_LENGTH, "Имя слишком длинное"),
+    .min(1, "nameRequired")
+    .max(MAX_DISPLAY_NAME_LENGTH, "nameLong"),
 });
 
 export const createCardSchema = z.object({
   boardId: z.string().cuid(),
   type: z.enum(["question", "task"]),
+  status: z.enum(["new", "in_progress", "answered", "done"]).default("new"),
   title: z
     .string()
     .trim()
-    .min(2, "Заголовок слишком короткий")
+    .min(2, "cardTitleShort")
     .max(MAX_TITLE_LENGTH),
   description: z.string().trim().max(MAX_DESCRIPTION_LENGTH).default(""),
+  urgent: z
+    .union([z.literal("on"), z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((value) => value === true || value === "on" || value === "true"),
 });
 
 export const moveCardSchema = z.object({
@@ -46,12 +54,31 @@ export const moveCardSchema = z.object({
   status: z.enum(["new", "in_progress", "answered", "done"]),
 });
 
+export const setCardUrgentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  urgent: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .transform((value) => value === true || value === "true"),
+});
+
+export const updateCardContentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  title: z
+    .string()
+    .trim()
+    .min(2, "cardTitleShort")
+    .max(MAX_TITLE_LENGTH),
+  description: z.string().trim().max(MAX_DESCRIPTION_LENGTH).default(""),
+});
+
 export const addCommentSchema = z.object({
   boardId: z.string().cuid(),
   cardId: z.string().cuid(),
   body: z
     .string()
     .trim()
-    .min(1, "Комментарий пустой")
+    .min(1, "commentEmpty")
     .max(MAX_COMMENT_LENGTH),
 });

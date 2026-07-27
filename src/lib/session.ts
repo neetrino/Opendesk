@@ -70,6 +70,17 @@ export async function setSessionCookie(payload: SessionPayload): Promise<void> {
   });
 }
 
+export async function clearSessionCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+}
+
 export async function requireBoardSession(
   boardId: string,
 ): Promise<SessionPayload> {

@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
-import { BoardColumn } from "@/components/board-column";
-import { CreateCardForm } from "@/components/create-card-form";
-import { CARD_COLUMNS } from "@/lib/constants";
+import { InviteButton } from "@/components/invite-button";
+import { KanbanBoard } from "@/components/kanban-board";
+import { ParticipantsPanel } from "@/components/participants-panel";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { getLocale } from "@/i18n/locale";
+import { logoutAction } from "@/lib/actions";
+import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -12,6 +16,8 @@ type BoardPageProps = {
 export default async function BoardPage({ params }: BoardPageProps) {
   const { boardId } = await params;
   const session = await getSession();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   if (!session || session.boardId !== boardId) {
     redirect("/");
@@ -20,8 +26,22 @@ export default async function BoardPage({ params }: BoardPageProps) {
   const board = await prisma.board.findUnique({
     where: { id: boardId },
     include: {
+      participants: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          displayName: true,
+          createdAt: true,
+        },
+      },
       cards: {
-        include: { author: true },
+        include: {
+          author: true,
+          comments: {
+            include: { author: true },
+            orderBy: { createdAt: "asc" },
+          },
+        },
         orderBy: [{ status: "asc" }, { position: "asc" }, { createdAt: "asc" }],
       },
     },
@@ -31,26 +51,39 @@ export default async function BoardPage({ params }: BoardPageProps) {
     redirect("/");
   }
 
+  const boardFull = board.participants.length >= MAX_BOARD_PARTICIPANTS;
+
   return (
-    <section>
-      <div className="board-top animate-rise">
-        <div>
-          <p className="eyebrow">Доска</p>
+    <section className="board-page">
+      <div className="board-top">
+        <div className="board-top-main">
           <h1>{board.title}</h1>
-          <p className="muted">Вы вошли как {session.displayName}</p>
+          <p className="muted">
+            {t.board.youAre} {session.displayName}
+          </p>
         </div>
-        <CreateCardForm boardId={board.id} />
-      </div>
-      <div className="board-grid">
-        {CARD_COLUMNS.map((column) => (
-          <BoardColumn
-            key={column.status}
-            boardId={board.id}
-            label={column.label}
-            cards={board.cards.filter((card) => card.status === column.status)}
+        <div className="board-top-actions">
+          <ParticipantsPanel
+            participants={board.participants}
+            locale={locale}
           />
-        ))}
+          <InviteButton boardId={board.id} compact disabled={boardFull} />
+          <form action={logoutAction}>
+            <button type="submit" className="button-ghost">
+              {t.board.logout}
+            </button>
+          </form>
+        </div>
       </div>
+      <KanbanBoard
+        boardId={board.id}
+        cards={board.cards}
+        locale={locale}
+        currentUser={{
+          participantId: session.participantId,
+          displayName: session.displayName,
+        }}
+      />
     </section>
   );
 }

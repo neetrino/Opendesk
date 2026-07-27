@@ -2,43 +2,48 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
 import { logger } from "@/lib/logger";
-import { setSessionCookie, requireBoardSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
+import {
+  clearSessionCookie,
+  requireBoardSession,
+  setSessionCookie,
+} from "@/lib/session";
+import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { createInviteToken } from "@/lib/tokens";
 import {
   addCommentSchema,
   claimInviteSchema,
   createBoardSchema,
   createCardSchema,
+  createInviteSchema,
   moveCardSchema,
+  setCardUrgentSchema,
+  updateCardContentSchema,
 } from "@/lib/validation";
 import type { ActionResult } from "@/types/actions";
 
 export async function createBoardAction(
   formData: FormData,
-): Promise<ActionResult<{ boardId: string; inviteTokens: string[] }>> {
+): Promise<ActionResult<{ boardId: string }>> {
+  const errors = await tErrors();
   const parsed = createBoardSchema.safeParse({
     title: formData.get("title"),
     organizerName: formData.get("organizerName"),
-    inviteCount: formData.get("inviteCount") ?? 5,
   });
 
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Ошибка валидации" };
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
   }
 
   try {
-    const tokens = Array.from({ length: parsed.data.inviteCount }, () =>
-      createInviteToken(),
-    );
-
     const board = await prisma.board.create({
       data: {
         title: parsed.data.title,
-        invites: {
-          create: tokens.map((token) => ({ token })),
-        },
         participants: {
           create: {
             displayName: parsed.data.organizerName,
@@ -52,7 +57,7 @@ export async function createBoardAction(
 
     const organizer = board.participants[0];
     if (!organizer) {
-      return { ok: false, error: "Не удалось создать организатора" };
+      return { ok: false, error: errors.createOrganizer };
     }
 
     await setSessionCookie({
@@ -63,22 +68,58 @@ export async function createBoardAction(
 
     return {
       ok: true,
-      data: { boardId: board.id, inviteTokens: tokens },
+      data: { boardId: board.id },
     };
   } catch (error) {
     logger.error("createBoardAction failed", error);
-    return { ok: false, error: "Не удалось создать доску" };
+    return { ok: false, error: errors.createBoard };
+  }
+}
+
+export async function createInviteLinkAction(
+  boardId: string,
+): Promise<ActionResult<{ token: string }>> {
+  const errors = await tErrors();
+  const parsed = createInviteSchema.safeParse({ boardId });
+  if (!parsed.success) {
+    return { ok: false, error: errors.invalidBoard };
+  }
+
+  try {
+    await requireBoardSession(parsed.data.boardId);
+    const participantCount = await prisma.participant.count({
+      where: { boardId: parsed.data.boardId },
+    });
+    if (participantCount >= MAX_BOARD_PARTICIPANTS) {
+      return { ok: false, error: errors.boardFull };
+    }
+
+    const token = createInviteToken();
+    await prisma.invite.create({
+      data: {
+        boardId: parsed.data.boardId,
+        token,
+      },
+    });
+    return { ok: true, data: { token } };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: errors.unauthorized };
+    }
+    logger.error("createInviteLinkAction failed", error);
+    return { ok: false, error: errors.createInvite };
   }
 }
 
 export async function claimInviteAction(formData: FormData): Promise<void> {
+  const errors = await tErrors();
   const parsed = claimInviteSchema.safeParse({
     token: formData.get("token"),
     displayName: formData.get("displayName"),
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Ошибка валидации");
+    throw new Error(await mapZodMessage(parsed.error.issues[0]?.message));
   }
 
   const invite = await prisma.invite.findUnique({
@@ -86,31 +127,59 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
   });
 
   if (!invite) {
-    throw new Error("Приглашение не найдено");
+    throw new Error(errors.inviteNotFound);
   }
 
   if (invite.claimedAt || invite.participantId) {
-    throw new Error("Это приглашение уже использовано");
+    throw new Error(errors.inviteUsed);
   }
 
-  const participant = await prisma.$transaction(async (tx) => {
-    const created = await tx.participant.create({
-      data: {
-        boardId: invite.boardId,
-        displayName: parsed.data.displayName,
-      },
-    });
+  let participant: { id: string; displayName: string };
+  try {
+    participant = await prisma.$transaction(async (tx) => {
+      const participantCount = await tx.participant.count({
+        where: { boardId: invite.boardId },
+      });
+      if (participantCount >= MAX_BOARD_PARTICIPANTS) {
+        throw new Error("BOARD_FULL");
+      }
 
-    await tx.invite.update({
-      where: { id: invite.id },
-      data: {
-        claimedAt: new Date(),
-        participantId: created.id,
-      },
-    });
+      const created = await tx.participant.create({
+        data: {
+          boardId: invite.boardId,
+          displayName: parsed.data.displayName,
+        },
+      });
 
-    return created;
-  });
+      // Atomic one-time claim: only the first concurrent winner updates the row.
+      const claimed = await tx.invite.updateMany({
+        where: {
+          id: invite.id,
+          claimedAt: null,
+          participantId: null,
+        },
+        data: {
+          claimedAt: new Date(),
+          participantId: created.id,
+        },
+      });
+
+      if (claimed.count !== 1) {
+        throw new Error("INVITE_CLAIM_CONFLICT");
+      }
+
+      return created;
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "BOARD_FULL") {
+      throw new Error(errors.boardFull);
+    }
+    if (error instanceof Error && error.message === "INVITE_CLAIM_CONFLICT") {
+      throw new Error(errors.inviteUsed);
+    }
+    logger.error("claimInviteAction failed", error);
+    throw new Error(errors.joinFailed);
+  }
 
   await setSessionCookie({
     boardId: invite.boardId,
@@ -121,24 +190,35 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
   redirect(`/b/${invite.boardId}`);
 }
 
+export async function logoutAction(): Promise<void> {
+  await clearSessionCookie();
+  redirect("/");
+}
+
 export async function createCardAction(
   formData: FormData,
 ): Promise<ActionResult> {
+  const errors = await tErrors();
   const parsed = createCardSchema.safeParse({
     boardId: formData.get("boardId"),
     type: formData.get("type"),
+    status: formData.get("status") ?? "new",
     title: formData.get("title"),
     description: formData.get("description") ?? "",
+    urgent: formData.get("urgent") ?? false,
   });
 
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Ошибка валидации" };
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
   }
 
   try {
     const session = await requireBoardSession(parsed.data.boardId);
     const maxPosition = await prisma.card.aggregate({
-      where: { boardId: parsed.data.boardId, status: "new" },
+      where: { boardId: parsed.data.boardId, status: parsed.data.status },
       _max: { position: true },
     });
 
@@ -149,7 +229,8 @@ export async function createCardAction(
         type: parsed.data.type,
         title: parsed.data.title,
         description: parsed.data.description,
-        status: "new",
+        status: parsed.data.status,
+        urgent: parsed.data.urgent,
         position: (maxPosition._max.position ?? -1) + 1,
       },
     });
@@ -158,16 +239,17 @@ export async function createCardAction(
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return { ok: false, error: "Нет доступа к доске" };
+      return { ok: false, error: errors.unauthorized };
     }
     logger.error("createCardAction failed", error);
-    return { ok: false, error: "Не удалось создать карточку" };
+    return { ok: false, error: errors.createCard };
   }
 }
 
 export async function moveCardAction(
   formData: FormData,
 ): Promise<ActionResult> {
+  const errors = await tErrors();
   const parsed = moveCardSchema.safeParse({
     boardId: formData.get("boardId"),
     cardId: formData.get("cardId"),
@@ -175,7 +257,10 @@ export async function moveCardAction(
   });
 
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Ошибка валидации" };
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
   }
 
   try {
@@ -186,7 +271,7 @@ export async function moveCardAction(
     });
 
     if (!card) {
-      return { ok: false, error: "Карточка не найдена" };
+      return { ok: false, error: errors.cardNotFound };
     }
 
     const maxPosition = await prisma.card.aggregate({
@@ -203,20 +288,110 @@ export async function moveCardAction(
     });
 
     revalidatePath(`/b/${parsed.data.boardId}`);
-    revalidatePath(`/b/${parsed.data.boardId}/c/${card.id}`);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return { ok: false, error: "Нет доступа к доске" };
+      return { ok: false, error: errors.unauthorized };
     }
     logger.error("moveCardAction failed", error);
-    return { ok: false, error: "Не удалось переместить карточку" };
+    return { ok: false, error: errors.moveCard };
+  }
+}
+
+export async function setCardUrgentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const errors = await tErrors();
+  const parsed = setCardUrgentSchema.safeParse({
+    boardId: formData.get("boardId"),
+    cardId: formData.get("cardId"),
+    urgent: formData.get("urgent"),
+  });
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
+  }
+
+  try {
+    await requireBoardSession(parsed.data.boardId);
+    const card = await prisma.card.findFirst({
+      where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
+    });
+
+    if (!card) {
+      return { ok: false, error: errors.cardNotFound };
+    }
+
+    await prisma.card.update({
+      where: { id: card.id },
+      data: { urgent: parsed.data.urgent },
+    });
+
+    revalidatePath(`/b/${parsed.data.boardId}`);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: errors.unauthorized };
+    }
+    logger.error("setCardUrgentAction failed", error);
+    return { ok: false, error: errors.updateCard };
+  }
+}
+
+export async function updateCardContentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const errors = await tErrors();
+  const parsed = updateCardContentSchema.safeParse({
+    boardId: formData.get("boardId"),
+    cardId: formData.get("cardId"),
+    title: formData.get("title"),
+    description: formData.get("description") ?? "",
+  });
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
+  }
+
+  try {
+    await requireBoardSession(parsed.data.boardId);
+    const card = await prisma.card.findFirst({
+      where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
+    });
+
+    if (!card) {
+      return { ok: false, error: errors.cardNotFound };
+    }
+
+    await prisma.card.update({
+      where: { id: card.id },
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description,
+      },
+    });
+
+    revalidatePath(`/b/${parsed.data.boardId}`);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: errors.unauthorized };
+    }
+    logger.error("updateCardContentAction failed", error);
+    return { ok: false, error: errors.updateCard };
   }
 }
 
 export async function addCommentAction(
   formData: FormData,
 ): Promise<ActionResult> {
+  const errors = await tErrors();
   const parsed = addCommentSchema.safeParse({
     boardId: formData.get("boardId"),
     cardId: formData.get("cardId"),
@@ -224,7 +399,10 @@ export async function addCommentAction(
   });
 
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Ошибка валидации" };
+    return {
+      ok: false,
+      error: await mapZodMessage(parsed.error.issues[0]?.message),
+    };
   }
 
   try {
@@ -235,7 +413,7 @@ export async function addCommentAction(
     });
 
     if (!card) {
-      return { ok: false, error: "Карточка не найдена" };
+      return { ok: false, error: errors.cardNotFound };
     }
 
     await prisma.comment.create({
@@ -246,14 +424,13 @@ export async function addCommentAction(
       },
     });
 
-    revalidatePath(`/b/${parsed.data.boardId}/c/${card.id}`);
     revalidatePath(`/b/${parsed.data.boardId}`);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return { ok: false, error: "Нет доступа к доске" };
+      return { ok: false, error: errors.unauthorized };
     }
     logger.error("addCommentAction failed", error);
-    return { ok: false, error: "Не удалось добавить комментарий" };
+    return { ok: false, error: errors.addComment };
   }
 }

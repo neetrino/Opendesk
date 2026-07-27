@@ -1,50 +1,78 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 import { addCommentAction } from "@/lib/actions";
+import { useI18n } from "@/i18n/provider";
 
 type CommentFormProps = {
   boardId: string;
   cardId: string;
+  onOptimisticSend: (body: string, tempId: string) => void;
+  onOptimisticRollback: (tempId: string) => void;
 };
 
-export function CommentForm({ boardId, cardId }: CommentFormProps) {
+export function CommentForm({
+  boardId,
+  cardId,
+  onOptimisticSend,
+  onOptimisticRollback,
+}: CommentFormProps) {
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  function onSubmit(formData: FormData): void {
+  function onSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const body = textarea.value.trim();
+    if (body.length === 0) {
+      return;
+    }
+
+    const tempId = `optimistic-${crypto.randomUUID()}`;
+    textarea.value = "";
     setError(null);
+
+    const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", cardId);
+    formData.set("body", body);
+
     startTransition(async () => {
+      onOptimisticSend(body, tempId);
       const response = await addCommentAction(formData);
       if (!response.ok) {
+        onOptimisticRollback(tempId);
         setError(response.error);
-        return;
+        textarea.value = body;
+        textarea.focus();
       }
-      const form = document.getElementById(
-        `comment-form-${cardId}`,
-      ) as HTMLFormElement | null;
-      form?.reset();
     });
   }
 
   return (
     <form
       id={`comment-form-${cardId}`}
-      action={onSubmit}
+      onSubmit={onSubmit}
       className="comment-form"
     >
       <textarea
+        ref={textareaRef}
         name="body"
         required
-        rows={3}
+        rows={2}
         maxLength={2000}
-        placeholder="Напишите ответ или комментарий…"
+        placeholder={t.comment.placeholder}
+        autoComplete="off"
       />
       {error ? <p className="form-error">{error}</p> : null}
-      <button className="button" type="submit" disabled={isPending}>
-        {isPending ? "Отправляем…" : "Отправить"}
+      <button className="button" type="submit">
+        {t.comment.send}
       </button>
     </form>
   );

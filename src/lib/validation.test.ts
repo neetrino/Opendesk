@@ -4,14 +4,14 @@ import {
   createBoardSchema,
   createCardSchema,
   moveCardSchema,
+  setCardUrgentSchema,
 } from "@/lib/validation";
 
 describe("validation schemas", () => {
   it("accepts a valid board payload", () => {
     const parsed = createBoardSchema.safeParse({
-      title: "Спринт",
-      organizerName: "Аня",
-      inviteCount: "5",
+      title: "Sprint",
+      organizerName: "Anna",
     });
     expect(parsed.success).toBe(true);
   });
@@ -41,5 +41,17 @@ describe("validation schemas", () => {
       status: "archived",
     });
     expect(parsed.success).toBe(false);
+  });
+
+  it("parses urgent false from string correctly", () => {
+    const parsed = setCardUrgentSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      cardId: "clyyyyyyyyyyyyyyyyyyyyyyyyy",
+      urgent: "false",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.urgent).toBe(false);
+    }
   });
 });
