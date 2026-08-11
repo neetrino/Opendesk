@@ -5,6 +5,28 @@ export type Dictionary = {
   home: {
     eyebrow: string;
     lede: string;
+    loginCta: string;
+    boardsCta: string;
+  };
+  loginPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    loginLabel: string;
+    passwordLabel: string;
+    submit: string;
+    submitting: string;
+  };
+  boardsPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    empty: string;
+    openBoard: string;
+    copyLink: string;
+    createdAt: string;
+    logout: string;
+    logoutConfirm: string;
   };
   boardForm: {
     title: string;
@@ -119,6 +141,7 @@ export type Dictionary = {
     updateCard: string;
     addComment: string;
     joinFailed: string;
+    invalidCredentials: string;
     titleShort: string;
     titleLong: string;
     nameRequired: string;
@@ -133,8 +156,30 @@ export const en: Dictionary = {
     description: "Public Kanban board via a reusable join link — no registration",
   },
   home: {
-    eyebrow: "No registration",
-    lede: "One shared board for questions and tasks. Create a board, save the permanent link, open it and enter your name — same for everyone.",
+    eyebrow: "Shared boards",
+    lede: "Open a board link and enter your name — same name rejoins. Owners sign in to create boards and see all of them.",
+    loginCta: "Owner sign in",
+    boardsCta: "My boards",
+  },
+  loginPage: {
+    eyebrow: "Owner",
+    title: "Sign in",
+    lede: "Use the owner login from your environment to manage all boards.",
+    loginLabel: "Login",
+    passwordLabel: "Password",
+    submit: "Sign in",
+    submitting: "Signing in…",
+  },
+  boardsPage: {
+    eyebrow: "Owner",
+    title: "All boards",
+    lede: "Create boards and open any of them without joining by name.",
+    empty: "No boards yet. Create the first one below.",
+    openBoard: "Open",
+    copyLink: "Copy link",
+    createdAt: "Created",
+    logout: "Log out",
+    logoutConfirm: "Log out of the owner account?",
   },
   boardForm: {
     title: "Board name",
@@ -146,7 +191,7 @@ export const en: Dictionary = {
     createdTitle: "Save this link",
     createdLede:
       "Everyone enters through this link — including you. Copy it, open it, and enter a name. Same name = same person.",
-    linkLabel: "Join link",
+    linkLabel: "Board link",
     copyLink: "Copy link",
   },
   board: {
@@ -251,6 +296,7 @@ export const en: Dictionary = {
     updateCard: "Could not update card",
     addComment: "Could not add comment",
     joinFailed: "Could not join",
+    invalidCredentials: "Invalid login or password",
     titleShort: "Name is too short",
     titleLong: "Name is too long",
     nameRequired: "Enter your name",

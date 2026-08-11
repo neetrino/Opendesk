@@ -8,6 +8,10 @@ export const CARD_STATUSES: ReadonlyArray<CardStatus> = [
 ] as const;
 
 export const SESSION_COOKIE_NAME = "opendesk_session";
+export const OWNER_COOKIE_NAME = "opendesk_owner";
+
+/** Stable display name for the env owner on each board (FK author). */
+export const OWNER_PARTICIPANT_NAME = "Owner";
 
 export const MAX_DISPLAY_NAME_LENGTH = 40;
 export const MAX_TITLE_LENGTH = 120;

@@ -19,6 +19,16 @@ export function proxy(request: NextRequest) {
   const isSlugJoin = /^\/b\/[^/]+\/[^/]+$/.test(path);
   const isBoardMutation =
     request.method === "POST" && path.startsWith("/b/");
+  const isOwnerLogin = request.method === "POST" && path === "/login";
+
+  if (isOwnerLogin) {
+    const result = checkRateLimit(`owner-login:${ip}`, 10, JOIN_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many attempts. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
 
   if (isLegacyJoin || isSlugJoin) {
     const result = checkRateLimit(`invite:${ip}`, JOIN_LIMIT, JOIN_WINDOW_MS);
@@ -46,5 +56,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/invite/:path*", "/join/:path*", "/b/:path*"],
+  matcher: ["/invite/:path*", "/join/:path*", "/b/:path*", "/login"],
 };

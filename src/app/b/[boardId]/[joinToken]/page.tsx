@@ -1,51 +1,114 @@
 import { notFound, redirect } from "next/navigation";
+import { BoardWorkspace } from "@/components/board-workspace";
 import { JoinBoardForm } from "@/components/join-board-form";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
+import {
+  canAccessBoard,
+  ensureOwnerParticipant,
+} from "@/lib/board-access";
 import { buildJoinPath } from "@/lib/join-url";
+import { getOwnerSession } from "@/lib/owner-session";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
-type JoinBySlugPageProps = {
+type BoardBySlugPageProps = {
   params: Promise<{ boardId: string; joinToken: string }>;
 };
 
 /**
- * Join entry: `/b/{slug}/{joinToken}`.
- * The first segment is the board slug (folder param name remains `boardId`).
+ * Canonical board URL: `/b/{slug}/{joinToken}`.
+ * With access → workspace; without → join form.
  */
-export default async function JoinBySlugPage({ params }: JoinBySlugPageProps) {
+export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) {
   const { boardId: boardSlug, joinToken } = await params;
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const board = await prisma.board.findUnique({
+
+  const boardMeta = await prisma.board.findUnique({
     where: { joinToken },
-    select: { id: true, title: true, slug: true },
+    select: { id: true, title: true, slug: true, joinToken: true },
+  });
+
+  if (!boardMeta) {
+    notFound();
+  }
+
+  if (boardMeta.slug !== boardSlug) {
+    redirect(buildJoinPath(boardMeta.slug, joinToken));
+  }
+
+  const owner = await getOwnerSession();
+  const hasAccess = await canAccessBoard(boardMeta.id);
+
+  if (!hasAccess) {
+    return (
+      <section className="hero">
+        <div className="hero-grid">
+          <div className="hero-copy animate-rise">
+            <p className="eyebrow">{t.joinPage.eyebrow}</p>
+            <h1>{boardMeta.title}</h1>
+            <p className="lede">{t.joinPage.joinLede}</p>
+          </div>
+          <JoinBoardForm token={joinToken} />
+        </div>
+      </section>
+    );
+  }
+
+  const board = await prisma.board.findUnique({
+    where: { id: boardMeta.id },
+    include: {
+      participants: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          displayName: true,
+          createdAt: true,
+        },
+      },
+      cards: {
+        include: {
+          author: true,
+          comments: {
+            include: { author: true },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+        orderBy: [{ status: "asc" }, { position: "asc" }, { createdAt: "asc" }],
+      },
+    },
   });
 
   if (!board) {
     notFound();
   }
 
-  if (board.slug !== boardSlug) {
-    redirect(buildJoinPath(board.slug, joinToken));
-  }
-
-  const session = await getSession();
-  if (session?.boardId === board.id) {
-    redirect(`/b/${board.id}`);
+  let currentUser: { participantId: string; displayName: string };
+  if (owner) {
+    const participant = await ensureOwnerParticipant(board.id);
+    currentUser = {
+      participantId: participant.id,
+      displayName: participant.displayName,
+    };
+  } else {
+    const session = await getSession();
+    if (!session || session.boardId !== board.id) {
+      redirect(buildJoinPath(board.slug, board.joinToken));
+    }
+    currentUser = {
+      participantId: session.participantId,
+      displayName: session.displayName,
+    };
   }
 
   return (
-    <section className="hero">
-      <div className="hero-grid">
-        <div className="hero-copy animate-rise">
-          <p className="eyebrow">{t.joinPage.eyebrow}</p>
-          <h1>{board.title}</h1>
-          <p className="lede">{t.joinPage.joinLede}</p>
-        </div>
-        <JoinBoardForm token={joinToken} />
-      </div>
-    </section>
+    <BoardWorkspace
+      board={board}
+      locale={locale}
+      t={t}
+      currentUser={currentUser}
+      isOwner={Boolean(owner)}
+    />
   );
 }

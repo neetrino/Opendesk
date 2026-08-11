@@ -1,28 +1,29 @@
 # Архитектура — OpenDesk
 
-> Публичная Kanban-доска по постоянной join-ссылке без регистрации.
+> Kanban-доска: участники по постоянной join-ссылке; один owner из env создаёт доски и видит все.
 
 **Размер проекта.** A  
-**Обновлено.** 2026-07-27
+**Обновлено.** 2026-08-11
 
 ---
 
 ## Назначение
 
-OpenDesk даёт команде одну общую доску: вход по постоянной ссылке + имя, карточки (вопрос / задача), 4 колонки, комментарии с автором.
+OpenDesk даёт команде общую доску: вход по постоянной ссылке + имя, карточки (вопрос / задача), 4 колонки, комментарии с автором. Создание досок — только у owner-аккаунта из env.
 
 ### Основные возможности
 
-- Создание доски с постоянным join-токеном
-- Вход без регистрации (ссылка + display name; то же имя = тот же участник)
+- Owner login (`OWNER_LOGIN` / `OWNER_PASSWORD`) → `/boards` (список + создание)
+- Постоянная ссылка `/b/{slug}/{joinToken}` (и join, и работа на доске)
+- Вход участника без регистрации (ссылка + display name; то же имя = тот же участник)
 - Kanban: `new` → `in_progress` → `answered` → `done`
 - Типы карточек: `question` | `task`
 - Тред комментариев внутри карточки
 
 ### Пользователи
 
-- **Организатор** — создаёт доску, сохраняет постоянную join-ссылку
-- **Участник** — открывает `/b/:slug/:joinToken`, указывает имя (так заходят все, включая создателя)
+- **Owner** — единственный аккаунт из env; создаёт доски, открывает любую без join; мутации от participant `Owner`
+- **Участник** — открывает `/b/:slug/:joinToken`, указывает имя
 
 ---
 
@@ -41,7 +42,6 @@ OpenDesk даёт команде одну общую доску: вход по �
            │
            ▼
 ┌──────────────────────┐
-│  PostgreSQL          │
 │  PostgreSQL (Neon)   │
 └──────────────────────┘
 ```
@@ -58,7 +58,9 @@ OpenDesk даёт команде одну общую доску: вход по �
 - **Технология.** Next.js 16 (App Router), React 19, Tailwind 4
 - **Расположение.** `src/`
 - **Мутации.** Server Actions + Zod
-- **Сессия.** HTTP-only signed cookie (`SESSION_SECRET`)
+- **Сессии.** HTTP-only signed cookies (`SESSION_SECRET`):
+  - `opendesk_session` — participant `{ boardId, participantId, displayName }`
+  - `opendesk_owner` — owner `{ role: "owner" }`
 
 ### База
 
@@ -71,9 +73,9 @@ OpenDesk даёт команде одну общую доску: вход по �
 
 ```
 src/
-  app/                 # routes: /, /join/[token], /invite/[token], /b/[boardId], …
+  app/                 # routes: /, /login, /boards, /b/[slug]/[joinToken], …
   components/          # UI: board, card, forms
-  lib/                 # prisma, session, validation, logger, constants
+  lib/                 # prisma, session, owner-session, board-access, validation
   types/               # shared types
 prisma/
   schema.prisma
@@ -85,17 +87,27 @@ docs/
 
 ## Потоки данных
 
+### Owner
+
+```
+1. GET /login → логин/пароль из env
+2. Cookie opendesk_owner
+3. GET /boards → список всех Board + создание
+4. Open /b/:slug/:joinToken → workspace без join-формы
+```
+
 ### Join по постоянной ссылке
 
 ```
-1. GET /b/:slug/:joinToken → форма имени
+1. GET /b/:slug/:joinToken → форма имени (если нет доступа)
 2. Server Action joinBoardByToken(token, name)
 3. Если Participant с таким именем есть → rejoin (новая cookie)
 4. Иначе создать Participant (если < 20), cookie
-5. Redirect → /b/:boardId
+5. Redirect → /b/:slug/:joinToken (workspace)
 ```
 
-Legacy: `GET /join/:token` редиректит на `/b/:slug/:token`.
+Legacy: `GET /join/:token` редиректит на `/b/:slug/:token`.  
+Legacy: `GET /b/:cuid` редиректит на canonical slug URL при наличии доступа.
 
 ### Legacy: Join по one-time invite
 
@@ -104,15 +116,15 @@ Legacy: `GET /join/:token` редиректит на `/b/:slug/:token`.
 2. Server Action claimInvite(token, name)
 3. Создаётся Participant, invite.claimedAt
 4. Ставится signed cookie { boardId, participantId }
-5. Redirect → /b/:boardId
+5. Redirect → /b/:slug/:joinToken
 ```
 
 ### Работа на доске
 
 ```
-1. Middleware / layout проверяет cookie для boardId
+1. Access: participant cookie для boardId ИЛИ owner cookie
 2. RSC загружает колонки + карточки
-3. Actions: createCard, moveCard, addComment
+3. Actions: createCard, moveCard, addComment (requireBoardAccess)
 ```
 
 ---
@@ -141,12 +153,12 @@ Participant 1──* Comment (author)
 ## Безопасность
 
 - Join link: многоразовый; имя (case-insensitive) привязывает к participant
-- Cookie: httpOnly, secure (prod), signed HMAC
-- Доступ к доске только с валидной сессией участника этой доски
+- Cookie: httpOnly, secure (prod), signed HMAC (`opendesk_session` / `opendesk_owner`)
+- Доступ к доске: participant этой доски **или** owner
+- Создание досок только с owner-сессией; credentials только в env
 - Zod на всех входах
-- Базовый rate limit на join / comment
-- Секреты только в env
-- Имя не является секретом: кто знает ссылку и имя — может войти как этот участник
+- Базовый rate limit на join / owner login / mutations
+- Имя участника не является секретом: кто знает ссылку и имя — может войти как этот участник
 
 ---
 
@@ -163,12 +175,12 @@ Participant 1──* Comment (author)
 
 | Решение | Выбор | Почему |
 |---------|-------|--------|
-| Auth | Permanent join + cookie | Без регистрации; rejoin после redeploy |
+| Auth | Owner env + join cookie | Size A: один admin без User table |
 | Backend | Server Actions | Size A, быстрее REST-слоя |
 | UI | Custom + Tailwind | Светлый минимализм без kit-оверкилла |
 | Realtime | Нет | Вне MVP |
 
 ---
 
-**Версия.** 1.1  
-**Дата.** 2026-07-27
+**Версия.** 1.2  
+**Дата.** 2026-08-11

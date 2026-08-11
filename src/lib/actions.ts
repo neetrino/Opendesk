@@ -1,17 +1,22 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
-import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
-import {
-  clearSessionCookie,
-  requireBoardSession,
-  setSessionCookie,
-} from "@/lib/session";
+import { z } from "zod";
+import { requireBoardAccess } from "@/lib/board-access";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { allocateBoardSlug } from "@/lib/allocate-board-slug";
+import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
+import { buildJoinPath } from "@/lib/join-url";
+import { logger } from "@/lib/logger";
+import {
+  clearOwnerSessionCookie,
+  requireOwnerSession,
+  setOwnerSessionCookie,
+  verifyOwnerCredentials,
+} from "@/lib/owner-session";
+import { prisma } from "@/lib/prisma";
+import { revalidateBoardPath } from "@/lib/revalidate-board";
+import { clearSessionCookie, setSessionCookie } from "@/lib/session";
 import { createJoinToken } from "@/lib/tokens";
 import {
   addCommentSchema,
@@ -25,10 +30,48 @@ import {
 } from "@/lib/validation";
 import type { ActionResult } from "@/types/actions";
 
+const ownerLoginSchema = z.object({
+  login: z.string().trim().min(1).max(120),
+  password: z.string().min(1).max(200),
+});
+
+export async function ownerLoginAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const errors = await tErrors();
+  const parsed = ownerLoginSchema.safeParse({
+    login: formData.get("login"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: errors.invalidCredentials };
+  }
+
+  if (!verifyOwnerCredentials(parsed.data.login, parsed.data.password)) {
+    return { ok: false, error: errors.invalidCredentials };
+  }
+
+  await setOwnerSessionCookie();
+  redirect("/boards");
+}
+
+export async function logoutOwnerAction(): Promise<void> {
+  await clearOwnerSessionCookie();
+  redirect("/login");
+}
+
 export async function createBoardAction(
   formData: FormData,
 ): Promise<ActionResult<{ boardId: string; joinToken: string; slug: string }>> {
   const errors = await tErrors();
+
+  try {
+    await requireOwnerSession();
+  } catch {
+    return { ok: false, error: errors.unauthorized };
+  }
+
   const parsed = createBoardSchema.safeParse({
     title: formData.get("title"),
   });
@@ -77,6 +120,9 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
 
   const invite = await prisma.invite.findUnique({
     where: { token: parsed.data.token },
+    include: {
+      board: { select: { slug: true, joinToken: true } },
+    },
   });
 
   if (!invite) {
@@ -104,7 +150,6 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
         },
       });
 
-      // Atomic one-time claim: only the first concurrent winner updates the row.
       const claimed = await tx.invite.updateMany({
         where: {
           id: invite.id,
@@ -140,14 +185,16 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
     displayName: participant.displayName,
   });
 
-  redirect(`/b/${invite.boardId}`);
+  redirect(buildJoinPath(invite.board.slug, invite.board.joinToken));
 }
 
 /**
  * Permanent board link: rejoin existing participant by display name
  * (case-insensitive), or create a new participant when the name is new.
  */
-export async function joinBoardByTokenAction(formData: FormData): Promise<void> {
+export async function joinBoardByTokenAction(
+  formData: FormData,
+): Promise<void> {
   const errors = await tErrors();
   const parsed = joinBoardSchema.safeParse({
     token: formData.get("token"),
@@ -160,7 +207,7 @@ export async function joinBoardByTokenAction(formData: FormData): Promise<void> 
 
   const board = await prisma.board.findUnique({
     where: { joinToken: parsed.data.token },
-    select: { id: true },
+    select: { id: true, slug: true, joinToken: true },
   });
 
   if (!board) {
@@ -213,7 +260,7 @@ export async function joinBoardByTokenAction(formData: FormData): Promise<void> 
     displayName: participant.displayName,
   });
 
-  redirect(`/b/${board.id}`);
+  redirect(buildJoinPath(board.slug, board.joinToken));
 }
 
 export async function logoutAction(): Promise<void> {
@@ -242,7 +289,7 @@ export async function createCardAction(
   }
 
   try {
-    const session = await requireBoardSession(parsed.data.boardId);
+    const access = await requireBoardAccess(parsed.data.boardId);
     const maxPosition = await prisma.card.aggregate({
       where: { boardId: parsed.data.boardId, status: parsed.data.status },
       _max: { position: true },
@@ -251,7 +298,7 @@ export async function createCardAction(
     await prisma.card.create({
       data: {
         boardId: parsed.data.boardId,
-        authorId: session.participantId,
+        authorId: access.participantId,
         type: parsed.data.type,
         title: parsed.data.title,
         description: parsed.data.description,
@@ -261,7 +308,7 @@ export async function createCardAction(
       },
     });
 
-    revalidatePath(`/b/${parsed.data.boardId}`);
+    await revalidateBoardPath(parsed.data.boardId);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -290,7 +337,7 @@ export async function moveCardAction(
   }
 
   try {
-    await requireBoardSession(parsed.data.boardId);
+    await requireBoardAccess(parsed.data.boardId);
 
     const card = await prisma.card.findFirst({
       where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
@@ -313,7 +360,7 @@ export async function moveCardAction(
       },
     });
 
-    revalidatePath(`/b/${parsed.data.boardId}`);
+    await revalidateBoardPath(parsed.data.boardId);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -342,7 +389,7 @@ export async function setCardUrgentAction(
   }
 
   try {
-    await requireBoardSession(parsed.data.boardId);
+    await requireBoardAccess(parsed.data.boardId);
     const card = await prisma.card.findFirst({
       where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
     });
@@ -356,7 +403,7 @@ export async function setCardUrgentAction(
       data: { urgent: parsed.data.urgent },
     });
 
-    revalidatePath(`/b/${parsed.data.boardId}`);
+    await revalidateBoardPath(parsed.data.boardId);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -386,7 +433,7 @@ export async function updateCardContentAction(
   }
 
   try {
-    await requireBoardSession(parsed.data.boardId);
+    await requireBoardAccess(parsed.data.boardId);
     const card = await prisma.card.findFirst({
       where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
     });
@@ -403,7 +450,7 @@ export async function updateCardContentAction(
       },
     });
 
-    revalidatePath(`/b/${parsed.data.boardId}`);
+    await revalidateBoardPath(parsed.data.boardId);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -432,7 +479,7 @@ export async function addCommentAction(
   }
 
   try {
-    const session = await requireBoardSession(parsed.data.boardId);
+    const access = await requireBoardAccess(parsed.data.boardId);
 
     const card = await prisma.card.findFirst({
       where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
@@ -445,12 +492,12 @@ export async function addCommentAction(
     await prisma.comment.create({
       data: {
         cardId: card.id,
-        authorId: session.participantId,
+        authorId: access.participantId,
         body: parsed.data.body,
       },
     });
 
-    revalidatePath(`/b/${parsed.data.boardId}`);
+    await revalidateBoardPath(parsed.data.boardId);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
