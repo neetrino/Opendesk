@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createBoardAction } from "@/lib/actions";
 import { useI18n } from "@/i18n/provider";
@@ -13,6 +14,7 @@ type CreatedBoard = {
 
 export function CreateBoardForm() {
   const { t } = useI18n();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [created, setCreated] = useState<CreatedBoard | null>(null);
@@ -43,6 +45,7 @@ export function CreateBoardForm() {
       }
       setCreated(response.data);
       setCopyMessage(null);
+      router.refresh();
     });
   }
 
@@ -73,6 +76,9 @@ export function CreateBoardForm() {
             </button>
           </div>
         </label>
+        <a className="button" href={buildJoinPath(created.slug, created.joinToken)}>
+          {t.boardsPage.openBoard}
+        </a>
       </div>
     );
   }

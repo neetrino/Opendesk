@@ -1,6 +1,6 @@
 # OpenDesk
 
-Минимальная публичная Kanban-доска по постоянной join-ссылке. Без регистрации.
+Минимальная Kanban-доска по постоянной ссылке `/b/{slug}/{joinToken}`. Участники входят по имени; один owner-аккаунт из env создаёт доски и видит все.
 
 ## Стек
 
@@ -8,13 +8,15 @@
 - Tailwind CSS 4
 - Prisma 7 + PostgreSQL (Neon)
 - Server Actions + Zod
-- Permanent `/join/:token` + signed cookie session (same name = same participant)
+- Participant: join link + signed cookie (same name = same participant)
+- Owner: `OWNER_LOGIN` / `OWNER_PASSWORD` + separate signed cookie
 
 ## Быстрый старт (local)
 
 ```bash
 cp .env.example .env
 # В .env: Neon DATABASE_URL + SESSION_SECRET (openssl rand -hex 32)
+# + OWNER_LOGIN / OWNER_PASSWORD
 
 pnpm install
 pnpm db:migrate:deploy   # применить миграции к Neon
@@ -22,7 +24,7 @@ pnpm db:seed             # опционально
 pnpm dev
 ```
 
-Откройте [http://localhost:3000](http://localhost:3000).
+Откройте [http://localhost:3000](http://localhost:3000) → `/login` для owner.
 
 ## Деплой на Vercel
 
@@ -34,6 +36,8 @@ pnpm dev
 |----------|--------|
 | `DATABASE_URL` | Neon URL (`sslmode=require`) |
 | `SESSION_SECRET` | `openssl rand -hex 32` |
+| `OWNER_LOGIN` | owner login |
+| `OWNER_PASSWORD` | strong password |
 | `APP_URL` | `https://<your-app>.vercel.app` |
 | `DATABASE_CONNECTION_LIMIT` | `1` |
 | `DATABASE_SESSION_OPTIONS` | `false` |

@@ -76,7 +76,7 @@
 ### Модель данных (MVP)
 
 - `Board` — id, title, slug (unique), joinToken (unique), createdAt
-  - постоянная ссылка: `/b/{slug}/{joinToken}`
+  - постоянная ссылка (join + workspace): `/b/{slug}/{joinToken}`
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
 - `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
 - `Card` — id, boardId, type (`question` \| `task`), status, title, description, authorId, position
@@ -90,12 +90,12 @@
 
 | # | Параметр | Решение | Статус | Заметка |
 |---|----------|---------|--------|---------|
-| 5.1 | Решение | Permanent join link + signed cookie | ✅ | имя = тот же participant; one-time invite legacy |
+| 5.1 | Решение | Owner env login + permanent join link + signed cookies | ✅ | owner: `OWNER_*`; участник: имя + cookie |
 | 5.2 | Провайдеры | — | ➖ | |
-| 5.3 | Сессии | HTTP-only signed cookie | ✅ | |
-| 5.4 | RBAC | не нужно | ➖ | все равны |
+| 5.3 | Сессии | HTTP-only signed cookies | ✅ | `opendesk_owner` + `opendesk_session` |
+| 5.4 | RBAC | owner vs participant | ✅ | создание досок только owner |
 | 5.5 | Email verify | не нужно | ➖ | |
-| 5.6 | Password reset | не нужно | ➖ | |
+| 5.6 | Password reset | не нужно | ➖ | пароль owner только в env |
 
 ---
 
@@ -175,4 +175,4 @@
 
 ## Резюме
 
-Размер **A** подтверждён. Stack: Next.js + Prisma + Postgres, invite-cookie auth, без лишних сервисов.
+Размер **A** подтверждён. Stack: Next.js + Prisma + Postgres, owner env login + participant join-cookie, без multi-user.
