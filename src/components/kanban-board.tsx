@@ -7,20 +7,21 @@ import {
   useTransition,
   type DragEvent,
 } from "react";
-import type { Card, CardStatus, Comment, Participant } from "@prisma/client";
+import type { CardStatus } from "@prisma/client";
 import { CardSheet } from "@/components/card-sheet";
 import { FireIcon } from "@/components/fire-icon";
 import { QuickCreateCard } from "@/components/quick-create-card";
 import { moveCardAction } from "@/lib/actions";
 import { CARD_STATUSES } from "@/lib/constants";
 import { useI18n } from "@/i18n/provider";
+import {
+  isLocalCardId,
+  mergeLocalCards,
+  pruneConfirmedLocalCards,
+  type LocalBoardCard,
+} from "@/lib/local-cards";
 
-type CommentWithAuthor = Comment & { author: Participant };
-
-export type BoardCard = Card & {
-  author: Participant;
-  comments: CommentWithAuthor[];
-};
+export type BoardCard = LocalBoardCard;
 
 type KanbanBoardProps = {
   boardId: string;
@@ -61,12 +62,14 @@ export function KanbanBoard({
   const [dragOverStatus, setDragOverStatus] = useState<CardStatus | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [activeStatus, setActiveStatus] = useState<CardStatus>("new");
-  const [moveError, setMoveError] = useState<string | null>(null);
+  const [boardError, setBoardError] = useState<string | null>(null);
+  const [localCards, setLocalCards] = useState<BoardCard[]>([]);
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
+  const pendingLocalCards = pruneConfirmedLocalCards(cards, localCards);
 
   const [optimisticCards, setOptimisticCards] = useOptimistic(
-    cards,
+    mergeLocalCards(cards, pendingLocalCards),
     (current, update: OptimisticUpdate) => {
       if (update.kind === "status") {
         return current.map((card) =>
@@ -85,7 +88,7 @@ export function KanbanBoard({
       }
 
       if (update.kind === "comment-add") {
-        const optimisticComment: CommentWithAuthor = {
+        const optimisticComment: BoardCard["comments"][number] = {
           id: update.tempId,
           cardId: update.cardId,
           authorId: update.authorId,
@@ -160,7 +163,7 @@ export function KanbanBoard({
       return;
     }
 
-    setMoveError(null);
+    setBoardError(null);
     startTransition(async () => {
       setOptimisticCards({ kind: "status", cardId, status });
       const formData = new FormData();
@@ -170,7 +173,7 @@ export function KanbanBoard({
       const result = await moveCardAction(formData);
       if (!result.ok) {
         setOptimisticCards({ kind: "status", cardId, status: fromStatus });
-        setMoveError(result.error);
+        setBoardError(result.error);
       }
     });
   }
@@ -185,7 +188,7 @@ export function KanbanBoard({
 
   return (
     <>
-      {moveError ? <p className="form-error board-move-error">{moveError}</p> : null}
+      {boardError ? <p className="form-error board-move-error">{boardError}</p> : null}
 
       <nav className="board-stage-nav" aria-label={t.board.stagesNav}>
         {CARD_STATUSES.map((status) => {
@@ -237,61 +240,88 @@ export function KanbanBoard({
                 <span className="count">{columnCards.length}</span>
               </header>
 
-              <QuickCreateCard boardId={boardId} status={status} />
+              <QuickCreateCard
+                boardId={boardId}
+                status={status}
+                currentUser={currentUser}
+                onLocalCreate={(card) => {
+                  setBoardError(null);
+                  setLocalCards((current) => [...current, card]);
+                }}
+                onLocalConfirm={(tempId, card) => {
+                  setLocalCards((current) =>
+                    current.map((item) => (item.id === tempId ? card : item)),
+                  );
+                }}
+                onLocalRollback={(tempId, error) => {
+                  setLocalCards((current) =>
+                    current.filter((item) => item.id !== tempId),
+                  );
+                  setBoardError(error);
+                }}
+              />
 
               <div className="column-stack">
-                {columnCards.map((card) => (
-                  <article
-                    key={card.id}
-                    className={`card-tile ${card.type}${card.urgent ? " is-urgent" : ""}`}
-                    draggable
-                    onDragStart={(event) =>
-                      onDragStart(event, card.id, card.status)
-                    }
-                    onClick={() => onCardClick(card.id)}
-                  >
-                    <div className="card-meta">
-                      <span className="type-pill">
-                        {t.cardTypes[card.type]}
-                      </span>
-                      <span className="card-meta-right">
-                        {card.urgent ? (
-                          <span
-                            className="fire-badge"
-                            title={t.quickAdd.urgent}
-                          >
-                            <FireIcon size={15} />
-                          </span>
-                        ) : null}
-                        <span className="author">{card.author.displayName}</span>
-                      </span>
-                    </div>
-                    <h3 className="card-title">{card.title}</h3>
-                    <p
-                      className={
-                        card.description
-                          ? "card-excerpt"
-                          : "card-excerpt is-empty"
+                {columnCards.map((card) => {
+                  const isLocal = isLocalCardId(card.id);
+
+                  return (
+                    <article
+                      key={card.id}
+                      className={`card-tile ${card.type}${card.urgent ? " is-urgent" : ""}${isLocal ? " is-syncing" : ""}`}
+                      draggable={!isLocal}
+                      onDragStart={(event) =>
+                        onDragStart(event, card.id, card.status)
                       }
+                      onClick={() => {
+                        if (!isLocal) {
+                          onCardClick(card.id);
+                        }
+                      }}
                     >
-                      {card.description || "—"}
-                    </p>
-                    <p
-                      className={
-                        card.comments.length > 0
-                          ? "card-foot"
-                          : "card-foot is-empty"
-                      }
-                    >
-                      {card.comments.length > 0
-                        ? t.board.replies.replace(
-                            "{n}",
-                            String(card.comments.length),
-                          )
-                        : "\u00a0"}
-                    </p>
-                  </article>
-                ))}
+                      <div className="card-meta">
+                        <span className="type-pill">
+                          {t.cardTypes[card.type]}
+                        </span>
+                        <span className="card-meta-right">
+                          {card.urgent ? (
+                            <span
+                              className="fire-badge"
+                              title={t.quickAdd.urgent}
+                            >
+                              <FireIcon size={15} />
+                            </span>
+                          ) : null}
+                          <span className="author">{card.author.displayName}</span>
+                        </span>
+                      </div>
+                      <h3 className="card-title">{card.title}</h3>
+                      <p
+                        className={
+                          card.description
+                            ? "card-excerpt"
+                            : "card-excerpt is-empty"
+                        }
+                      >
+                        {card.description || "—"}
+                      </p>
+                      <p
+                        className={
+                          card.comments.length > 0
+                            ? "card-foot"
+                            : "card-foot is-empty"
+                        }
+                      >
+                        {card.comments.length > 0
+                          ? t.board.replies.replace(
+                              "{n}",
+                              String(card.comments.length),
+                            )
+                          : "\u00a0"}
+                      </p>
+                    </article>
+                  );
+                })}
               </div>
             </section>
           );
@@ -305,12 +335,12 @@ export function KanbanBoard({
           locale={locale}
           onClose={() => setSelectedCardId(null)}
           onStatusChange={(cardId, status) => {
-            setMoveError(null);
+            setBoardError(null);
             setOptimisticCards({ kind: "status", cardId, status });
           }}
           onStatusRollback={(cardId, status, error) => {
             setOptimisticCards({ kind: "status", cardId, status });
-            setMoveError(error);
+            setBoardError(error);
           }}
           onUrgentChange={(cardId, urgent) => {
             setOptimisticCards({ kind: "urgent", cardId, urgent });

@@ -825,6 +825,11 @@ textarea {
   box-shadow: 0 1px 0 rgba(220, 80, 20, 0.05), 0 14px 28px rgba(220, 80, 20, 0.12);
 }
 
+.card-tile.is-syncing {
+  opacity: 0.72;
+  cursor: default;
+}
+
 .card-meta-right {
   display: inline-flex;
   align-items: center;

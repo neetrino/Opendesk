@@ -1,5 +1,6 @@
 "use server";
 
+import type { Card } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireBoardAccess } from "@/lib/board-access";
@@ -270,7 +271,7 @@ export async function logoutAction(): Promise<void> {
 
 export async function createCardAction(
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult<Card>> {
   const errors = await tErrors();
   const parsed = createCardSchema.safeParse({
     boardId: formData.get("boardId"),
@@ -295,7 +296,7 @@ export async function createCardAction(
       _max: { position: true },
     });
 
-    await prisma.card.create({
+    const created = await prisma.card.create({
       data: {
         boardId: parsed.data.boardId,
         authorId: access.participantId,
@@ -309,7 +310,7 @@ export async function createCardAction(
     });
 
     await revalidateBoardPath(parsed.data.boardId);
-    return { ok: true, data: undefined };
+    return { ok: true, data: created };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return { ok: false, error: errors.unauthorized };
