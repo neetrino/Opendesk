@@ -41,9 +41,9 @@ export default async function BoardsPage() {
       </div>
 
       <div className="boards-page-grid">
-        <div className="boards-list-panel animate-rise">
+        <div className="boards-list-panel">
           {boards.length === 0 ? (
-            <p className="muted">{t.boardsPage.empty}</p>
+            <p className="boards-list-empty">{t.boardsPage.empty}</p>
           ) : (
             <ul className="boards-list">
               {boards.map((board) => (

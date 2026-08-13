@@ -52,7 +52,7 @@ export function CreateBoardForm() {
   if (created) {
     const url = joinUrl(created.slug, created.joinToken);
     return (
-      <div className="create-form animate-rise">
+      <div className="create-form">
         <p className="eyebrow">{t.boardForm.createdEyebrow}</p>
         <h2 className="save-link-title">{t.boardForm.createdTitle}</h2>
         <p className="muted save-link-lede">{t.boardForm.createdLede}</p>
@@ -84,7 +84,7 @@ export function CreateBoardForm() {
   }
 
   return (
-    <form action={onSubmit} className="create-form animate-rise">
+    <form action={onSubmit} className="create-form">
       <label className="field">
         <span>{t.boardForm.title}</span>
         <input
