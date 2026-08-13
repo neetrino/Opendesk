@@ -1,32 +1,79 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import type { CardStatus } from "@prisma/client";
+import { useRef, useState, useTransition, type FormEvent } from "react";
+import type { CardStatus, CardType } from "@prisma/client";
 import { createCardAction } from "@/lib/actions";
 import { useI18n } from "@/i18n/provider";
+import {
+  buildLocalBoardCard,
+  toBoardCardFromCreated,
+  type LocalBoardCard,
+  type LocalCardAuthor,
+} from "@/lib/local-cards";
 
 type QuickCreateCardProps = {
   boardId: string;
   status: CardStatus;
+  currentUser: LocalCardAuthor;
+  onLocalCreate: (card: LocalBoardCard) => void;
+  onLocalConfirm: (tempId: string, card: LocalBoardCard) => void;
+  onLocalRollback: (tempId: string, error: string) => void;
 };
 
-export function QuickCreateCard({ boardId, status }: QuickCreateCardProps) {
+function readCardType(value: FormDataEntryValue | null): CardType {
+  return value === "task" ? "task" : "question";
+}
+
+export function QuickCreateCard({
+  boardId,
+  status,
+  currentUser,
+  onLocalCreate,
+  onLocalConfirm,
+  onLocalRollback,
+}: QuickCreateCardProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const titleRef = useRef<HTMLInputElement>(null);
 
-  function onSubmit(formData: FormData): void {
-    setError(null);
+  function onSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const title = String(formData.get("title") ?? "").trim();
+    if (title.length < 2) {
+      return;
+    }
+
+    const localCard = buildLocalBoardCard({
+      boardId,
+      status,
+      type: readCardType(formData.get("type")),
+      title,
+      description: String(formData.get("description") ?? "").trim(),
+      urgent:
+        formData.get("urgent") === "on" || formData.get("urgent") === "true",
+      author: currentUser,
+    });
+
     formData.set("boardId", boardId);
     formData.set("status", status);
+    setError(null);
+    onLocalCreate(localCard);
+    form.reset();
+    titleRef.current?.focus();
+
     startTransition(async () => {
       const response = await createCardAction(formData);
       if (!response.ok) {
+        onLocalRollback(localCard.id, response.error);
         setError(response.error);
         return;
       }
-      setOpen(false);
+
+      onLocalConfirm(localCard.id, toBoardCardFromCreated(response.data, currentUser));
     });
   }
 
@@ -43,11 +90,7 @@ export function QuickCreateCard({ boardId, status }: QuickCreateCardProps) {
   }
 
   return (
-    <form
-      action={onSubmit}
-      className="quick-add-form animate-rise"
-      autoComplete="off"
-    >
+    <form onSubmit={onSubmit} className="quick-add-form animate-rise" autoComplete="off">
       <input type="hidden" name="boardId" value={boardId} />
       <input type="hidden" name="status" value={status} />
 
@@ -56,6 +99,7 @@ export function QuickCreateCard({ boardId, status }: QuickCreateCardProps) {
           {t.quickAdd.title} <em>*</em>
         </span>
         <input
+          ref={titleRef}
           name="title"
           required
           minLength={2}
@@ -95,13 +139,16 @@ export function QuickCreateCard({ boardId, status }: QuickCreateCardProps) {
       {error ? <p className="form-error">{error}</p> : null}
 
       <div className="quick-actions">
-        <button className="button button-save" type="submit" disabled={isPending}>
-          {isPending ? t.quickAdd.saving : t.quickAdd.save}
+        <button className="button button-save" type="submit">
+          {t.quickAdd.save}
         </button>
         <button
           type="button"
           className="button button-cancel"
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            setOpen(false);
+            setError(null);
+          }}
         >
           {t.quickAdd.cancel}
         </button>
