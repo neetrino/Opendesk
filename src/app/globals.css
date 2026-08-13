@@ -377,11 +377,7 @@ textarea {
 }
 
 .boards-list-panel {
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  min-width: 0;
 }
 
 .boards-list {
@@ -390,44 +386,123 @@ textarea {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 .boards-list-item {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.85rem;
-  padding: 0.85rem 0;
-  border-bottom: 1px solid var(--line);
+  gap: 0.85rem 1rem;
+  padding: 1.05rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
 }
 
-.boards-list-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+.boards-list-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(20, 32, 26, 0.12);
+  box-shadow: 0 1px 0 rgba(20, 32, 26, 0.03), 0 14px 28px rgba(20, 32, 26, 0.08);
 }
 
-.boards-list-item:first-child {
-  padding-top: 0;
+.boards-list-main {
+  min-width: 0;
+  flex: 1 1 12rem;
 }
 
 .boards-list-main h2 {
-  margin: 0 0 0.25rem;
-  font-size: 1.05rem;
-  letter-spacing: -0.02em;
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
 }
 
-.boards-list-path {
-  margin: 0.35rem 0 0;
-  font-size: 0.78rem;
-  word-break: break-all;
+.boards-list-main h2 a {
+  display: inline;
+}
+
+.boards-list-main h2 a:hover {
+  color: var(--accent);
+}
+
+.boards-list-main .muted {
+  margin: 0;
+  font-size: 0.82rem;
 }
 
 .boards-list-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.boards-list-empty {
+  margin: 0;
+  padding: 1.35rem 1.15rem;
+  border: 1px dashed rgba(20, 32, 26, 0.16);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.boards-skel {
+  display: block;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 7%, white);
+  animation: boards-skel-pulse 1.2s ease-in-out infinite;
+}
+
+.boards-skel-eyebrow {
+  width: 4.2rem;
+  height: 0.7rem;
+  margin-bottom: 0.75rem;
+}
+
+.boards-skel-title {
+  width: min(16rem, 70%);
+  height: 2rem;
+  margin-bottom: 0.7rem;
+}
+
+.boards-skel-lede {
+  width: min(22rem, 90%);
+  height: 0.95rem;
+}
+
+.boards-skel-card {
+  min-height: 5.4rem;
+  pointer-events: none;
+}
+
+.boards-skel-form {
+  min-height: 11.5rem;
+  pointer-events: none;
+}
+
+.boards-skel-col {
+  width: 6.5rem;
+  height: 0.9rem;
+}
+
+.boards-skel-tile {
+  height: 8.1rem;
+  border-radius: 14px;
+  margin-top: 0.5rem;
+}
+
+@keyframes boards-skel-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .board-page {
@@ -1572,6 +1647,21 @@ textarea {
     padding: 0.55rem 0 0.2rem;
   }
 
+  .boards-list-item {
+    align-items: stretch;
+    padding: 0.95rem 1rem;
+  }
+
+  .boards-list-actions {
+    width: 100%;
+  }
+
+  .boards-list-actions .button,
+  .boards-list-actions .button-secondary {
+    flex: 1 1 auto;
+    min-height: 2.55rem;
+  }
+
   .brand {
     font-size: 1.05rem;
     gap: 0.4rem;
@@ -1805,6 +1895,7 @@ textarea {
 
 @media (hover: none) {
   .card-tile:hover,
+  .boards-list-item:hover,
   .button:hover,
   .button-secondary:hover,
   .button-ghost:hover,
@@ -1812,7 +1903,8 @@ textarea {
     transform: none;
   }
 
-  .card-tile:hover {
+  .card-tile:hover,
+  .boards-list-item:hover {
     box-shadow: 0 1px 0 rgba(20, 32, 26, 0.03), 0 8px 18px rgba(20, 32, 26, 0.04);
     border-color: rgba(20, 32, 26, 0.07);
   }

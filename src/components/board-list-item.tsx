@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useI18n } from "@/i18n/provider";
 import { buildJoinPath } from "@/lib/join-url";
 
@@ -35,16 +36,19 @@ export function BoardListItem({
   return (
     <li className="boards-list-item">
       <div className="boards-list-main">
-        <h2>{title}</h2>
+        <h2>
+          <Link href={path} prefetch>
+            {title}
+          </Link>
+        </h2>
         <p className="muted">
           {t.boardsPage.createdAt} {createdAtLabel}
         </p>
-        <p className="boards-list-path muted">{path}</p>
       </div>
       <div className="boards-list-actions">
-        <a className="button" href={path}>
+        <Link className="button" href={path} prefetch>
           {t.boardsPage.openBoard}
-        </a>
+        </Link>
         <button
           type="button"
           className="button-secondary"
