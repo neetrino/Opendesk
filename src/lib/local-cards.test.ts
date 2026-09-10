@@ -48,9 +48,7 @@ describe("local cards", () => {
     const card = buildLocalBoardCard({
       boardId: "clboardxxxxxxxxxxxxxxxxxxxx",
       status: "new",
-      type: "task",
       title: "Ship login",
-      description: "Tonight",
       urgent: true,
       author,
     });
@@ -68,10 +66,8 @@ describe("local cards", () => {
         id: "clcardxxxxxxxxxxxxxxxxxxxxx",
         boardId: "clboardxxxxxxxxxxxxxxxxxxxx",
         authorId: author.participantId,
-        type: "question",
         status: "new",
         title: "Need copy",
-        description: "",
         urgent: false,
         position: 3,
         createdAt,

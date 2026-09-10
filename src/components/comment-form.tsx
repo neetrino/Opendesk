@@ -53,7 +53,6 @@ function fitTextarea(textarea: HTMLTextAreaElement): void {
 type CommentFormProps = {
   boardId: string;
   cardId: string;
-  typeLabel: string;
   enabled: boolean;
   onOptimisticSend: (
     body: string,
@@ -86,7 +85,6 @@ function mapFileError(
 export function CommentForm({
   boardId,
   cardId,
-  typeLabel,
   enabled,
   onOptimisticSend,
   onOptimisticRollback,
@@ -272,7 +270,6 @@ export function CommentForm({
             addFiles(files);
           }}
         />
-        <span className="type-pill">{typeLabel}</span>
         <button
           type="button"
           className="sheet-icon-btn comment-attach"

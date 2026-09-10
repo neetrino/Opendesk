@@ -33,7 +33,7 @@
 - [x] Создание доски + invites
 - [x] Join по invite
 - [x] Kanban 4 колонки
-- [x] Карточки question / task
+- [x] Карточки + срочность + чат
 - [x] Перемещение + комментарии
 - [x] Фото/видео вложения в карточке и чате (R2, max 50 MB)
 - [x] UI + 404 + rate-limit middleware

@@ -62,17 +62,10 @@ export type Dictionary = {
     answered: string;
     done: string;
   };
-  cardTypes: {
-    question: string;
-    task: string;
-  };
   quickAdd: {
     trigger: string;
     title: string;
     titlePlaceholder: string;
-    type: string;
-    description: string;
-    descriptionPlaceholder: string;
     urgent: string;
     saving: string;
     save: string;
@@ -99,7 +92,6 @@ export type Dictionary = {
   cardPage: {
     back: string;
     close: string;
-    noDescription: string;
     stage: string;
     priority: string;
     markUrgent: string;
@@ -108,9 +100,6 @@ export type Dictionary = {
     discussion: string;
     emptyThread: string;
     editTitle: string;
-    editDescription: string;
-    saveChanges: string;
-    savingChanges: string;
     attachments: string;
     attachmentsHint: string;
     attachmentsEmpty: string;
@@ -235,18 +224,11 @@ export const en: Dictionary = {
     answered: "Answered",
     done: "Done",
   },
-  cardTypes: {
-    question: "Question",
-    task: "Task",
-  },
   quickAdd: {
     trigger: "+ Quick item",
     title: "Title",
-    titlePlaceholder: "Short question or task",
-    type: "Type",
-    description: "Description",
-    descriptionPlaceholder: "Optional",
-    urgent: "Urgent / important",
+    titlePlaceholder: "Short title",
+    urgent: "Urgent",
     saving: "Saving…",
     save: "Save",
     cancel: "Cancel",
@@ -273,7 +255,6 @@ export const en: Dictionary = {
   cardPage: {
     back: "← Back to board",
     close: "Close",
-    noDescription: "No description yet.",
     stage: "Stage",
     priority: "Priority",
     markUrgent: "Mark as urgent",
@@ -282,9 +263,6 @@ export const en: Dictionary = {
     discussion: "Discussion",
     emptyThread: "No replies yet. Write the first one.",
     editTitle: "Title",
-    editDescription: "Description",
-    saveChanges: "Save changes",
-    savingChanges: "Saving…",
     attachments: "Photos & videos",
     attachmentsHint: "Up to 50 MB each",
     attachmentsEmpty: "Add a photo or a short video",

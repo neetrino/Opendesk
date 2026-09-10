@@ -107,7 +107,6 @@ export function CardSheet({
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
     formData.set("title", nextTitle);
-    formData.set("description", card.description);
     startTransition(async () => {
       const response = await updateCardContentAction(formData);
       if (!response.ok) {
@@ -125,7 +124,7 @@ export function CardSheet({
         onClick={onClose}
       />
       <aside
-        className={`card-sheet ${card.type}${card.urgent ? " is-urgent" : ""}`}
+        className={`card-sheet${card.urgent ? " is-urgent" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={`card-sheet-title-${card.id}`}
@@ -192,7 +191,6 @@ export function CardSheet({
             <CommentForm
               boardId={boardId}
               cardId={card.id}
-              typeLabel={t.cardTypes[card.type]}
               enabled={attachmentsEnabled}
               onOptimisticSend={onCommentSend}
               onOptimisticRollback={onCommentRollback}

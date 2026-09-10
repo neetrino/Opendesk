@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, useTransition, type FormEvent } from "react";
-import type { CardStatus, CardType } from "@prisma/client";
+import type { CardStatus } from "@prisma/client";
+import { FireIcon } from "@/components/fire-icon";
 import { createCardAction } from "@/lib/actions";
+import { MAX_TITLE_LENGTH } from "@/lib/constants";
 import { useI18n } from "@/i18n/provider";
 import {
   buildLocalBoardCard,
@@ -20,10 +22,6 @@ type QuickCreateCardProps = {
   onLocalRollback: (tempId: string, error: string) => void;
 };
 
-function readCardType(value: FormDataEntryValue | null): CardType {
-  return value === "task" ? "task" : "question";
-}
-
 export function QuickCreateCard({
   boardId,
   status,
@@ -34,9 +32,15 @@ export function QuickCreateCard({
 }: QuickCreateCardProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [urgent, setUrgent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const titleRef = useRef<HTMLInputElement>(null);
+
+  function resetForm(): void {
+    setUrgent(false);
+    setError(null);
+  }
 
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -50,19 +54,18 @@ export function QuickCreateCard({
     const localCard = buildLocalBoardCard({
       boardId,
       status,
-      type: readCardType(formData.get("type")),
       title,
-      description: String(formData.get("description") ?? "").trim(),
-      urgent:
-        formData.get("urgent") === "on" || formData.get("urgent") === "true",
+      urgent,
       author: currentUser,
     });
 
     formData.set("boardId", boardId);
     formData.set("status", status);
+    formData.set("urgent", urgent ? "true" : "false");
     setError(null);
     onLocalCreate(localCard);
     form.reset();
+    setUrgent(false);
     titleRef.current?.focus();
 
     startTransition(async () => {
@@ -103,7 +106,7 @@ export function QuickCreateCard({
           name="title"
           required
           minLength={2}
-          maxLength={120}
+          maxLength={MAX_TITLE_LENGTH}
           placeholder={t.quickAdd.titlePlaceholder}
           autoComplete="off"
           autoCorrect="off"
@@ -112,33 +115,25 @@ export function QuickCreateCard({
         />
       </label>
 
-      <label className="quick-field">
-        <span>{t.quickAdd.type}</span>
-        <select name="type" defaultValue="question" autoComplete="off">
-          <option value="question">{t.cardTypes.question}</option>
-          <option value="task">{t.cardTypes.task}</option>
-        </select>
-      </label>
-
-      <label className="quick-field">
-        <span>{t.quickAdd.description}</span>
-        <textarea
-          name="description"
-          rows={2}
-          maxLength={4000}
-          placeholder={t.quickAdd.descriptionPlaceholder}
-          autoComplete="off"
-        />
-      </label>
-
-      <label className="quick-check">
-        <input type="checkbox" name="urgent" />
-        <span>{t.quickAdd.urgent}</span>
-      </label>
-
       {error ? <p className="form-error">{error}</p> : null}
 
       <div className="quick-actions">
+        <button
+          type="button"
+          className={
+            urgent
+              ? "sheet-icon-btn sheet-urgent is-on"
+              : "sheet-icon-btn sheet-urgent"
+          }
+          onClick={() => setUrgent((current) => !current)}
+          aria-pressed={urgent}
+          aria-label={
+            urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
+          }
+          title={urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent}
+        >
+          <FireIcon size={18} />
+        </button>
         <button className="button button-save" type="submit">
           {t.quickAdd.save}
         </button>
@@ -147,7 +142,7 @@ export function QuickCreateCard({
           className="button button-cancel"
           onClick={() => {
             setOpen(false);
-            setError(null);
+            resetForm();
           }}
         >
           {t.quickAdd.cancel}

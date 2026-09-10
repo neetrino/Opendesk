@@ -279,10 +279,8 @@ export async function createCardAction(
   const errors = await tErrors();
   const parsed = createCardSchema.safeParse({
     boardId: formData.get("boardId"),
-    type: formData.get("type"),
     status: formData.get("status") ?? "new",
     title: formData.get("title"),
-    description: formData.get("description") ?? "",
     urgent: formData.get("urgent") ?? false,
   });
 
@@ -304,9 +302,7 @@ export async function createCardAction(
       data: {
         boardId: parsed.data.boardId,
         authorId: access.participantId,
-        type: parsed.data.type,
         title: parsed.data.title,
-        description: parsed.data.description,
         status: parsed.data.status,
         urgent: parsed.data.urgent,
         position: (maxPosition._max.position ?? -1) + 1,
@@ -427,7 +423,6 @@ export async function updateCardContentAction(
     boardId: formData.get("boardId"),
     cardId: formData.get("cardId"),
     title: formData.get("title"),
-    description: formData.get("description") ?? "",
   });
 
   if (!parsed.success) {
@@ -451,7 +446,6 @@ export async function updateCardContentAction(
       where: { id: card.id },
       data: {
         title: parsed.data.title,
-        description: parsed.data.description,
       },
     });
 
