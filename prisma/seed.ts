@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { normalizeDatabaseUrl } from "../src/lib/database-url";
 
 async function main(): Promise<void> {
   const connectionString = process.env.DATABASE_URL;
@@ -10,7 +11,9 @@ async function main(): Promise<void> {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString: normalizeDatabaseUrl(connectionString),
+  });
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 

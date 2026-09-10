@@ -9,7 +9,9 @@ import {
 } from "@/lib/board-access";
 import { buildJoinPath } from "@/lib/join-url";
 import { getOwnerSession } from "@/lib/owner-session";
+import { ATTACHMENT_PUBLIC_SELECT } from "@/lib/attachments";
 import { prisma } from "@/lib/prisma";
+import { isR2Configured } from "@/lib/r2";
 import { getSession } from "@/lib/session";
 
 type BoardBySlugPageProps = {
@@ -70,8 +72,19 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
       cards: {
         include: {
           author: true,
+          attachments: {
+            where: { commentId: null },
+            orderBy: { createdAt: "asc" },
+            select: ATTACHMENT_PUBLIC_SELECT,
+          },
           comments: {
-            include: { author: true },
+            include: {
+              author: true,
+              attachments: {
+                orderBy: { createdAt: "asc" },
+                select: ATTACHMENT_PUBLIC_SELECT,
+              },
+            },
             orderBy: { createdAt: "asc" },
           },
         },
@@ -109,6 +122,7 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
       t={t}
       currentUser={currentUser}
       isOwner={Boolean(owner)}
+      attachmentsEnabled={isR2Configured()}
     />
   );
 }

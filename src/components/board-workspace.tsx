@@ -28,6 +28,7 @@ type BoardWorkspaceProps = {
     displayName: string;
   };
   isOwner: boolean;
+  attachmentsEnabled: boolean;
 };
 
 export function BoardWorkspace({
@@ -36,6 +37,7 @@ export function BoardWorkspace({
   t,
   currentUser,
   isOwner,
+  attachmentsEnabled,
 }: BoardWorkspaceProps) {
   return (
     <section className="board-page">
@@ -61,6 +63,7 @@ export function BoardWorkspace({
         cards={board.cards}
         locale={locale}
         currentUser={currentUser}
+        attachmentsEnabled={attachmentsEnabled}
       />
     </section>
   );

@@ -1,0 +1,111 @@
+"use client";
+
+import { useEffect } from "react";
+import { canPreviewInline } from "@/lib/attachments";
+
+export type MediaItem = {
+  id: string;
+  filename: string;
+  contentType: string;
+  kind: "image" | "video";
+  src: string;
+};
+
+type MediaThumbProps = {
+  item: MediaItem;
+  progress?: number;
+  onOpen: () => void;
+  onRemove?: () => void;
+  openLabel: string;
+  removeLabel?: string;
+};
+
+export function MediaThumb({
+  item,
+  progress,
+  onOpen,
+  onRemove,
+  openLabel,
+  removeLabel,
+}: MediaThumbProps) {
+  const previewable = canPreviewInline(item.contentType, item.kind);
+  const uploading = progress !== undefined && progress < 100;
+
+  return (
+    <div className={uploading ? "media-thumb is-uploading" : "media-thumb"}>
+      <button
+        type="button"
+        className="media-thumb-open"
+        onClick={onOpen}
+        aria-label={`${openLabel}: ${item.filename}`}
+      >
+        {previewable && item.kind === "image" ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.src} alt="" />
+        ) : previewable && item.kind === "video" ? (
+          <video src={item.src} muted playsInline preload="metadata" />
+        ) : (
+          <span className="media-thumb-fallback">{item.filename}</span>
+        )}
+        {item.kind === "video" ? <span className="media-play" /> : null}
+      </button>
+      {onRemove && removeLabel ? (
+        <button
+          type="button"
+          className="media-thumb-remove"
+          onClick={onRemove}
+          aria-label={removeLabel}
+        >
+          ×
+        </button>
+      ) : null}
+      {uploading ? (
+        <span className="media-thumb-progress">{progress}%</span>
+      ) : null}
+    </div>
+  );
+}
+
+type MediaLightboxProps = {
+  item: MediaItem;
+  closeLabel: string;
+  onClose: () => void;
+};
+
+export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps) {
+  const previewable = canPreviewInline(item.contentType, item.kind);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="media-lightbox" role="dialog" aria-modal="true">
+      <button
+        type="button"
+        className="media-lightbox-backdrop"
+        aria-label={closeLabel}
+        onClick={onClose}
+      />
+      <div className="media-lightbox-frame">
+        {previewable && item.kind === "image" ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.src} alt={item.filename} />
+        ) : previewable && item.kind === "video" ? (
+          <video src={item.src} controls autoPlay playsInline />
+        ) : (
+          <a className="media-lightbox-link" href={item.src} target="_blank" rel="noreferrer">
+            {item.filename}
+          </a>
+        )}
+        <p>{item.filename}</p>
+      </div>
+    </div>
+  );
+}

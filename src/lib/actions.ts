@@ -20,7 +20,11 @@ import { revalidateBoardPath } from "@/lib/revalidate-board";
 import { clearSessionCookie, setSessionCookie } from "@/lib/session";
 import { createJoinToken } from "@/lib/tokens";
 import {
-  addCommentSchema,
+  persistVerifiedAttachments,
+  verifyOwnedUploads,
+} from "@/lib/persist-attachments";
+import {
+  addCommentWithAttachmentsSchema,
   claimInviteSchema,
   createBoardSchema,
   createCardSchema,
@@ -462,14 +466,34 @@ export async function updateCardContentAction(
   }
 }
 
+function parseCommentAttachments(raw: FormDataEntryValue | null): unknown {
+  if (raw == null || raw === "") {
+    return [];
+  }
+  if (typeof raw !== "string") {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return null;
+  }
+}
+
 export async function addCommentAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const errors = await tErrors();
-  const parsed = addCommentSchema.safeParse({
+  const attachments = parseCommentAttachments(formData.get("attachments"));
+  if (attachments === null) {
+    return { ok: false, error: errors.validation };
+  }
+
+  const parsed = addCommentWithAttachmentsSchema.safeParse({
     boardId: formData.get("boardId"),
     cardId: formData.get("cardId"),
-    body: formData.get("body"),
+    body: formData.get("body") ?? "",
+    attachments,
   });
 
   if (!parsed.success) {
@@ -481,21 +505,38 @@ export async function addCommentAction(
 
   try {
     const access = await requireBoardAccess(parsed.data.boardId);
-
     const card = await prisma.card.findFirst({
       where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
     });
-
     if (!card) {
       return { ok: false, error: errors.cardNotFound };
     }
 
-    await prisma.comment.create({
-      data: {
-        cardId: card.id,
-        authorId: access.participantId,
-        body: parsed.data.body,
-      },
+    const verified = await verifyOwnedUploads(
+      parsed.data.boardId,
+      card.id,
+      parsed.data.attachments,
+    );
+
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.comment.create({
+        data: {
+          cardId: card.id,
+          authorId: access.participantId,
+          body: parsed.data.body,
+        },
+      });
+
+      if (verified.length > 0) {
+        await persistVerifiedAttachments({
+          boardId: parsed.data.boardId,
+          cardId: card.id,
+          commentId: created.id,
+          authorId: access.participantId,
+          items: verified,
+          db: tx,
+        });
+      }
     });
 
     await revalidateBoardPath(parsed.data.boardId);
