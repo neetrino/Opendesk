@@ -2,9 +2,22 @@ import type { Card, CardStatus, CardType, Comment, Participant } from "@prisma/c
 
 export const LOCAL_CARD_ID_PREFIX = "local-";
 
+export type BoardAttachment = {
+  id: string;
+  filename: string;
+  contentType: string;
+  byteSize: number;
+  kind: "image" | "video";
+  createdAt: Date;
+  commentId: string | null;
+  authorId: string;
+  previewUrl?: string;
+};
+
 export type LocalBoardCard = Card & {
   author: Participant;
-  comments: Array<Comment & { author: Participant }>;
+  attachments: BoardAttachment[];
+  comments: Array<Comment & { author: Participant; attachments: BoardAttachment[] }>;
 };
 
 export type LocalCardAuthor = {
@@ -71,6 +84,7 @@ export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard 
       createdAt: now,
     },
     comments: [],
+    attachments: [],
   };
 }
 
@@ -92,5 +106,6 @@ export function toBoardCardFromCreated(
       createdAt,
     },
     comments: [],
+    attachments: [],
   };
 }

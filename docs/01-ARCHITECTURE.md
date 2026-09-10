@@ -3,7 +3,7 @@
 > Kanban-доска: участники по постоянной join-ссылке; один owner из env создаёт доски и видит все.
 
 **Размер проекта.** A  
-**Обновлено.** 2026-08-11
+**Обновлено.** 2026-09-10
 
 ---
 
@@ -19,6 +19,7 @@ OpenDesk даёт команде общую доску: вход по посто
 - Kanban: `new` → `in_progress` → `answered` → `done`
 - Типы карточек: `question` | `task`
 - Тред комментариев внутри карточки
+- Фото и короткие видео (до 50 MB) в карточке и в чате карточки (Cloudflare R2)
 
 ### Пользователи
 
@@ -35,15 +36,15 @@ OpenDesk даёт команде общую доску: вход по посто
 │  UI + Server Actions │
 └──────────┬───────────┘
            │
-           ▼
-┌──────────────────────┐
-│  Prisma ORM          │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│  PostgreSQL (Neon)   │
-└──────────────────────┘
+     ┌─────┴──────┐
+     ▼            ▼
+┌──────────┐  ┌──────────┐
+│ Prisma   │  │ R2 (S3)  │
+└────┬─────┘  └──────────┘
+     ▼
+┌──────────┐
+│ Postgres │
+└──────────┘
 ```
 
 **Стиль.** Modular monolith (один Next.js app).  
@@ -124,7 +125,7 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 ```
 1. Access: participant cookie для boardId ИЛИ owner cookie
 2. RSC загружает колонки + карточки
-3. Actions: createCard, moveCard, addComment (requireBoardAccess)
+3. Actions: createCard, moveCard, addComment, attachment upload (requireBoardAccess)
 ```
 
 ---
@@ -138,6 +139,7 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 | Participant | Участник (displayName) |
 | Card | question \| task + status + position |
 | Comment | Сообщение в треде карточки |
+| Attachment | Фото/видео карточки или комментария (R2) |
 
 ```
 Board 1──* Invite
@@ -145,7 +147,10 @@ Board 1──* Participant
 Board 1──* Card
 Participant 1──* Card (author)
 Card 1──* Comment
+Card 1──* Attachment
+Comment 1──* Attachment
 Participant 1──* Comment (author)
+Participant 1──* Attachment (author)
 ```
 
 ---
@@ -157,7 +162,8 @@ Participant 1──* Comment (author)
 - Доступ к доске: participant этой доски **или** owner
 - Создание досок только с owner-сессией; credentials только в env
 - Zod на всех входах
-- Базовый rate limit на join / owner login / mutations
+- Базовый rate limit на join / owner login / mutations / downloads
+- Вложения: allowlist MIME, 50 MB, ключи сервера, presigned PUT/GET, доступ только с доски
 - Имя участника не является секретом: кто знает ссылку и имя — может войти как этот участник
 
 ---
@@ -182,5 +188,5 @@ Participant 1──* Comment (author)
 
 ---
 
-**Версия.** 1.2  
-**Дата.** 2026-08-11
+**Версия.** 1.3  
+**Дата.** 2026-09-10

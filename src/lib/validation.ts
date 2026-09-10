@@ -1,5 +1,9 @@
 import { z } from "zod";
+import { ATTACHMENT_CONTENT_TYPES } from "@/lib/attachments";
 import {
+  MAX_ATTACHMENT_BYTES,
+  MAX_ATTACHMENT_FILENAME_LENGTH,
+  MAX_COMMENT_ATTACHMENTS,
   MAX_COMMENT_LENGTH,
   MAX_DESCRIPTION_LENGTH,
   MAX_DISPLAY_NAME_LENGTH,
@@ -76,3 +80,64 @@ export const addCommentSchema = z.object({
     .min(1, "commentEmpty")
     .max(MAX_COMMENT_LENGTH),
 });
+
+export const attachmentMetaSchema = z.object({
+  objectKey: z.string().trim().min(20).max(500),
+  filename: z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_ATTACHMENT_FILENAME_LENGTH),
+  contentType: z.enum(ATTACHMENT_CONTENT_TYPES),
+  byteSize: z.number().int().positive().max(MAX_ATTACHMENT_BYTES),
+});
+
+export const createAttachmentUploadSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  filename: z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_ATTACHMENT_FILENAME_LENGTH),
+  contentType: z.string().trim().min(1).max(120),
+  byteSize: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_ATTACHMENT_BYTES, "fileTooLarge"),
+  target: z.enum(["card", "comment"]),
+});
+
+export const completeCardAttachmentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  objectKey: z.string().trim().min(20).max(500),
+  filename: z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_ATTACHMENT_FILENAME_LENGTH),
+  contentType: z.enum(ATTACHMENT_CONTENT_TYPES),
+  byteSize: z.number().int().positive().max(MAX_ATTACHMENT_BYTES),
+});
+
+export const deleteAttachmentSchema = z.object({
+  boardId: z.string().cuid(),
+  attachmentId: z.string().cuid(),
+});
+
+export const addCommentWithAttachmentsSchema = z
+  .object({
+    boardId: z.string().cuid(),
+    cardId: z.string().cuid(),
+    body: z.string().trim().max(MAX_COMMENT_LENGTH).default(""),
+    attachments: z
+      .array(attachmentMetaSchema)
+      .max(MAX_COMMENT_ATTACHMENTS)
+      .default([]),
+  })
+  .refine(
+    (value) => value.body.length > 0 || value.attachments.length > 0,
+    { message: "commentEmpty" },
+  );

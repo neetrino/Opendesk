@@ -54,7 +54,7 @@
 | 3.4 | Rate limiting | middleware (базовый) | ✅ | in-memory per isolate; best-effort на Vercel |
 | 3.5 | API docs | не нужно | ➖ | |
 | 3.6 | CRON | не нужно | ➖ | |
-| 3.7 | Файлы | не нужно | ➖ | |
+| 3.7 | Файлы | Cloudflare R2, photo/video до 50 MB | ✅ | presigned PUT, signed GET |
 
 ---
 
@@ -81,6 +81,7 @@
 - `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
 - `Card` — id, boardId, type (`question` \| `task`), status, title, description, authorId, position
 - `Comment` — id, cardId, authorId, body, createdAt
+- `Attachment` — id, boardId, cardId, commentId?, authorId, objectKey, filename, contentType, byteSize, kind (`image` \| `video`)
 
 **Колонки:** `new` → `in_progress` → `answered` → `done`
 
@@ -103,7 +104,7 @@
 
 | # | Параметр | Решение | Статус | Заметка |
 |---|----------|---------|--------|---------|
-| 6.1 | R2 | не нужно | ➖ | |
+| 6.1 | R2 | Cloudflare R2 | ✅ | фото/видео в карточках и чате, max 50 MB |
 | 6.2 | CDN | Vercel Edge | ✅ | |
 | 6.3 | next/image | не нужно | ➖ | |
 

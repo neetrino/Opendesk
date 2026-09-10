@@ -29,6 +29,7 @@ model Board {
   invites      Invite[]
   participants Participant[]
   cards        Card[]
+  attachments  Attachment[]
 }
 
 model Invite {
@@ -51,10 +52,11 @@ model Participant {
   displayName String
   createdAt   DateTime @default(now())
 
-  board    Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  invite   Invite?
-  cards    Card[]
-  comments Comment[]
+  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  invite      Invite?
+  cards       Card[]
+  comments    Comment[]
+  attachments Attachment[]
 
   @@index([boardId])
 }
@@ -72,9 +74,10 @@ model Card {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  board    Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  author   Participant @relation(fields: [authorId], references: [id], onDelete: Restrict)
-  comments Comment[]
+  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  author      Participant  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  comments    Comment[]
+  attachments Attachment[]
 
   @@index([boardId, status])
   @@index([boardId, status, position])
@@ -87,8 +90,37 @@ model Comment {
   body      String
   createdAt DateTime @default(now())
 
-  card   Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  author Participant @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  card        Card         @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  author      Participant  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  attachments Attachment[]
 
   @@index([cardId, createdAt])
+}
+
+enum AttachmentKind {
+  image
+  video
+}
+
+model Attachment {
+  id          String         @id @default(cuid())
+  boardId     String
+  cardId      String
+  commentId   String?
+  authorId    String
+  objectKey   String         @unique
+  filename    String
+  contentType String
+  byteSize    Int
+  kind        AttachmentKind
+  createdAt   DateTime       @default(now())
+
+  board   Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  card    Card         @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  comment Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  author  Participant  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([cardId, createdAt])
+  @@index([commentId])
+  @@index([boardId])
 }

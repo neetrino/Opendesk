@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import {
+  databaseUrlNeedsSsl,
+  normalizeDatabaseUrl,
+} from "@/lib/database-url";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -23,10 +27,11 @@ function shouldApplySessionOptions(connectionString: string): boolean {
 }
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
+  const rawConnectionString = process.env.DATABASE_URL;
+  if (!rawConnectionString) {
     throw new Error("DATABASE_URL is not set");
   }
+  const connectionString = normalizeDatabaseUrl(rawConnectionString);
 
   const isProduction = process.env.NODE_ENV === "production";
   const connectionLimit = Number(
@@ -41,10 +46,7 @@ function createPrismaClient(): PrismaClient {
   );
   const lockTimeoutMs = Number(process.env.DATABASE_LOCK_TIMEOUT_MS ?? "5000");
 
-  const needsSsl =
-    connectionString.includes("sslmode=require") ||
-    connectionString.includes("sslmode=verify-full") ||
-    isProduction;
+  const needsSsl = databaseUrlNeedsSsl(connectionString) || isProduction;
   // Neon works with public CAs. Set DATABASE_SSL_REJECT_UNAUTHORIZED=false only
   // as a temporary escape hatch (e.g. corporate MITM proxies in local dev).
   const rejectUnauthorized =

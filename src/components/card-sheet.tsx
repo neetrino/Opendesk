@@ -1,36 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import type { Card, CardStatus, Comment, Participant } from "@prisma/client";
-import { CommentForm } from "@/components/comment-form";
+import { CommentForm, type OptimisticCommentAttachment } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
-import { MoveCardControls } from "@/components/move-card-controls";
+import { PencilIcon } from "@/components/pencil-icon";
+import { ThreadList } from "@/components/thread-list";
 import {
   setCardUrgentAction,
   updateCardContentAction,
 } from "@/lib/actions";
+import type { LocalBoardCard } from "@/lib/local-cards";
 import { useI18n } from "@/i18n/provider";
 
-type CommentWithAuthor = Comment & { author: Participant };
-
-export type SheetCard = Card & {
-  author: Participant;
-  comments: CommentWithAuthor[];
-};
+export type SheetCard = LocalBoardCard;
 
 type CardSheetProps = {
   boardId: string;
   card: SheetCard;
   locale: string;
+  attachmentsEnabled: boolean;
   onClose: () => void;
-  onStatusChange: (cardId: string, status: CardStatus) => void;
-  onStatusRollback: (
-    cardId: string,
-    status: CardStatus,
-    error: string,
-  ) => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
-  onCommentSend: (body: string, tempId: string) => void;
+  onCommentSend: (
+    body: string,
+    tempId: string,
+    attachments: OptimisticCommentAttachment[],
+  ) => void;
   onCommentRollback: (tempId: string) => void;
 };
 
@@ -38,9 +33,8 @@ export function CardSheet({
   boardId,
   card,
   locale,
+  attachmentsEnabled,
   onClose,
-  onStatusChange,
-  onStatusRollback,
   onUrgentChange,
   onCommentSend,
   onCommentRollback,
@@ -49,14 +43,12 @@ export function CardSheet({
   const [isPending, startTransition] = useTransition();
   const [cardId, setCardId] = useState(card.id);
   const [title, setTitle] = useState(card.title);
-  const [description, setDescription] = useState(card.description);
   const [error, setError] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
   if (card.id !== cardId) {
     setCardId(card.id);
     setTitle(card.title);
-    setDescription(card.description);
     setError(null);
   }
 
@@ -83,13 +75,9 @@ export function CardSheet({
     thread.scrollTop = thread.scrollHeight;
   }, [card.id, card.comments.length]);
 
-  const isDirty =
-    title.trim() !== card.title || description !== card.description;
-
   function toggleUrgent(): void {
     const nextUrgent = !card.urgent;
     setError(null);
-
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
@@ -105,13 +93,21 @@ export function CardSheet({
     });
   }
 
-  function saveContent(): void {
+  function saveTitle(): void {
+    const nextTitle = title.trim();
+    if (nextTitle.length < 2 || nextTitle === card.title) {
+      if (nextTitle.length < 2) {
+        setTitle(card.title);
+      }
+      return;
+    }
+
     setError(null);
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
-    formData.set("title", title);
-    formData.set("description", description);
+    formData.set("title", nextTitle);
+    formData.set("description", card.description);
     startTransition(async () => {
       const response = await updateCardContentAction(formData);
       if (!response.ok) {
@@ -136,16 +132,26 @@ export function CardSheet({
       >
         <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
-          <div className="sheet-badges">
-            <span className="type-pill">{t.cardTypes[card.type]}</span>
-            {card.urgent ? (
-              <span className="urgent-pill">
-                <FireIcon size={13} />
-                {t.cardPage.urgentBadge}
-              </span>
-            ) : null}
-            <span className="sheet-author">{card.author.displayName}</span>
-          </div>
+          <label className="sheet-title-bar">
+            <span className="visually-hidden">{t.cardPage.editTitle}</span>
+            <input
+              id={`card-sheet-title-${card.id}`}
+              className="sheet-title-input"
+              value={title}
+              maxLength={120}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              onChange={(event) => setTitle(event.target.value)}
+              onBlur={saveTitle}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+            <PencilIcon className="sheet-title-edit" size={16} />
+          </label>
           <div className="sheet-actions">
             <button
               type="button"
@@ -176,88 +182,21 @@ export function CardSheet({
             </button>
           </div>
         </header>
+        {error ? <p className="form-error sheet-title-error">{error}</p> : null}
 
-        <div className="sheet-body">
-          <div className="sheet-details">
-            <label className="sheet-edit-field">
-              <span>{t.cardPage.editTitle}</span>
-              <input
-                id={`card-sheet-title-${card.id}`}
-                className="sheet-title-input"
-                value={title}
-                maxLength={120}
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                onChange={(event) => setTitle(event.target.value)}
-              />
-            </label>
-
-            <label className="sheet-edit-field">
-              <span>{t.cardPage.editDescription}</span>
-              <textarea
-                className="sheet-description-input"
-                value={description}
-                rows={3}
-                maxLength={4000}
-                placeholder={t.cardPage.noDescription}
-                autoComplete="off"
-                onChange={(event) => setDescription(event.target.value)}
-              />
-            </label>
-
-            {error ? <p className="form-error">{error}</p> : null}
-
-            {isDirty ? (
-              <button
-                type="button"
-                className="button button-save sheet-save"
-                onClick={saveContent}
-                disabled={isPending}
-              >
-                {isPending ? t.cardPage.savingChanges : t.cardPage.saveChanges}
-              </button>
-            ) : null}
-
-            <div className="sheet-block">
-              <p className="eyebrow">{t.cardPage.stage}</p>
-              <MoveCardControls
-                boardId={boardId}
-                cardId={card.id}
-                currentStatus={card.status}
-                onStatusChange={onStatusChange}
-                onStatusRollback={onStatusRollback}
-              />
-            </div>
+        <div className="sheet-discussion">
+          <div className="thread" ref={threadRef}>
+            <ThreadList comments={card.comments} locale={locale} />
           </div>
-
-          <div className="sheet-discussion">
-            <h3>{t.cardPage.discussion}</h3>
-            <div className="thread" ref={threadRef}>
-              {card.comments.length === 0 ? (
-                <p className="muted thread-empty">{t.cardPage.emptyThread}</p>
-              ) : (
-                card.comments.map((comment) => (
-                  <div key={comment.id} className="thread-item">
-                    <header>
-                      <strong>{comment.author.displayName}</strong>
-                      <span className="muted">
-                        {comment.createdAt.toLocaleString(locale)}
-                      </span>
-                    </header>
-                    <p>{comment.body}</p>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="sheet-composer">
-              <CommentForm
-                boardId={boardId}
-                cardId={card.id}
-                onOptimisticSend={onCommentSend}
-                onOptimisticRollback={onCommentRollback}
-              />
-            </div>
+          <div className="sheet-composer">
+            <CommentForm
+              boardId={boardId}
+              cardId={card.id}
+              typeLabel={t.cardTypes[card.type]}
+              enabled={attachmentsEnabled}
+              onOptimisticSend={onCommentSend}
+              onOptimisticRollback={onCommentRollback}
+            />
           </div>
         </div>
       </aside>

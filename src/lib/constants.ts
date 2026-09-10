@@ -19,3 +19,10 @@ export const MAX_DESCRIPTION_LENGTH = 4000;
 export const MAX_COMMENT_LENGTH = 2000;
 /** Soft cap for people on one board. */
 export const MAX_BOARD_PARTICIPANTS = 20;
+
+export const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
+export const MAX_ATTACHMENT_FILENAME_LENGTH = 180;
+export const MAX_CARD_ATTACHMENTS = 20;
+export const MAX_COMMENT_ATTACHMENTS = 4;
+export const ATTACHMENT_UPLOAD_URL_TTL_SECONDS = 5 * 60;
+export const ATTACHMENT_DOWNLOAD_URL_TTL_SECONDS = 60 * 60;

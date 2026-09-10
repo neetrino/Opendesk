@@ -17,6 +17,7 @@
 cp .env.example .env
 # В .env: Neon DATABASE_URL + SESSION_SECRET (openssl rand -hex 32)
 # + OWNER_LOGIN / OWNER_PASSWORD
+# + R2_* for photo/video attachments (see .env.example CORS notes)
 
 pnpm install
 pnpm db:migrate:deploy   # применить миграции к Neon
@@ -39,6 +40,10 @@ pnpm dev
 | `OWNER_LOGIN` | owner login |
 | `OWNER_PASSWORD` | strong password |
 | `APP_URL` | `https://<your-app>.vercel.app` |
+| `R2_ACCOUNT_ID` | Cloudflare account id |
+| `R2_ACCESS_KEY_ID` | R2 S3 API token |
+| `R2_SECRET_ACCESS_KEY` | R2 secret |
+| `R2_BUCKET_NAME` | bucket name |
 | `DATABASE_CONNECTION_LIMIT` | `1` |
 | `DATABASE_SESSION_OPTIONS` | `false` |
 

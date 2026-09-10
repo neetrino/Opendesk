@@ -52,9 +52,26 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  const isAttachmentGet =
+    request.method === "GET" && path.startsWith("/api/attachments/");
+  if (isAttachmentGet) {
+    const result = checkRateLimit(`files:${ip}`, 120, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/invite/:path*", "/join/:path*", "/b/:path*", "/login"],
+  matcher: [
+    "/invite/:path*",
+    "/join/:path*",
+    "/b/:path*",
+    "/login",
+    "/api/attachments/:path*",
+  ],
 };

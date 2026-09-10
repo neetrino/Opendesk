@@ -111,11 +111,23 @@ export type Dictionary = {
     editDescription: string;
     saveChanges: string;
     savingChanges: string;
+    attachments: string;
+    attachmentsHint: string;
+    attachmentsEmpty: string;
+    attachmentsAdd: string;
+    attachmentsUploading: string;
+    attachmentOpen: string;
+    attachmentRemove: string;
+    attachmentsUnavailable: string;
+    attachmentsLocalCard: string;
+    attachmentClosePreview: string;
   };
   comment: {
     placeholder: string;
     sending: string;
     send: string;
+    attach: string;
+    attachAria: string;
   };
   notFound: {
     title: string;
@@ -148,6 +160,13 @@ export type Dictionary = {
     nameLong: string;
     cardTitleShort: string;
     commentEmpty: string;
+    storageNotConfigured: string;
+    fileTooLarge: string;
+    fileTypeUnsupported: string;
+    uploadFailed: string;
+    attachmentLimit: string;
+    attachmentNotFound: string;
+    deleteAttachment: string;
   };
 };
 
@@ -266,11 +285,23 @@ export const en: Dictionary = {
     editDescription: "Description",
     saveChanges: "Save changes",
     savingChanges: "Saving…",
+    attachments: "Photos & videos",
+    attachmentsHint: "Up to 50 MB each",
+    attachmentsEmpty: "Add a photo or a short video",
+    attachmentsAdd: "Add file",
+    attachmentsUploading: "Uploading…",
+    attachmentOpen: "Open",
+    attachmentRemove: "Remove",
+    attachmentsUnavailable: "File storage is not configured",
+    attachmentsLocalCard: "Wait until the card is saved, then attach files",
+    attachmentClosePreview: "Close preview",
   },
   comment: {
     placeholder: "Write a reply or comment…",
     sending: "Sending…",
     send: "Send",
+    attach: "Attach",
+    attachAria: "Attach a photo or video",
   },
   notFound: {
     title: "Page not found",
@@ -302,6 +333,13 @@ export const en: Dictionary = {
     nameRequired: "Enter your name",
     nameLong: "Name is too long",
     cardTitleShort: "Title is too short",
-    commentEmpty: "Comment is empty",
+    commentEmpty: "Write a comment or attach a file",
+    storageNotConfigured: "File storage is not configured",
+    fileTooLarge: "File is larger than 50 MB",
+    fileTypeUnsupported: "Only photos and videos are allowed",
+    uploadFailed: "Could not upload the file",
+    attachmentLimit: "Too many files on this card",
+    attachmentNotFound: "File not found",
+    deleteAttachment: "Could not remove the file",
   },
 };

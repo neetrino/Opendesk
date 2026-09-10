@@ -9,7 +9,9 @@ import {
 } from "react";
 import type { CardStatus } from "@prisma/client";
 import { CardSheet } from "@/components/card-sheet";
+import type { OptimisticCommentAttachment } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
+import { PaperclipIcon } from "@/components/paperclip-icon";
 import { QuickCreateCard } from "@/components/quick-create-card";
 import { moveCardAction } from "@/lib/actions";
 import { CARD_STATUSES } from "@/lib/constants";
@@ -27,6 +29,7 @@ type KanbanBoardProps = {
   boardId: string;
   cards: BoardCard[];
   locale: string;
+  attachmentsEnabled: boolean;
   currentUser: {
     participantId: string;
     displayName: string;
@@ -48,6 +51,7 @@ type OptimisticUpdate =
       body: string;
       authorId: string;
       displayName: string;
+      attachments: OptimisticCommentAttachment[];
     }
   | { kind: "comment-rollback"; cardId: string; tempId: string };
 
@@ -55,6 +59,7 @@ export function KanbanBoard({
   boardId,
   cards,
   locale,
+  attachmentsEnabled,
   currentUser,
 }: KanbanBoardProps) {
   const { t } = useI18n();
@@ -100,6 +105,17 @@ export function KanbanBoard({
             displayName: update.displayName,
             createdAt: new Date(),
           },
+          attachments: update.attachments.map((attachment) => ({
+            id: attachment.id,
+            filename: attachment.filename,
+            contentType: attachment.contentType,
+            byteSize: attachment.byteSize,
+            kind: attachment.kind,
+            createdAt: new Date(),
+            commentId: update.tempId,
+            authorId: update.authorId,
+            previewUrl: attachment.previewUrl,
+          })),
         };
 
         return current.map((card) =>
@@ -307,17 +323,25 @@ export function KanbanBoard({
                       </p>
                       <p
                         className={
-                          card.comments.length > 0
+                          card.comments.length > 0 || card.attachments.length > 0
                             ? "card-foot"
                             : "card-foot is-empty"
                         }
                       >
+                        {card.attachments.length > 0 ? (
+                          <span className="card-foot-media">
+                            <PaperclipIcon size={11} />
+                            {card.attachments.length}
+                          </span>
+                        ) : null}
                         {card.comments.length > 0
                           ? t.board.replies.replace(
                               "{n}",
                               String(card.comments.length),
                             )
-                          : "\u00a0"}
+                          : card.attachments.length > 0
+                            ? null
+                            : "\u00a0"}
                       </p>
                     </article>
                   );
@@ -333,19 +357,12 @@ export function KanbanBoard({
           boardId={boardId}
           card={selectedCard}
           locale={locale}
+          attachmentsEnabled={attachmentsEnabled}
           onClose={() => setSelectedCardId(null)}
-          onStatusChange={(cardId, status) => {
-            setBoardError(null);
-            setOptimisticCards({ kind: "status", cardId, status });
-          }}
-          onStatusRollback={(cardId, status, error) => {
-            setOptimisticCards({ kind: "status", cardId, status });
-            setBoardError(error);
-          }}
           onUrgentChange={(cardId, urgent) => {
             setOptimisticCards({ kind: "urgent", cardId, urgent });
           }}
-          onCommentSend={(body, tempId) => {
+          onCommentSend={(body, tempId, attachments) => {
             setOptimisticCards({
               kind: "comment-add",
               cardId: selectedCard.id,
@@ -353,6 +370,7 @@ export function KanbanBoard({
               body,
               authorId: currentUser.participantId,
               displayName: currentUser.displayName,
+              attachments,
             });
           }}
           onCommentRollback={(tempId) => {
