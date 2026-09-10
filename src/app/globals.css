@@ -784,6 +784,17 @@ textarea {
   font-size: 0.85rem;
 }
 
+.quick-title {
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  min-height: calc(1.35em + 0.9rem);
+  max-height: calc(1.35em * 2 + 0.9rem);
+  field-sizing: content;
+}
+
 .quick-actions {
   display: flex;
   align-items: center;

@@ -35,18 +35,34 @@ export function QuickCreateCard({
   const [urgent, setUrgent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-  const titleRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
 
   function resetForm(): void {
     setUrgent(false);
     setError(null);
   }
 
+  function fitTitle(textarea: HTMLTextAreaElement): void {
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+
+  function onTitleInput(event: FormEvent<HTMLTextAreaElement>): void {
+    const textarea = event.currentTarget;
+    const next = textarea.value.replace(/\n/g, " ");
+    if (next !== textarea.value) {
+      textarea.value = next;
+    }
+    fitTitle(textarea);
+  }
+
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const title = String(formData.get("title") ?? "").trim();
+    const title = String(formData.get("title") ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
     if (title.length < 2) {
       return;
     }
@@ -61,12 +77,16 @@ export function QuickCreateCard({
 
     formData.set("boardId", boardId);
     formData.set("status", status);
+    formData.set("title", title);
     formData.set("urgent", urgent ? "true" : "false");
     setError(null);
     onLocalCreate(localCard);
     form.reset();
     setUrgent(false);
-    titleRef.current?.focus();
+    if (titleRef.current) {
+      fitTitle(titleRef.current);
+      titleRef.current.focus();
+    }
 
     startTransition(async () => {
       const response = await createCardAction(formData);
@@ -101,17 +121,26 @@ export function QuickCreateCard({
         <span>
           {t.quickAdd.title} <em>*</em>
         </span>
-        <input
+        <textarea
           ref={titleRef}
           name="title"
+          className="quick-title"
           required
           minLength={2}
           maxLength={MAX_TITLE_LENGTH}
+          rows={1}
           placeholder={t.quickAdd.titlePlaceholder}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
           autoFocus
+          onInput={onTitleInput}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }
+          }}
         />
       </label>
 
