@@ -106,6 +106,10 @@ export type Dictionary = {
     discussion: string;
     emptyThread: string;
     editTitle: string;
+    titlePlaceholder: string;
+    draftLeavePrompt: string;
+    draftLeaveCreate: string;
+    draftLeaveDiscard: string;
     attachments: string;
     attachmentsHint: string;
     attachmentsEmpty: string;
@@ -308,6 +312,10 @@ export const en: Dictionary = {
     discussion: "Discussion",
     emptyThread: "No replies yet. Write the first one.",
     editTitle: "Title",
+    titlePlaceholder: "Task title",
+    draftLeavePrompt: "This task is not created yet. Create it?",
+    draftLeaveCreate: "Create",
+    draftLeaveDiscard: "Don't create",
     attachments: "Photos & videos",
     attachmentsHint: "Up to {n} MB each, video about {minutes} min",
     attachmentsEmpty: "Add a photo or a short video",

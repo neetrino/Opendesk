@@ -14,6 +14,14 @@ import { useI18n } from "@/i18n/provider";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { displayInitials } from "@/lib/initials";
 
+const SETTINGS_DOCK_TITLE_MAX_CHARS = 8;
+
+function formatSettingsDockTitle(title: string): string {
+  return Array.from(title.trim())
+    .slice(0, SETTINGS_DOCK_TITLE_MAX_CHARS)
+    .join("");
+}
+
 type BoardSettingsSheetProps = {
   slug: string;
   joinToken: string;
@@ -68,7 +76,9 @@ export function BoardSettingsSheet({
         onClick={() => setOpen(true)}
       >
         <SettingsIcon size={18} />
-        <span className="board-dock-settings-title">{boardTitle}</span>
+        <span className="board-dock-settings-title">
+          {formatSettingsDockTitle(boardTitle)}
+        </span>
       </button>
 
       {open

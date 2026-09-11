@@ -1,26 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import type { CardStatus } from "@prisma/client";
 import { BoardSettingsSheet } from "@/components/board-settings-sheet";
-import { QuickCreateCard } from "@/components/quick-create-card";
 import type { BoardParticipant } from "@/components/participants-panel";
 import { useI18n } from "@/i18n/provider";
-import type { LocalBoardCard, LocalCardAuthor } from "@/lib/local-cards";
 
 type BoardDockProps = {
-  boardId: string;
   boardTitle: string;
-  status: CardStatus;
   slug: string;
   joinToken: string;
   participants: BoardParticipant[];
   locale: string;
-  currentUser: LocalCardAuthor;
+  displayName: string;
   isOwner: boolean;
-  onLocalCreate: (card: LocalBoardCard) => void;
-  onLocalConfirm: (tempId: string, card: LocalBoardCard) => void;
-  onLocalRollback: (tempId: string, error: string) => void;
+  onStartCreate: () => void;
 };
 
 function PlusIcon() {
@@ -43,56 +35,38 @@ function PlusIcon() {
 }
 
 export function BoardDock({
-  boardId,
   boardTitle,
-  status,
   slug,
   joinToken,
   participants,
   locale,
-  currentUser,
+  displayName,
   isOwner,
-  onLocalCreate,
-  onLocalConfirm,
-  onLocalRollback,
+  onStartCreate,
 }: BoardDockProps) {
   const { t } = useI18n();
-  const [creating, setCreating] = useState(false);
 
   return (
     <div className="board-dock" role="toolbar" aria-label={t.board.dockAria}>
-      {creating ? (
-        <QuickCreateCard
-          boardId={boardId}
-          status={status}
-          currentUser={currentUser}
-          layout="dock"
-          onLocalCreate={onLocalCreate}
-          onLocalConfirm={onLocalConfirm}
-          onLocalRollback={onLocalRollback}
-          onCancel={() => setCreating(false)}
+      <div className="board-dock-actions">
+        <BoardSettingsSheet
+          slug={slug}
+          joinToken={joinToken}
+          boardTitle={boardTitle}
+          participants={participants}
+          locale={locale}
+          displayName={displayName}
+          isOwner={isOwner}
         />
-      ) : (
-        <div className="board-dock-actions">
-          <BoardSettingsSheet
-            slug={slug}
-            joinToken={joinToken}
-            boardTitle={boardTitle}
-            participants={participants}
-            locale={locale}
-            displayName={currentUser.displayName}
-            isOwner={isOwner}
-          />
-          <button
-            type="button"
-            className="board-dock-primary"
-            onClick={() => setCreating(true)}
-          >
-            <PlusIcon />
-            {t.board.newCard}
-          </button>
-        </div>
-      )}
+        <button
+          type="button"
+          className="board-dock-primary"
+          onClick={onStartCreate}
+        >
+          <PlusIcon />
+          {t.board.newCard}
+        </button>
+      </div>
     </div>
   );
 }

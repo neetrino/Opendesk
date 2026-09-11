@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FocusEvent,
+  type PointerEvent,
+} from "react";
 import { CommentForm, type OptimisticCommentAttachment } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
 import { PencilIcon } from "@/components/pencil-icon";
@@ -9,11 +17,13 @@ import {
   setCardUrgentAction,
   updateCardContentAction,
 } from "@/lib/actions";
-import type { LocalBoardCard } from "@/lib/local-cards";
+import { isLocalCardId, type LocalBoardCard } from "@/lib/local-cards";
 import { useI18n } from "@/i18n/provider";
 import { useHistoryTrap } from "@/lib/use-history-trap";
 
 export type SheetCard = LocalBoardCard;
+
+const MIN_CARD_TITLE_LENGTH = 2;
 
 type CardSheetProps = {
   boardId: string;
@@ -21,7 +31,9 @@ type CardSheetProps = {
   locale: string;
   currentUserId: string;
   attachmentsEnabled: boolean;
+  isDraft?: boolean;
   onClose: () => void;
+  onDraftCommit?: (title: string, urgent: boolean) => Promise<string | null>;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
   onCommentSend: (
     body: string,
@@ -37,7 +49,9 @@ export function CardSheet({
   locale,
   currentUserId,
   attachmentsEnabled,
+  isDraft = false,
   onClose,
+  onDraftCommit,
   onUrgentChange,
   onCommentSend,
   onCommentRollback,
@@ -46,25 +60,63 @@ export function CardSheet({
   const [isPending, startTransition] = useTransition();
   const [cardId, setCardId] = useState(card.id);
   const [title, setTitle] = useState(card.title);
+  const [draftUrgent, setDraftUrgent] = useState(card.urgent);
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const createConfirmRef = useRef<HTMLButtonElement>(null);
+  const dismissIntentRef = useRef(false);
+  const skipCommitRef = useRef(false);
+  const commitInFlightRef = useRef(false);
+  const urgent = isDraft ? draftUrgent : card.urgent;
+  const titleReady = title.trim().length >= MIN_CARD_TITLE_LENGTH;
+
+  const requestClose = useCallback((): void => {
+    dismissIntentRef.current = false;
+    if (leaveConfirm) {
+      onClose();
+      return;
+    }
+    if (isDraft && titleReady) {
+      skipCommitRef.current = true;
+      setLeaveConfirm(true);
+      return;
+    }
+    onClose();
+  }, [isDraft, leaveConfirm, onClose, titleReady]);
 
   useHistoryTrap({
     id: "card",
     active: true,
-    onBack: onClose,
+    onBack: requestClose,
   });
 
   if (card.id !== cardId) {
     setCardId(card.id);
     setTitle(card.title);
+    setDraftUrgent(card.urgent);
+    setLeaveConfirm(false);
     setError(null);
   }
 
   useEffect(() => {
+    if (!isDraft) {
+      return;
+    }
+    titleRef.current?.focus();
+  }, [isDraft, card.id]);
+
+  useEffect(() => {
+    if (leaveConfirm) {
+      createConfirmRef.current?.focus();
+    }
+  }, [leaveConfirm]);
+
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {
-        onClose();
+        requestClose();
       }
     }
     window.addEventListener("keydown", onKeyDown);
@@ -74,7 +126,7 @@ export function CardSheet({
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [onClose]);
+  }, [requestClose]);
 
   useEffect(() => {
     const thread = threadRef.current;
@@ -84,7 +136,49 @@ export function CardSheet({
     thread.scrollTop = thread.scrollHeight;
   }, [card.id, card.comments.length]);
 
+  async function commitDraft(nextUrgent = draftUrgent): Promise<boolean> {
+    if (!isDraft || !onDraftCommit) {
+      return true;
+    }
+    if (commitInFlightRef.current) {
+      return false;
+    }
+    const nextTitle = title.trim();
+    if (nextTitle.length < MIN_CARD_TITLE_LENGTH) {
+      setError(t.errors.cardTitleShort);
+      titleRef.current?.focus();
+      return false;
+    }
+
+    commitInFlightRef.current = true;
+    setError(null);
+    const commitError = await onDraftCommit(nextTitle, nextUrgent);
+    commitInFlightRef.current = false;
+    if (commitError) {
+      setError(commitError);
+      return false;
+    }
+    setLeaveConfirm(false);
+    return true;
+  }
+
+  function markDismissIntent(): void {
+    dismissIntentRef.current = true;
+  }
+
   function toggleUrgent(): void {
+    if (isDraft) {
+      const nextUrgent = !draftUrgent;
+      setDraftUrgent(nextUrgent);
+      if (titleReady) {
+        void commitDraft(nextUrgent);
+      }
+      return;
+    }
+    if (isLocalCardId(card.id)) {
+      return;
+    }
+
     const nextUrgent = !card.urgent;
     setError(null);
     const formData = new FormData();
@@ -104,8 +198,11 @@ export function CardSheet({
 
   function saveTitle(): void {
     const nextTitle = title.trim();
-    if (nextTitle.length < 2 || nextTitle === card.title) {
-      if (nextTitle.length < 2) {
+    if (isDraft || isLocalCardId(card.id)) {
+      return;
+    }
+    if (nextTitle.length < MIN_CARD_TITLE_LENGTH || nextTitle === card.title) {
+      if (nextTitle.length < MIN_CARD_TITLE_LENGTH) {
         setTitle(card.title);
       }
       return;
@@ -124,34 +221,86 @@ export function CardSheet({
     });
   }
 
+  function onTitleBlur(event: FocusEvent<HTMLInputElement>): void {
+    if (dismissIntentRef.current || skipCommitRef.current || leaveConfirm) {
+      dismissIntentRef.current = false;
+      skipCommitRef.current = false;
+      return;
+    }
+    const next = event.relatedTarget;
+    if (
+      next instanceof HTMLElement &&
+      (next.closest("[data-sheet-dismiss]") || next.closest(".sheet-urgent"))
+    ) {
+      return;
+    }
+    if (isDraft) {
+      if (titleReady) {
+        void commitDraft();
+      }
+      return;
+    }
+    saveTitle();
+  }
+
+  function onComposerPointerDown(event: PointerEvent<HTMLDivElement>): void {
+    if (!isDraft || leaveConfirm) {
+      return;
+    }
+    if (!titleReady) {
+      event.preventDefault();
+      setError(t.errors.cardTitleShort);
+      titleRef.current?.focus();
+      return;
+    }
+    void commitDraft();
+  }
+
+  async function confirmCreateAndClose(): Promise<void> {
+    const created = await commitDraft();
+    if (created) {
+      onClose();
+    }
+  }
+
   return (
     <div className="sheet-root" role="presentation">
       <button
         type="button"
         className="sheet-backdrop"
+        data-sheet-dismiss=""
         aria-label={t.cardPage.close}
-        onClick={onClose}
+        onPointerDown={markDismissIntent}
+        onClick={requestClose}
       />
       <aside
-        className={`card-sheet${card.urgent ? " is-urgent" : ""}`}
+        className={`card-sheet${urgent ? " is-urgent" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={`card-sheet-title-${card.id}`}
       >
         <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
-          <label className="sheet-title-bar">
+          <label className={isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"}>
             <span className="visually-hidden">{t.cardPage.editTitle}</span>
             <input
+              ref={titleRef}
               id={`card-sheet-title-${card.id}`}
               className="sheet-title-input"
               value={title}
               maxLength={120}
+              placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
-              onChange={(event) => setTitle(event.target.value)}
-              onBlur={saveTitle}
+              autoFocus={isDraft}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                if (leaveConfirm) {
+                  setLeaveConfirm(false);
+                }
+              }}
+              onBlur={onTitleBlur}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.currentTarget.blur();
@@ -164,18 +313,18 @@ export function CardSheet({
             <button
               type="button"
               className={
-                card.urgent
+                urgent
                   ? "sheet-icon-btn sheet-urgent is-on"
                   : "sheet-icon-btn sheet-urgent"
               }
               onClick={toggleUrgent}
-              disabled={isPending}
-              aria-pressed={card.urgent}
+              disabled={isPending || (!isDraft && isLocalCardId(card.id))}
+              aria-pressed={urgent}
               aria-label={
-                card.urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
+                urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
               }
               title={
-                card.urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
+                urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
               }
             >
               <FireIcon size={18} />
@@ -183,7 +332,9 @@ export function CardSheet({
             <button
               type="button"
               className="sheet-icon-btn sheet-close"
-              onClick={onClose}
+              data-sheet-dismiss=""
+              onPointerDown={markDismissIntent}
+              onClick={requestClose}
               aria-label={t.cardPage.close}
             >
               ×
@@ -201,13 +352,46 @@ export function CardSheet({
             />
           </div>
           <div className="sheet-composer">
-            <CommentForm
-              boardId={boardId}
-              cardId={card.id}
-              enabled={attachmentsEnabled}
-              onOptimisticSend={onCommentSend}
-              onOptimisticRollback={onCommentRollback}
-            />
+            {leaveConfirm ? (
+              <div
+                className="sheet-draft-confirm"
+                role="alertdialog"
+                aria-labelledby={`card-sheet-leave-${card.id}`}
+              >
+                <p id={`card-sheet-leave-${card.id}`}>
+                  {t.cardPage.draftLeavePrompt}
+                </p>
+                <div className="sheet-draft-confirm-actions">
+                  <button
+                    type="button"
+                    className="button button-cancel"
+                    onClick={onClose}
+                  >
+                    {t.cardPage.draftLeaveDiscard}
+                  </button>
+                  <button
+                    ref={createConfirmRef}
+                    type="button"
+                    className="button button-save"
+                    onClick={() => {
+                      void confirmCreateAndClose();
+                    }}
+                  >
+                    {t.cardPage.draftLeaveCreate}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div onPointerDownCapture={onComposerPointerDown}>
+                <CommentForm
+                  boardId={boardId}
+                  cardId={card.id}
+                  enabled={attachmentsEnabled}
+                  onOptimisticSend={onCommentSend}
+                  onOptimisticRollback={onCommentRollback}
+                />
+              </div>
+            )}
           </div>
         </div>
       </aside>
