@@ -30,6 +30,7 @@ export type BoardCard = LocalBoardCard;
 
 type KanbanBoardProps = {
   boardId: string;
+  boardTitle: string;
   cards: BoardCard[];
   locale: string;
   attachmentsEnabled: boolean;
@@ -40,6 +41,7 @@ type KanbanBoardProps = {
     participantId: string;
     displayName: string;
   };
+  isOwner: boolean;
 };
 
 type DragPayload = {
@@ -63,6 +65,7 @@ type OptimisticUpdate =
 
 export function KanbanBoard({
   boardId,
+  boardTitle,
   cards,
   locale,
   attachmentsEnabled,
@@ -70,6 +73,7 @@ export function KanbanBoard({
   joinToken,
   participants,
   currentUser,
+  isOwner,
 }: KanbanBoardProps) {
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
@@ -359,12 +363,14 @@ export function KanbanBoard({
 
       <BoardDock
         boardId={boardId}
+        boardTitle={boardTitle}
         status={activeStatus}
         slug={slug}
         joinToken={joinToken}
         participants={participants}
         locale={locale}
         currentUser={currentUser}
+        isOwner={isOwner}
         onLocalCreate={(card) => {
           setBoardError(null);
           setLocalCards((current) => [...current, card]);

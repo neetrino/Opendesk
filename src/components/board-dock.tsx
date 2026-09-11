@@ -10,12 +10,14 @@ import type { LocalBoardCard, LocalCardAuthor } from "@/lib/local-cards";
 
 type BoardDockProps = {
   boardId: string;
+  boardTitle: string;
   status: CardStatus;
   slug: string;
   joinToken: string;
   participants: BoardParticipant[];
   locale: string;
   currentUser: LocalCardAuthor;
+  isOwner: boolean;
   onLocalCreate: (card: LocalBoardCard) => void;
   onLocalConfirm: (tempId: string, card: LocalBoardCard) => void;
   onLocalRollback: (tempId: string, error: string) => void;
@@ -42,12 +44,14 @@ function PlusIcon() {
 
 export function BoardDock({
   boardId,
+  boardTitle,
   status,
   slug,
   joinToken,
   participants,
   locale,
   currentUser,
+  isOwner,
   onLocalCreate,
   onLocalConfirm,
   onLocalRollback,
@@ -73,8 +77,11 @@ export function BoardDock({
           <BoardSettingsSheet
             slug={slug}
             joinToken={joinToken}
+            boardTitle={boardTitle}
             participants={participants}
             locale={locale}
+            displayName={currentUser.displayName}
+            isOwner={isOwner}
           />
           <button
             type="button"

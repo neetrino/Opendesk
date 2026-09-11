@@ -66,9 +66,11 @@ export function BoardWorkspace({
       </header>
       <KanbanBoard
         boardId={board.id}
+        boardTitle={board.title}
         cards={board.cards}
         locale={locale}
         currentUser={currentUser}
+        isOwner={isOwner}
         attachmentsEnabled={attachmentsEnabled}
         slug={board.slug}
         joinToken={board.joinToken}

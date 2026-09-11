@@ -849,6 +849,10 @@ textarea {
 
 .participants-sheet-title {
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 1.05rem;
   font-family: var(--font-display), sans-serif;
   letter-spacing: -0.03em;
@@ -949,6 +953,22 @@ textarea {
 .board-identity strong {
   color: var(--ink);
   font-weight: 650;
+}
+
+.board-session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper-raised) 86%, var(--canvas));
+}
+
+.board-session-card .board-identity {
+  margin: 0;
+  min-width: 0;
 }
 
 .board-avatar,
@@ -2741,12 +2761,14 @@ textarea {
   }
 
   .board-dock-settings {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 52%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    padding: 0 1rem;
+    padding: 0 0.85rem;
     border: 1px solid var(--line-strong);
     background: var(--paper-raised);
     color: var(--ink);
@@ -2754,6 +2776,13 @@ textarea {
     font-size: 0.88rem;
     font-weight: 700;
     cursor: pointer;
+  }
+
+  .board-dock-settings-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .board-dock-primary {
@@ -2779,31 +2808,27 @@ textarea {
   }
 
   .board-top {
-    position: static;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0.65rem;
-    padding: 0.75rem 0.85rem;
+    position: absolute;
+    top: auto;
+    left: 0;
+    z-index: 0;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    box-shadow: none;
+    background: none;
+    pointer-events: none;
   }
 
-  .board-top h1 {
-    font-size: 1.25rem;
-  }
-
-  .board-top-main {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .board-top-actions {
-    flex: 1 1 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    margin-left: 0;
-  }
-
-  .board-logout {
-    margin-left: auto;
+  .board-top .board-identity,
+  .board-top .board-logout,
+  .board-top .board-top-actions {
+    display: none;
   }
 
   .invite-actions.compact {
@@ -2910,7 +2935,7 @@ textarea {
     display: none;
     flex: none;
     width: 100%;
-    min-height: calc(100dvh - 16rem);
+    min-height: calc(100dvh - 11.5rem);
     padding: 0.65rem;
     border-radius: 18px;
   }

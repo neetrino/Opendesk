@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { InviteButton } from "@/components/invite-button";
+import { LogoutButton } from "@/components/logout-button";
+import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import {
   ParticipantsList,
   type BoardParticipant,
@@ -10,23 +12,31 @@ import {
 import { SettingsIcon } from "@/components/settings-icon";
 import { useI18n } from "@/i18n/provider";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
+import { displayInitials } from "@/lib/initials";
 
 type BoardSettingsSheetProps = {
   slug: string;
   joinToken: string;
+  boardTitle: string;
   participants: BoardParticipant[];
   locale: string;
+  displayName: string;
+  isOwner: boolean;
 };
 
 export function BoardSettingsSheet({
   slug,
   joinToken,
+  boardTitle,
   participants,
   locale,
+  displayName,
+  isOwner,
 }: BoardSettingsSheetProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const count = `${participants.length}/${MAX_BOARD_PARTICIPANTS}`;
+  const settingsLabel = `${t.board.settingsAria}: ${boardTitle}`;
 
   useEffect(() => {
     if (!open) {
@@ -53,11 +63,12 @@ export function BoardSettingsSheet({
       <button
         type="button"
         className="board-dock-settings"
-        aria-label={t.board.settingsAria}
+        aria-label={settingsLabel}
+        title={settingsLabel}
         onClick={() => setOpen(true)}
       >
         <SettingsIcon size={18} />
-        {t.board.settings}
+        <span className="board-dock-settings-title">{boardTitle}</span>
       </button>
 
       {open
@@ -81,7 +92,8 @@ export function BoardSettingsSheet({
                     id="board-settings-title"
                     className="participants-sheet-title"
                   >
-                    {t.board.settings}
+                    <span className="visually-hidden">{t.board.settings}: </span>
+                    {boardTitle}
                   </h2>
                   <button
                     type="button"
@@ -95,6 +107,20 @@ export function BoardSettingsSheet({
 
                 <div className="sheet-body">
                   <div className="sheet-details">
+                    <div className="sheet-block">
+                      <div className="board-session-card">
+                        <p className="board-identity">
+                          <span className="board-avatar" aria-hidden="true">
+                            {displayInitials(displayName)}
+                          </span>
+                          <span>
+                            {t.board.youAre}{" "}
+                            <strong>{displayName}</strong>
+                          </span>
+                        </p>
+                        {isOwner ? <OwnerLogoutButton /> : <LogoutButton />}
+                      </div>
+                    </div>
                     <div className="sheet-block">
                       <InviteButton slug={slug} joinToken={joinToken} />
                     </div>
