@@ -73,6 +73,7 @@ export function VoiceNotePlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
+  const [source, setSource] = useState(src);
   const [peaks, setPeaks] = useState(() =>
     fallbackWaveform(src, VOICE_WAVEFORM_BAR_COUNT),
   );
@@ -80,17 +81,20 @@ export function VoiceNotePlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
+  if (src !== source) {
+    setSource(src);
+    setPeaks(fallbackWaveform(src, VOICE_WAVEFORM_BAR_COUNT));
+    setPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+  }
+
   const uploading = progress !== undefined && progress < 100;
   const ratio = duration > 0 ? currentTime / duration : 0;
   const playedCount = playedBarCount(ratio, peaks.length);
   const clock = formatVoiceClock(playing || currentTime > 0 ? currentTime : duration);
 
   useEffect(() => {
-    setPeaks(fallbackWaveform(src, VOICE_WAVEFORM_BAR_COUNT));
-    setPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-
     if (!src.startsWith("blob:") || typeof AudioContext === "undefined") {
       return;
     }
