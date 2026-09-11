@@ -489,7 +489,6 @@ export function CommentForm({
         onTakePhoto={camera.takePhoto}
         onStartVideo={camera.startVideo}
         onStopVideo={camera.stopVideo}
-        onCancelVideo={camera.cancelVideo}
         labels={{
           close: t.comment.closeCamera,
           closeAria: t.comment.closeCameraAria,
