@@ -8,10 +8,12 @@ import {
   type DragEvent,
 } from "react";
 import type { CardStatus } from "@prisma/client";
+import { BoardDock } from "@/components/board-dock";
 import { CardSheet } from "@/components/card-sheet";
 import type { OptimisticCommentAttachment } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
 import { PaperclipIcon } from "@/components/paperclip-icon";
+import type { BoardParticipant } from "@/components/participants-panel";
 import { QuickCreateCard } from "@/components/quick-create-card";
 import { moveCardAction } from "@/lib/actions";
 import { CARD_STATUSES } from "@/lib/constants";
@@ -31,6 +33,9 @@ type KanbanBoardProps = {
   cards: BoardCard[];
   locale: string;
   attachmentsEnabled: boolean;
+  slug: string;
+  joinToken: string;
+  participants: BoardParticipant[];
   currentUser: {
     participantId: string;
     displayName: string;
@@ -61,6 +66,9 @@ export function KanbanBoard({
   cards,
   locale,
   attachmentsEnabled,
+  slug,
+  joinToken,
+  participants,
   currentUser,
 }: KanbanBoardProps) {
   const { t } = useI18n();
@@ -349,11 +357,37 @@ export function KanbanBoard({
         })}
       </div>
 
+      <BoardDock
+        boardId={boardId}
+        status={activeStatus}
+        slug={slug}
+        joinToken={joinToken}
+        participants={participants}
+        locale={locale}
+        currentUser={currentUser}
+        onLocalCreate={(card) => {
+          setBoardError(null);
+          setLocalCards((current) => [...current, card]);
+        }}
+        onLocalConfirm={(tempId, card) => {
+          setLocalCards((current) =>
+            current.map((item) => (item.id === tempId ? card : item)),
+          );
+        }}
+        onLocalRollback={(tempId, error) => {
+          setLocalCards((current) =>
+            current.filter((item) => item.id !== tempId),
+          );
+          setBoardError(error);
+        }}
+      />
+
       {selectedCard ? (
         <CardSheet
           boardId={boardId}
           card={selectedCard}
           locale={locale}
+          currentUserId={currentUser.participantId}
           attachmentsEnabled={attachmentsEnabled}
           onClose={() => setSelectedCardId(null)}
           onUrgentChange={(cardId, urgent) => {

@@ -7,6 +7,7 @@ import {
   buildObjectKey,
   resolveContentType,
   sanitizeFilename,
+  type AttachmentKind,
   type AttachmentUploadTarget,
 } from "@/lib/attachments";
 import { requireBoardAccess } from "@/lib/board-access";
@@ -30,7 +31,7 @@ export type AttachmentUploadPayload = {
   uploadUrl: string;
   objectKey: string;
   contentType: string;
-  kind: "image" | "video";
+  kind: AttachmentKind;
   filename: string;
 };
 

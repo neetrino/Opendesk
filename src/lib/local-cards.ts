@@ -7,7 +7,7 @@ export type BoardAttachment = {
   filename: string;
   contentType: string;
   byteSize: number;
-  kind: "image" | "video";
+  kind: "image" | "video" | "audio";
   createdAt: Date;
   commentId: string | null;
   authorId: string;

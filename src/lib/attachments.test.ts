@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyAttachmentLimitCopy,
   attachmentKindFor,
   attachmentLimitFor,
   buildObjectKey,
@@ -33,6 +34,10 @@ describe("attachment helpers", () => {
       false,
     );
     expect(attachmentKindFor("video/mp4")).toBe("video");
+    expect(attachmentKindFor("audio/webm")).toBe("audio");
+    expect(resolveContentType("audio/webm;codecs=opus", "voice-note.webm")).toBe(
+      "audio/webm",
+    );
   });
 
   it("sanitizes path characters in filenames", () => {
@@ -44,6 +49,8 @@ describe("attachment helpers", () => {
     expect(canPreviewInline("image/heic", "image")).toBe(false);
     expect(canPreviewInline("video/mp4", "video")).toBe(true);
     expect(canPreviewInline("video/quicktime", "video")).toBe(false);
+    expect(canPreviewInline("audio/webm", "audio")).toBe(true);
+    expect(canPreviewInline("audio/mp4", "audio")).toBe(true);
   });
 
   it("keeps comment attachment quota independent of card-level files", () => {
@@ -83,5 +90,11 @@ describe("comment attachments schema", () => {
       attachments: [],
     });
     expect(parsed.success).toBe(false);
+  });
+
+  it("fills size and duration placeholders in limit copy", () => {
+    expect(
+      applyAttachmentLimitCopy("Up to {n} MB, about {minutes} min"),
+    ).toBe("Up to 200 MB, about 2 min");
   });
 });

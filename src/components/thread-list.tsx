@@ -16,13 +16,14 @@ type ThreadComment = {
   id: string;
   body: string;
   createdAt: Date;
-  author: { displayName: string };
+  author: { id: string; displayName: string };
   attachments: ThreadAttachment[];
 };
 
 type ThreadListProps = {
   comments: ThreadComment[];
   locale: string;
+  currentUserId: string;
 };
 
 function toItem(attachment: ThreadAttachment): MediaItem {
@@ -35,7 +36,7 @@ function toItem(attachment: ThreadAttachment): MediaItem {
   };
 }
 
-export function ThreadList({ comments, locale }: ThreadListProps) {
+export function ThreadList({ comments, locale, currentUserId }: ThreadListProps) {
   const { t } = useI18n();
   const [openItem, setOpenItem] = useState<MediaItem | null>(null);
 
@@ -45,32 +46,43 @@ export function ThreadList({ comments, locale }: ThreadListProps) {
 
   return (
     <>
-      {comments.map((comment) => (
-        <div key={comment.id} className="thread-item">
-          <header>
-            <strong>{comment.author.displayName}</strong>
-            <span className="muted">
-              {comment.createdAt.toLocaleString(locale)}
-            </span>
-          </header>
-          {comment.body ? <p>{comment.body}</p> : null}
-          {comment.attachments.length > 0 ? (
-            <div className="thread-media">
-              {comment.attachments.map((attachment) => {
-                const item = toItem(attachment);
-                return (
-                  <MediaThumb
-                    key={attachment.id}
-                    item={item}
-                    onOpen={() => setOpenItem(item)}
-                    openLabel={t.cardPage.attachmentOpen}
-                  />
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
-      ))}
+      {comments.map((comment) => {
+        const own = comment.author.id === currentUserId;
+        const time = new Date(comment.createdAt).toLocaleTimeString(locale, {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        return (
+          <div
+            key={comment.id}
+            className={own ? "thread-item is-own" : "thread-item"}
+          >
+            {own ? null : (
+              <span className="thread-author">{comment.author.displayName}</span>
+            )}
+            {comment.body ? <p>{comment.body}</p> : null}
+            {comment.attachments.length > 0 ? (
+              <div className="thread-media">
+                {comment.attachments.map((attachment) => {
+                  const item = toItem(attachment);
+                  return (
+                    <MediaThumb
+                      key={attachment.id}
+                      item={item}
+                      onOpen={() => setOpenItem(item)}
+                      openLabel={t.cardPage.attachmentOpen}
+                    />
+                  );
+                })}
+              </div>
+            ) : null}
+            <time className="thread-time" dateTime={new Date(comment.createdAt).toISOString()}>
+              {time}
+            </time>
+          </div>
+        );
+      })}
       {openItem ? (
         <MediaLightbox
           item={openItem}
