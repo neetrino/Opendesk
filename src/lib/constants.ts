@@ -25,7 +25,13 @@ export const MAX_ATTACHMENT_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
 export const VIDEO_DURATION_HINT_MINUTES = 2;
 export const MAX_ATTACHMENT_FILENAME_LENGTH = 180;
 export const MAX_CARD_ATTACHMENTS = 20;
+/** Files attached to one comment (composer + persist). */
 export const MAX_COMMENT_ATTACHMENTS = 4;
+/**
+ * All comment files on one card. Independent of the per-comment cap so a
+ * photo thread is not blocked after a few messages.
+ */
+export const MAX_CARD_COMMENT_ATTACHMENTS = 100;
 /** Field voice notes: long enough to describe a site, still a small upload. */
 export const MAX_VOICE_NOTE_SECONDS = 5 * 60;
 /** Hold the in-app shutter this long, then keep holding to record video. */

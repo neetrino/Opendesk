@@ -54,7 +54,7 @@
 | 3.4 | Rate limiting | middleware (базовый) | ✅ | in-memory per isolate; best-effort на Vercel |
 | 3.5 | API docs | не нужно | ➖ | |
 | 3.6 | CRON | не нужно | ➖ | |
-| 3.7 | Файлы | Cloudflare R2, photo/video до 200 MB | ✅ | presigned PUT, signed GET; in-app camera overlay (gallery on that screen); Permissions-Policy camera/microphone self |
+| 3.7 | Файлы | Cloudflare R2, photo/video до 200 MB | ✅ | presigned PUT, signed GET; in-app camera overlay (gallery on that screen); Permissions-Policy camera/microphone self; до 4 файлов в одном комментарии, до 100 файлов в чате карточки |
 
 ---
 
@@ -104,7 +104,7 @@
 
 | # | Параметр | Решение | Статус | Заметка |
 |---|----------|---------|--------|---------|
-| 6.1 | R2 | Cloudflare R2 | ✅ | фото/видео/аудио в карточках и чате, max 200 MB |
+| 6.1 | R2 | Cloudflare R2 | ✅ | фото/видео/аудио в карточках и чате, max 200 MB; чат карточки до 100 файлов |
 | 6.2 | CDN | Vercel Edge | ✅ | |
 | 6.3 | next/image | не нужно | ➖ | |
 
