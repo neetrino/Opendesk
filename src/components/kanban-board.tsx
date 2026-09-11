@@ -14,15 +14,16 @@ import type { OptimisticCommentAttachment } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
 import { PaperclipIcon } from "@/components/paperclip-icon";
 import type { BoardParticipant } from "@/components/participants-panel";
-import { QuickCreateCard } from "@/components/quick-create-card";
-import { moveCardAction } from "@/lib/actions";
+import { createCardAction, moveCardAction } from "@/lib/actions";
 import { CARD_STATUSES } from "@/lib/constants";
 import { displayInitials } from "@/lib/initials";
 import { useI18n } from "@/i18n/provider";
 import {
+  buildLocalBoardCard,
   isLocalCardId,
   mergeLocalCards,
   pruneConfirmedLocalCards,
+  toBoardCardFromCreated,
   type LocalBoardCard,
 } from "@/lib/local-cards";
 
@@ -30,6 +31,7 @@ export type BoardCard = LocalBoardCard;
 
 type KanbanBoardProps = {
   boardId: string;
+  boardTitle: string;
   cards: BoardCard[];
   locale: string;
   attachmentsEnabled: boolean;
@@ -40,6 +42,7 @@ type KanbanBoardProps = {
     participantId: string;
     displayName: string;
   };
+  isOwner: boolean;
 };
 
 type DragPayload = {
@@ -63,6 +66,7 @@ type OptimisticUpdate =
 
 export function KanbanBoard({
   boardId,
+  boardTitle,
   cards,
   locale,
   attachmentsEnabled,
@@ -70,11 +74,13 @@ export function KanbanBoard({
   joinToken,
   participants,
   currentUser,
+  isOwner,
 }: KanbanBoardProps) {
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
   const [dragOverStatus, setDragOverStatus] = useState<CardStatus | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [draftCard, setDraftCard] = useState<BoardCard | null>(null);
   const [activeStatus, setActiveStatus] = useState<CardStatus>("new");
   const [boardError, setBoardError] = useState<string | null>(null);
   const [localCards, setLocalCards] = useState<BoardCard[]>([]);
@@ -150,7 +156,72 @@ export function KanbanBoard({
   const selectedCard =
     selectedCardId === null
       ? null
-      : (optimisticCards.find((card) => card.id === selectedCardId) ?? null);
+      : (optimisticCards.find((card) => card.id === selectedCardId) ??
+        (draftCard?.id === selectedCardId ? draftCard : null));
+  const selectedIsDraft =
+    draftCard !== null && selectedCardId === draftCard.id;
+
+  function startCreate(status: CardStatus): void {
+    const draft = buildLocalBoardCard({
+      boardId,
+      status,
+      title: "",
+      urgent: false,
+      author: currentUser,
+    });
+    setBoardError(null);
+    setDraftCard(draft);
+    setSelectedCardId(draft.id);
+  }
+
+  function closeSheet(): void {
+    setSelectedCardId(null);
+    setDraftCard(null);
+  }
+
+  async function commitDraft(
+    title: string,
+    urgent: boolean,
+  ): Promise<string | null> {
+    if (!draftCard) {
+      return t.errors.createCard;
+    }
+
+    const localCard: BoardCard = {
+      ...draftCard,
+      title,
+      urgent,
+      updatedAt: new Date(),
+    };
+    setBoardError(null);
+    setLocalCards((current) => [...current, localCard]);
+    setDraftCard(null);
+
+    const formData = new FormData();
+    formData.set("boardId", boardId);
+    formData.set("status", localCard.status);
+    formData.set("title", title);
+    formData.set("urgent", urgent ? "true" : "false");
+
+    const response = await createCardAction(formData);
+    if (!response.ok) {
+      setLocalCards((current) =>
+        current.filter((item) => item.id !== localCard.id),
+      );
+      setDraftCard(localCard);
+      setBoardError(response.error);
+      return response.error;
+    }
+
+    const confirmed = toBoardCardFromCreated(response.data, currentUser);
+    setLocalCards((current) =>
+      current.map((item) => (item.id === localCard.id ? confirmed : item)),
+    );
+    setSelectedCardId((current) =>
+      current === localCard.id ? confirmed.id : current,
+    );
+    return null;
+  }
 
   function onDragStart(
     event: DragEvent<HTMLElement>,
@@ -225,6 +296,7 @@ export function KanbanBoard({
             <button
               key={status}
               type="button"
+              aria-pressed={activeStatus === status}
               className={
                 activeStatus === status
                   ? `board-stage-tab stage-${status} is-active`
@@ -251,6 +323,7 @@ export function KanbanBoard({
           return (
             <section
               key={status}
+              aria-label={t.columns[status]}
               className={
                 dragOverStatus === status
                   ? `board-column column-${status} is-drop-target${isFocused ? " is-focused" : ""}`
@@ -261,30 +334,21 @@ export function KanbanBoard({
               onDrop={(event) => onDrop(event, status)}
             >
               <header className="column-header">
-                <h2>{t.columns[status]}</h2>
-                <span className="count">{columnCards.length}</span>
+                <div className={`board-stage-tab stage-${status} is-active`}>
+                  <h2 className="board-stage-label">{t.columns[status]}</h2>
+                  <span className="board-stage-count">
+                    {columnCards.length}
+                  </span>
+                </div>
               </header>
 
-              <QuickCreateCard
-                boardId={boardId}
-                status={status}
-                currentUser={currentUser}
-                onLocalCreate={(card) => {
-                  setBoardError(null);
-                  setLocalCards((current) => [...current, card]);
-                }}
-                onLocalConfirm={(tempId, card) => {
-                  setLocalCards((current) =>
-                    current.map((item) => (item.id === tempId ? card : item)),
-                  );
-                }}
-                onLocalRollback={(tempId, error) => {
-                  setLocalCards((current) =>
-                    current.filter((item) => item.id !== tempId),
-                  );
-                  setBoardError(error);
-                }}
-              />
+              <button
+                type="button"
+                className="quick-add-trigger"
+                onClick={() => startCreate(status)}
+              >
+                {t.quickAdd.trigger}
+              </button>
 
               <div className="column-stack">
                 {columnCards.length === 0 ? (
@@ -302,9 +366,7 @@ export function KanbanBoard({
                         onDragStart(event, card.id, card.status)
                       }
                       onClick={() => {
-                        if (!isLocal) {
-                          onCardClick(card.id);
-                        }
+                        onCardClick(card.id);
                       }}
                     >
                       <div className="card-meta">
@@ -358,28 +420,14 @@ export function KanbanBoard({
       </div>
 
       <BoardDock
-        boardId={boardId}
-        status={activeStatus}
+        boardTitle={boardTitle}
         slug={slug}
         joinToken={joinToken}
         participants={participants}
         locale={locale}
-        currentUser={currentUser}
-        onLocalCreate={(card) => {
-          setBoardError(null);
-          setLocalCards((current) => [...current, card]);
-        }}
-        onLocalConfirm={(tempId, card) => {
-          setLocalCards((current) =>
-            current.map((item) => (item.id === tempId ? card : item)),
-          );
-        }}
-        onLocalRollback={(tempId, error) => {
-          setLocalCards((current) =>
-            current.filter((item) => item.id !== tempId),
-          );
-          setBoardError(error);
-        }}
+        displayName={currentUser.displayName}
+        isOwner={isOwner}
+        onStartCreate={() => startCreate(activeStatus)}
       />
 
       {selectedCard ? (
@@ -389,7 +437,9 @@ export function KanbanBoard({
           locale={locale}
           currentUserId={currentUser.participantId}
           attachmentsEnabled={attachmentsEnabled}
-          onClose={() => setSelectedCardId(null)}
+          isDraft={selectedIsDraft}
+          onClose={closeSheet}
+          onDraftCommit={commitDraft}
           onUrgentChange={(cardId, urgent) => {
             setOptimisticCards({ kind: "urgent", cardId, urgent });
           }}

@@ -111,6 +111,10 @@ export const hy: Dictionary = {
     discussion: "Քննարկում",
     emptyThread: "Դեռ պատասխաններ չկան։ Գրեք առաջինը։",
     editTitle: "Անվանում",
+    titlePlaceholder: "Առաջադրանքի անվանում",
+    draftLeavePrompt: "Առաջադրանքը դեռ չի ստեղծվել։ Ստեղծե՞լ այն։",
+    draftLeaveCreate: "Ստեղծել",
+    draftLeaveDiscard: "Չստեղծել",
     attachments: "Լուսանկարներ և տեսանյութեր",
     attachmentsHint: "Մինչև {n} ՄԲ, տեսանյութը՝ մոտ {minutes} րոպե",
     attachmentsEmpty: "Ավելացրեք լուսանկար կամ կարճ տեսանյութ",
@@ -157,6 +161,14 @@ export const hy: Dictionary = {
   common: {
     stageAria: "Քարտի փուլ",
     credit: "by Neetrino",
+  },
+  install: {
+    title: "Տեղադրել OpenDesk",
+    androidBody: "Բացեք տախտակը որպես հավելված՝ գլխավոր էկրանից։",
+    androidAction: "Տեղադրել",
+    iosBody: "iPhone-ում՝ Կիսվել → Ավելացնել գլխավոր էկրանին։",
+    dismiss: "Ոչ հիմա",
+    dismissAria: "Փակել տեղադրման հուշումը",
   },
   errors: {
     validation: "Վալիդացիայի սխալ",

@@ -27,6 +27,8 @@ pnpm dev
 
 Откройте [http://localhost:3000](http://localhost:3000) → `/login` для owner.
 
+На телефоне (HTTPS или localhost): Android — «Установить» в баннере или меню Chrome; iPhone Safari — Поделиться → На экран «Домой». Со страницы доски иконка открывает эту доску. Офлайн и push не входят.
+
 ## Деплой на Vercel
 
 1. Neon → `DATABASE_URL` (для runtime лучше **pooled**).

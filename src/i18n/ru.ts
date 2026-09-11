@@ -111,6 +111,10 @@ export const ru: Dictionary = {
     discussion: "Обсуждение",
     emptyThread: "Пока нет ответов. Напишите первый.",
     editTitle: "Название",
+    titlePlaceholder: "Название задачи",
+    draftLeavePrompt: "Задача ещё не создана. Создать её?",
+    draftLeaveCreate: "Создать",
+    draftLeaveDiscard: "Не создавать",
     attachments: "Фото и видео",
     attachmentsHint: "До {n} МБ, видео примерно {minutes} мин",
     attachmentsEmpty: "Добавьте фото или короткое видео",
@@ -157,6 +161,14 @@ export const ru: Dictionary = {
   common: {
     stageAria: "Стадия карточки",
     credit: "by Neetrino",
+  },
+  install: {
+    title: "Установить OpenDesk",
+    androidBody: "Открывайте доску как приложение — с экрана «Домой».",
+    androidAction: "Установить",
+    iosBody: "На iPhone: Поделиться → На экран «Домой».",
+    dismiss: "Не сейчас",
+    dismissAria: "Скрыть подсказку установки",
   },
   errors: {
     validation: "Ошибка валидации",

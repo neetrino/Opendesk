@@ -194,7 +194,7 @@ export function CommentForm({
   }
 
   function sendComment(body: string, files: PendingCommentFile[]): void {
-    if (body.length === 0 && files.length === 0) {
+    if (locked || (body.length === 0 && files.length === 0)) {
       return;
     }
 
@@ -261,7 +261,7 @@ export function CommentForm({
 
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    if (recording) {
+    if (recording || locked) {
       return;
     }
     const body = textareaRef.current?.value.trim() ?? "";
@@ -452,7 +452,7 @@ export function CommentForm({
             className="comment-action"
             type={canSend && !recording ? "submit" : "button"}
             onClick={onPrimaryClick}
-            disabled={!canAttach && !canSend}
+            disabled={locked || (!canAttach && !canSend)}
             aria-label={
               recording || canSend ? t.comment.send : t.comment.recordVoiceAria
             }
