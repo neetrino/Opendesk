@@ -1935,6 +1935,7 @@ textarea {
   z-index: 80;
   display: grid;
   place-items: center;
+  cursor: pointer;
 }
 
 .media-lightbox-backdrop {
@@ -1942,13 +1943,38 @@ textarea {
   inset: 0;
   border: none;
   background: rgba(16, 24, 20, 0.72);
+  pointer-events: none;
+}
+
+.media-lightbox-close {
+  position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 1.7rem;
+  line-height: 1;
   cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.media-lightbox-close:hover {
+  background: #fff;
 }
 
 .media-lightbox-frame {
   position: relative;
   z-index: 1;
-  width: min(920px, calc(100vw - 1.5rem));
+  width: fit-content;
+  max-width: min(920px, calc(100vw - 2.5rem));
   max-height: 88vh;
   display: grid;
   gap: 0.55rem;
