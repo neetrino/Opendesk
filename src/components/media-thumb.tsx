@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type MouseEvent } from "react";
 import { canPreviewInline } from "@/lib/attachments";
 
 export type MediaItem = {
@@ -78,33 +78,62 @@ export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps)
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {
+        event.stopImmediatePropagation();
         onClose();
       }
     }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [onClose]);
 
+  function keepOpen(event: MouseEvent<HTMLElement>): void {
+    event.stopPropagation();
+  }
+
   return (
-    <div className="media-lightbox" role="dialog" aria-modal="true">
+    <div
+      className="media-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.filename}
+      onClick={onClose}
+    >
+      <div className="media-lightbox-backdrop" aria-hidden="true" />
       <button
         type="button"
-        className="media-lightbox-backdrop"
+        className="media-lightbox-close"
         aria-label={closeLabel}
-        onClick={onClose}
-      />
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+      >
+        ×
+      </button>
       <div className="media-lightbox-frame">
         {previewable && item.kind === "image" ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.src} alt={item.filename} />
+          <img src={item.src} alt={item.filename} onClick={keepOpen} />
         ) : previewable && item.kind === "video" ? (
-          <video src={item.src} controls autoPlay playsInline />
+          <video
+            src={item.src}
+            controls
+            autoPlay
+            playsInline
+            onClick={keepOpen}
+          />
         ) : (
-          <a className="media-lightbox-link" href={item.src} target="_blank" rel="noreferrer">
+          <a
+            className="media-lightbox-link"
+            href={item.src}
+            target="_blank"
+            rel="noreferrer"
+            onClick={keepOpen}
+          >
             {item.filename}
           </a>
         )}
-        <p>{item.filename}</p>
+        <p onClick={keepOpen}>{item.filename}</p>
       </div>
     </div>
   );

@@ -956,15 +956,26 @@ textarea {
   border-radius: 13px;
   background: color-mix(in srgb, var(--paper-raised) 88%, white);
   border: 1px solid color-mix(in srgb, var(--column-accent) 16%, var(--line));
-  border-left: 4px solid var(--column-accent);
 }
 
 .column-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--ink);
+}
+
+.column-header h2::before {
+  content: "";
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--column-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--column-accent) 18%, transparent);
 }
 
 .count {
@@ -1111,7 +1122,7 @@ textarea {
   grid-template-rows: auto auto auto;
   gap: 0.4rem;
   min-height: 0;
-  padding: 0.75rem 0.8rem 0.7rem 0.9rem;
+  padding: 0.75rem 0.8rem 0.7rem;
   border-radius: 14px;
   border: 1px solid rgba(23, 33, 27, 0.08);
   background: var(--paper-raised);
@@ -1125,17 +1136,6 @@ textarea {
   position: relative;
   overflow: hidden;
   align-content: stretch;
-}
-
-.card-tile::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.7rem;
-  bottom: 0.7rem;
-  width: 3px;
-  border-radius: 999px;
-  background: var(--column-accent);
 }
 
 .card-tile:hover {
@@ -1153,11 +1153,6 @@ textarea {
   background: var(--urgent-soft);
   border-color: color-mix(in srgb, var(--urgent) 30%, transparent);
   box-shadow: 3px 3px 0 color-mix(in srgb, var(--urgent) 18%, transparent);
-}
-
-.card-tile.is-urgent::before {
-  width: 3px;
-  background: var(--urgent);
 }
 
 .card-tile.is-urgent:hover {
@@ -1185,10 +1180,13 @@ textarea {
 }
 
 .card-sheet.is-urgent {
-  border-top-color: #e2410d;
   box-shadow:
-    0 24px 60px rgba(226, 65, 13, 0.22),
-    0 0 0 1px rgba(226, 65, 13, 0.12);
+    0 24px 60px rgba(226, 65, 13, 0.16),
+    0 0 0 1px rgba(226, 65, 13, 0.1);
+}
+
+.card-sheet.is-urgent .sheet-header {
+  background: var(--urgent-soft);
 }
 
 .card-meta {
@@ -1277,7 +1275,6 @@ textarea {
   border-radius: 20px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
-  border-top: 4px solid var(--accent);
   box-shadow: 0 28px 70px rgba(16, 24, 20, 0.28);
   overflow: hidden;
   animation: sheet-in 220ms ease;
@@ -1938,6 +1935,7 @@ textarea {
   z-index: 80;
   display: grid;
   place-items: center;
+  cursor: pointer;
 }
 
 .media-lightbox-backdrop {
@@ -1945,13 +1943,38 @@ textarea {
   inset: 0;
   border: none;
   background: rgba(16, 24, 20, 0.72);
+  pointer-events: none;
+}
+
+.media-lightbox-close {
+  position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 1.7rem;
+  line-height: 1;
   cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.media-lightbox-close:hover {
+  background: #fff;
 }
 
 .media-lightbox-frame {
   position: relative;
   z-index: 1;
-  width: min(920px, calc(100vw - 1.5rem));
+  width: fit-content;
+  max-width: min(920px, calc(100vw - 2.5rem));
   max-height: 88vh;
   display: grid;
   gap: 0.55rem;
@@ -2303,7 +2326,7 @@ textarea {
   .card-tile {
     height: auto;
     min-height: 7.4rem;
-    padding: 0.8rem 0.85rem 0.75rem 0.95rem;
+    padding: 0.8rem 0.85rem 0.75rem;
     cursor: pointer;
   }
 
