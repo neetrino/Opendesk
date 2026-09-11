@@ -9,14 +9,17 @@ import {
   type FocusEvent,
   type PointerEvent,
 } from "react";
+import type { CardStatus } from "@prisma/client";
 import { CommentForm, type OptimisticCommentAttachment } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
 import { PencilIcon } from "@/components/pencil-icon";
 import { ThreadList } from "@/components/thread-list";
 import {
+  moveCardAction,
   setCardUrgentAction,
   updateCardContentAction,
 } from "@/lib/actions";
+import { CARD_STATUSES } from "@/lib/constants";
 import { isLocalCardId, type LocalBoardCard } from "@/lib/local-cards";
 import { useI18n } from "@/i18n/provider";
 import { useHistoryTrap } from "@/lib/use-history-trap";
@@ -34,6 +37,7 @@ type CardSheetProps = {
   isDraft?: boolean;
   onClose: () => void;
   onDraftCommit?: (title: string, urgent: boolean) => Promise<string | null>;
+  onStatusChange: (cardId: string, status: CardStatus) => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
   onCommentSend: (
     body: string,
@@ -52,6 +56,7 @@ export function CardSheet({
   isDraft = false,
   onClose,
   onDraftCommit,
+  onStatusChange,
   onUrgentChange,
   onCommentSend,
   onCommentRollback,
@@ -196,6 +201,32 @@ export function CardSheet({
     });
   }
 
+  function changeStatus(nextStatus: CardStatus): void {
+    if (
+      isDraft ||
+      isLocalCardId(card.id) ||
+      nextStatus === card.status
+    ) {
+      return;
+    }
+
+    const previousStatus = card.status;
+    setError(null);
+    const formData = new FormData();
+    formData.set("boardId", boardId);
+    formData.set("cardId", card.id);
+    formData.set("status", nextStatus);
+
+    startTransition(async () => {
+      onStatusChange(card.id, nextStatus);
+      const response = await moveCardAction(formData);
+      if (!response.ok) {
+        onStatusChange(card.id, previousStatus);
+        setError(response.error);
+      }
+    });
+  }
+
   function saveTitle(): void {
     const nextTitle = title.trim();
     if (isDraft || isLocalCardId(card.id)) {
@@ -281,34 +312,59 @@ export function CardSheet({
       >
         <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
-          <label className={isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"}>
-            <span className="visually-hidden">{t.cardPage.editTitle}</span>
-            <input
-              ref={titleRef}
-              id={`card-sheet-title-${card.id}`}
-              className="sheet-title-input"
-              value={title}
-              maxLength={120}
-              placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              autoFocus={isDraft}
-              onChange={(event) => {
-                setTitle(event.target.value);
-                if (leaveConfirm) {
-                  setLeaveConfirm(false);
-                }
-              }}
-              onBlur={onTitleBlur}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.currentTarget.blur();
-                }
-              }}
-            />
-            <PencilIcon className="sheet-title-edit" size={16} />
-          </label>
+          <div className="sheet-heading">
+            <label
+              className={
+                isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"
+              }
+            >
+              <span className="visually-hidden">{t.cardPage.editTitle}</span>
+              <input
+                ref={titleRef}
+                id={`card-sheet-title-${card.id}`}
+                className="sheet-title-input"
+                value={title}
+                maxLength={120}
+                placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                autoFocus={isDraft}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  if (leaveConfirm) {
+                    setLeaveConfirm(false);
+                  }
+                }}
+                onBlur={onTitleBlur}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
+              <PencilIcon className="sheet-title-edit" size={16} />
+            </label>
+            <span
+              className={`sheet-stage-control stage-${card.status}${isPending ? " is-pending" : ""}`}
+            >
+              <select
+                className="sheet-stage-select"
+                value={card.status}
+                disabled={isPending || isDraft || isLocalCardId(card.id)}
+                aria-label={t.common.stageAria}
+                onChange={(event) => {
+                  changeStatus(event.target.value as CardStatus);
+                }}
+              >
+                {CARD_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {t.columns[status]}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </div>
           <div className="sheet-actions">
             <button
               type="button"

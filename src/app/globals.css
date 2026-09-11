@@ -1454,7 +1454,7 @@ textarea {
 }
 
 .sheet-header .sheet-title-bar {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -1462,6 +1462,102 @@ textarea {
   padding: 0;
   border: none;
   cursor: text;
+}
+
+.sheet-heading {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.sheet-stage-control {
+  --stage-color: var(--col-new);
+  position: relative;
+  display: none;
+  width: fit-content;
+  color: var(--stage-color);
+}
+
+.sheet-stage-control.stage-in_progress {
+  --stage-color: var(--col-progress);
+}
+
+.sheet-stage-control.stage-answered {
+  --stage-color: var(--col-answered);
+}
+
+.sheet-stage-control.stage-done {
+  --stage-color: var(--col-done);
+}
+
+.sheet-stage-control::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 0.65rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.sheet-stage-control::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: calc(50% - 0.12rem);
+  right: 0.7rem;
+  width: 0.38rem;
+  height: 0.38rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.sheet-stage-select {
+  appearance: none;
+  width: auto;
+  min-width: 7.8rem;
+  max-width: 11rem;
+  min-height: 1.9rem;
+  padding: 0.3rem 1.7rem 0.3rem 1.45rem;
+  border: 1px solid color-mix(in srgb, var(--stage-color) 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--stage-color) 10%, var(--paper-raised));
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--duration-ui) var(--ease-ui),
+    border-color var(--duration-ui) var(--ease-ui),
+    opacity var(--duration-ui) var(--ease-ui);
+}
+
+.sheet-stage-select:focus {
+  border-color: color-mix(in srgb, var(--stage-color) 55%, var(--line-strong));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--stage-color) 14%, transparent);
+}
+
+.sheet-stage-select:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.sheet-stage-control.is-pending::before {
+  animation: stage-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes stage-pulse {
+  to {
+    opacity: 0.35;
+  }
 }
 
 .sheet-badges {
@@ -3000,6 +3096,10 @@ textarea {
   .sheet-icon-btn {
     width: 2.55rem;
     height: 2.55rem;
+  }
+
+  .sheet-stage-control {
+    display: inline-flex;
   }
 
   .sheet-details {
