@@ -40,6 +40,7 @@
 - [x] Голосовые в чате: tap-to-record, затем отправить; в камере tap=фото / hold=видео
 - [x] Зелёная кнопка композера: камера по умолчанию, запоминает последний режим (камера / голос)
 - [x] UI + 404 + rate-limit middleware
+- [x] Installable PWA (manifest + Add to Home Screen, без service worker)
 
 ## Фаза 3. Тесты
 

@@ -40,7 +40,7 @@
 | 2.8 | SEO | Metadata API (минимум) | ✅ | |
 | 2.9 | Тёмная тема | не нужно | ➖ | |
 | 2.10 | Анимации | CSS transitions | ✅ | |
-| 2.11 | PWA | не нужно | ➖ | |
+| 2.11 | PWA | installable (manifest, без SW) | ✅ | Add to Home Screen; со страницы доски `start_url` = join URL; без offline/push |
 
 ---
 

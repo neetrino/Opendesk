@@ -158,6 +158,14 @@ export const ru: Dictionary = {
     stageAria: "Стадия карточки",
     credit: "by Neetrino",
   },
+  install: {
+    title: "Установить OpenDesk",
+    androidBody: "Открывайте доску как приложение — с экрана «Домой».",
+    androidAction: "Установить",
+    iosBody: "На iPhone: Поделиться → На экран «Домой».",
+    dismiss: "Не сейчас",
+    dismissAria: "Скрыть подсказку установки",
+  },
   errors: {
     validation: "Ошибка валидации",
     createOrganizer: "Не удалось создать организатора",

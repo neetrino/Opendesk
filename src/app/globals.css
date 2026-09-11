@@ -74,13 +74,19 @@ a {
 }
 
 .desk {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 0.85rem;
+  padding: max(0.85rem, env(safe-area-inset-top, 0px))
+    max(0.85rem, env(safe-area-inset-right, 0px))
+    max(0.85rem, env(safe-area-inset-bottom, 0px))
+    max(0.85rem, env(safe-area-inset-left, 0px));
 }
 
 .workspace {
-  min-height: calc(100dvh - 1.4rem);
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -114,6 +120,60 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.install-banner {
+  flex-shrink: 0;
+  width: min(1480px, calc(100% - 1.25rem));
+  margin: 0.75rem auto 0;
+}
+
+.install-banner-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.install-banner-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.install-banner-title {
+  margin: 0 0 0.2rem;
+  color: var(--ink);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.install-banner-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.install-banner-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.install-banner-actions .button,
+.install-banner-actions .button-ghost {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+}
+
+body:has(.card-sheet) .install-banner {
+  display: none;
 }
 
 .lang-switch {
@@ -2567,12 +2627,31 @@ textarea {
   }
 
   .desk {
-    padding: 0.35rem;
+    padding: max(0.35rem, env(safe-area-inset-top, 0px))
+      max(0.35rem, env(safe-area-inset-right, 0px))
+      max(0.35rem, env(safe-area-inset-bottom, 0px))
+      max(0.35rem, env(safe-area-inset-left, 0px));
   }
 
   .workspace {
-    min-height: calc(100dvh - 0.7rem);
+    min-height: 0;
     border-radius: 1.15rem;
+  }
+
+  .install-banner {
+    width: min(100% - 0.7rem, 1480px);
+    margin-top: 0.55rem;
+  }
+
+  .install-banner-card {
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .install-banner-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .site-header {

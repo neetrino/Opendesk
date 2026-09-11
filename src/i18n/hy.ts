@@ -158,6 +158,14 @@ export const hy: Dictionary = {
     stageAria: "Քարտի փուլ",
     credit: "by Neetrino",
   },
+  install: {
+    title: "Տեղադրել OpenDesk",
+    androidBody: "Բացեք տախտակը որպես հավելված՝ գլխավոր էկրանից։",
+    androidAction: "Տեղադրել",
+    iosBody: "iPhone-ում՝ Կիսվել → Ավելացնել գլխավոր էկրանին։",
+    dismiss: "Ոչ հիմա",
+    dismissAria: "Փակել տեղադրման հուշումը",
+  },
   errors: {
     validation: "Վալիդացիայի սխալ",
     createOrganizer: "Չհաջողվեց ստեղծել կազմակերպիչ",

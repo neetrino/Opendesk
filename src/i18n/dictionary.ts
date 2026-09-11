@@ -153,6 +153,14 @@ export type Dictionary = {
     stageAria: string;
     credit: string;
   };
+  install: {
+    title: string;
+    androidBody: string;
+    androidAction: string;
+    iosBody: string;
+    dismiss: string;
+    dismissAria: string;
+  };
   errors: {
     validation: string;
     createOrganizer: string;
@@ -346,6 +354,14 @@ export const en: Dictionary = {
   common: {
     stageAria: "Card stage",
     credit: "by Neetrino",
+  },
+  install: {
+    title: "Install OpenDesk",
+    androidBody: "Open the board like an app — from your home screen.",
+    androidAction: "Install",
+    iosBody: "On iPhone: Share → Add to Home Screen.",
+    dismiss: "Not now",
+    dismissAria: "Dismiss install hint",
   },
   errors: {
     validation: "Validation error",
