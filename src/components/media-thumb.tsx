@@ -7,7 +7,7 @@ export type MediaItem = {
   id: string;
   filename: string;
   contentType: string;
-  kind: "image" | "video";
+  kind: "image" | "video" | "audio";
   src: string;
 };
 
@@ -30,6 +30,19 @@ export function MediaThumb({
 }: MediaThumbProps) {
   const previewable = canPreviewInline(item.contentType, item.kind);
   const uploading = progress !== undefined && progress < 100;
+
+  if (item.kind === "audio") {
+    return (
+      <div className={uploading ? "voice-note is-uploading" : "voice-note"}>
+        <audio src={item.src} controls preload="metadata">
+          <a href={item.src}>{item.filename}</a>
+        </audio>
+        {uploading ? (
+          <span className="media-thumb-progress">{progress}%</span>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className={uploading ? "media-thumb is-uploading" : "media-thumb"}>
@@ -122,6 +135,8 @@ export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps)
             playsInline
             onClick={keepOpen}
           />
+        ) : previewable && item.kind === "audio" ? (
+          <audio src={item.src} controls autoPlay onClick={keepOpen} />
         ) : (
           <a
             className="media-lightbox-link"

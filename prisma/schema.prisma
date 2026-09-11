@@ -93,6 +93,7 @@ model Comment {
 enum AttachmentKind {
   image
   video
+  audio
 }
 
 model Attachment {

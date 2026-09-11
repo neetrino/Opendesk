@@ -121,12 +121,15 @@ export type Dictionary = {
     placeholder: string;
     sending: string;
     send: string;
-    capturePhoto: string;
-    capturePhotoAria: string;
-    captureVideo: string;
-    captureVideoAria: string;
+    captureCamera: string;
+    captureCameraAria: string;
     captureGallery: string;
     captureGalleryAria: string;
+    captureLimitHint: string;
+    recordVoice: string;
+    recordVoiceAria: string;
+    recordingVoice: string;
+    cancelRecording: string;
   };
   notFound: {
     title: string;
@@ -164,6 +167,8 @@ export type Dictionary = {
     fileTooLarge: string;
     fileTypeUnsupported: string;
     uploadFailed: string;
+    microphoneDenied: string;
+    voiceUnsupported: string;
     attachmentLimit: string;
     attachmentNotFound: string;
     deleteAttachment: string;
@@ -281,7 +286,7 @@ export const en: Dictionary = {
     emptyThread: "No replies yet. Write the first one.",
     editTitle: "Title",
     attachments: "Photos & videos",
-    attachmentsHint: "Up to 50 MB each",
+    attachmentsHint: "Up to {n} MB each, video about {minutes} min",
     attachmentsEmpty: "Add a photo or a short video",
     attachmentsAdd: "Add file",
     attachmentsUploading: "Uploading…",
@@ -295,12 +300,15 @@ export const en: Dictionary = {
     placeholder: "Message",
     sending: "Sending…",
     send: "Send",
-    capturePhoto: "Photo",
-    capturePhotoAria: "Take a photo",
-    captureVideo: "Video",
-    captureVideoAria: "Record a video",
+    captureCamera: "Tap for a photo. Hold for video, about {minutes} min",
+    captureCameraAria: "Tap for a photo, hold for video",
     captureGallery: "Gallery",
     captureGalleryAria: "Choose from gallery",
+    captureLimitHint: "Video about {minutes} min, up to {n} MB",
+    recordVoice: "Voice",
+    recordVoiceAria: "Record a voice note",
+    recordingVoice: "Recording…",
+    cancelRecording: "Cancel recording",
   },
   notFound: {
     title: "Page not found",
@@ -335,9 +343,12 @@ export const en: Dictionary = {
     cardTitleShort: "Title is too short",
     commentEmpty: "Write a comment or attach a file",
     storageNotConfigured: "File storage is not configured",
-    fileTooLarge: "File is larger than 50 MB",
+    fileTooLarge:
+      "File is larger than {n} MB. For video, record about {minutes} minutes or less.",
     fileTypeUnsupported: "Only photos and videos are allowed",
     uploadFailed: "Could not upload the file",
+    microphoneDenied: "Microphone access was denied",
+    voiceUnsupported: "Voice notes are not supported in this browser",
     attachmentLimit: "Too many files on this card",
     attachmentNotFound: "File not found",
     deleteAttachment: "Could not remove the file",

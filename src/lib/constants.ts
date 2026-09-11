@@ -19,9 +19,17 @@ export const MAX_COMMENT_LENGTH = 2000;
 /** Soft cap for people on one board. */
 export const MAX_BOARD_PARTICIPANTS = 20;
 
-export const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
+export const MAX_ATTACHMENT_SIZE_MB = 200;
+export const MAX_ATTACHMENT_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
+/** Typical iPhone 1080p length that still fits the size cap. */
+export const VIDEO_DURATION_HINT_MINUTES = 2;
 export const MAX_ATTACHMENT_FILENAME_LENGTH = 180;
 export const MAX_CARD_ATTACHMENTS = 20;
 export const MAX_COMMENT_ATTACHMENTS = 4;
-export const ATTACHMENT_UPLOAD_URL_TTL_SECONDS = 5 * 60;
+/** Field voice notes: long enough to describe a site, still a small upload. */
+export const MAX_VOICE_NOTE_SECONDS = 5 * 60;
+/** Hold the camera button this long, then release to open video capture. */
+export const CAMERA_LONG_PRESS_MS = 450;
+/** Long enough for a 200 MB PUT on a slow mobile link. */
+export const ATTACHMENT_UPLOAD_URL_TTL_SECONDS = 15 * 60;
 export const ATTACHMENT_DOWNLOAD_URL_TTL_SECONDS = 60 * 60;

@@ -3,6 +3,7 @@ import {
   isOwnedObjectKey,
   sanitizeFilename,
   type AttachmentContentType,
+  type AttachmentKind,
 } from "@/lib/attachments";
 import { assertUploadedObject } from "@/lib/r2";
 import { prisma } from "@/lib/prisma";
@@ -20,7 +21,7 @@ export type PersistedAttachment = {
   filename: string;
   contentType: string;
   byteSize: number;
-  kind: "image" | "video";
+  kind: AttachmentKind;
   createdAt: Date;
   commentId: string | null;
   authorId: string;

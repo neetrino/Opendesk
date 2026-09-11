@@ -7,10 +7,15 @@ import {
   useTransition,
   type ClipboardEvent,
   type FormEvent,
+  type MouseEvent,
 } from "react";
-import { MediaCaptureControls } from "@/components/media-capture-controls";
+import {
+  MediaCaptureControls,
+  VoiceMicIcon,
+} from "@/components/media-capture-controls";
 import { SendIcon } from "@/components/send-icon";
 import { addCommentAction } from "@/lib/actions";
+import { applyAttachmentLimitCopy, attachmentKindFor } from "@/lib/attachments";
 import { MAX_COMMENT_ATTACHMENTS, MAX_COMMENT_LENGTH } from "@/lib/constants";
 import { isLocalCardId } from "@/lib/local-cards";
 import type { BoardAttachment } from "@/lib/local-cards";
@@ -18,6 +23,8 @@ import {
   requestAndUploadFile,
   validateLocalFile,
 } from "@/lib/upload-client";
+import { useVoiceRecorder } from "@/lib/use-voice-recorder";
+import { formatVoiceElapsed } from "@/lib/voice-recorder";
 import { useI18n } from "@/i18n/provider";
 
 export type OptimisticCommentAttachment = Pick<
@@ -33,7 +40,7 @@ type PendingCommentFile = {
   localId: string;
   file: File;
   previewUrl: string;
-  kind: "image" | "video";
+  kind: BoardAttachment["kind"];
 };
 
 function fitTextarea(textarea: HTMLTextAreaElement): void {
@@ -66,16 +73,24 @@ function mapFileError(
     fileTooLarge: string;
     fileTypeUnsupported: string;
     uploadFailed: string;
+    microphoneDenied: string;
+    voiceUnsupported: string;
   },
 ): string {
   if (message === "fileTooLarge") {
-    return errors.fileTooLarge;
+    return applyAttachmentLimitCopy(errors.fileTooLarge);
   }
   if (message === "fileTypeUnsupported") {
     return errors.fileTypeUnsupported;
   }
   if (message === "UPLOAD_FAILED") {
     return errors.uploadFailed;
+  }
+  if (message === "microphoneDenied") {
+    return errors.microphoneDenied;
+  }
+  if (message === "voiceUnsupported") {
+    return errors.voiceUnsupported;
   }
   return message;
 }
@@ -95,8 +110,12 @@ export function CommentForm({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const locked = isLocalCardId(cardId);
   const canAttach = enabled && !locked;
-
   const canSend = hasText || pendingFiles.length > 0;
+
+  const { recording, elapsedMs, start, stop, cancel } = useVoiceRecorder({
+    onError: (key) => setError(mapFileError(key, t.errors)),
+    onAutoStop: (file) => addFiles([file]),
+  });
 
   useLayoutEffect(() => {
     if (textareaRef.current) {
@@ -123,7 +142,7 @@ export function CommentForm({
         localId: crypto.randomUUID(),
         file,
         previewUrl: URL.createObjectURL(file),
-        kind: local.contentType.startsWith("video/") ? "video" : "image",
+        kind: attachmentKindFor(local.contentType),
       });
     }
 
@@ -151,19 +170,12 @@ export function CommentForm({
     addFiles(files);
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      return;
-    }
-
-    const body = textarea.value.trim();
-    const files = pendingFiles;
+  function sendComment(body: string, files: PendingCommentFile[]): void {
     if (body.length === 0 && files.length === 0) {
       return;
     }
 
+    const textarea = textareaRef.current;
     const tempId = `optimistic-${crypto.randomUUID()}`;
     const optimisticAttachments: OptimisticCommentAttachment[] = files.map(
       (item) => ({
@@ -176,8 +188,10 @@ export function CommentForm({
       }),
     );
 
-    textarea.value = "";
-    fitTextarea(textarea);
+    if (textarea) {
+      textarea.value = "";
+      fitTextarea(textarea);
+    }
     setHasText(false);
     setPendingFiles([]);
     setError(null);
@@ -211,30 +225,94 @@ export function CommentForm({
         const message =
           caught instanceof Error ? caught.message : t.errors.addComment;
         setError(mapFileError(message, t.errors));
-        textarea.value = body;
-        fitTextarea(textarea);
+        if (textarea) {
+          textarea.value = body;
+          fitTextarea(textarea);
+        }
         setHasText(body.length > 0);
         setPendingFiles(files);
-        textarea.focus();
+        textarea?.focus();
       }
     });
   }
+
+  function onSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    if (recording) {
+      return;
+    }
+    const body = textareaRef.current?.value.trim() ?? "";
+    sendComment(body, pendingFiles);
+  }
+
+  async function finishVoiceAndSend(): Promise<void> {
+    const file = await stop();
+    if (!file) {
+      return;
+    }
+    const local = validateLocalFile(file);
+    if ("errorKey" in local) {
+      setError(mapFileError(local.errorKey, t.errors));
+      return;
+    }
+    const pending: PendingCommentFile = {
+      localId: crypto.randomUUID(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+      kind: attachmentKindFor(local.contentType),
+    };
+    const body = textareaRef.current?.value.trim() ?? "";
+    sendComment(body, [...pendingFiles, pending]);
+  }
+
+  function onPrimaryClick(event: MouseEvent<HTMLButtonElement>): void {
+    if (recording) {
+      event.preventDefault();
+      void finishVoiceAndSend();
+      return;
+    }
+    if (canSend) {
+      return;
+    }
+    event.preventDefault();
+    if (!canAttach) {
+      return;
+    }
+    setError(null);
+    void start();
+  }
+
+  const unavailableReason = !enabled
+    ? t.cardPage.attachmentsUnavailable
+    : locked
+      ? t.cardPage.attachmentsLocalCard
+      : undefined;
+  const showSend = recording || canSend;
 
   return (
     <form
       id={`comment-form-${cardId}`}
       onSubmit={onSubmit}
-      className="comment-form"
+      className={recording ? "comment-form is-recording" : "comment-form"}
     >
       {pendingFiles.length > 0 ? (
         <ul className="comment-previews">
           {pendingFiles.map((item) => (
-            <li key={item.localId} className="comment-preview">
+            <li
+              key={item.localId}
+              className={
+                item.kind === "audio"
+                  ? "comment-preview is-audio"
+                  : "comment-preview"
+              }
+            >
               {item.kind === "image" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.previewUrl} alt="" />
-              ) : (
+              ) : item.kind === "video" ? (
                 <video src={item.previewUrl} muted playsInline />
+              ) : (
+                <audio src={item.previewUrl} controls preload="metadata" />
               )}
               <button
                 type="button"
@@ -250,55 +328,81 @@ export function CommentForm({
       ) : null}
       <div className="comment-compose-row">
         <div className="comment-compose-field">
-          <textarea
-            ref={textareaRef}
-            name="body"
-            rows={1}
-            maxLength={MAX_COMMENT_LENGTH}
-            placeholder={t.comment.placeholder}
-            autoComplete="off"
-            onPaste={onPaste}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                event.preventDefault();
-                event.currentTarget.form?.requestSubmit();
-              }
-            }}
-            onInput={(event) => {
-              fitTextarea(event.currentTarget);
-              setHasText(event.currentTarget.value.trim().length > 0);
-            }}
-          />
+          {recording ? (
+            <div className="voice-recording" aria-live="polite">
+              <button
+                type="button"
+                className="comment-attach voice-cancel"
+                onClick={cancel}
+                aria-label={t.comment.cancelRecording}
+                title={t.comment.cancelRecording}
+              >
+                ×
+              </button>
+              <span className="voice-recording-dot" aria-hidden="true" />
+              <span className="voice-recording-label">
+                {t.comment.recordingVoice}
+              </span>
+              <span className="voice-recording-time">
+                {formatVoiceElapsed(elapsedMs)}
+              </span>
+            </div>
+          ) : (
+            <textarea
+              ref={textareaRef}
+              name="body"
+              rows={1}
+              maxLength={MAX_COMMENT_LENGTH}
+              placeholder={t.comment.placeholder}
+              autoComplete="off"
+              onPaste={onPaste}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+              onInput={(event) => {
+                fitTextarea(event.currentTarget);
+                setHasText(event.currentTarget.value.trim().length > 0);
+              }}
+            />
+          )}
         </div>
         <div className="comment-toolbar">
-          <MediaCaptureControls
-            disabled={!canAttach}
-            onFiles={addFiles}
-            labels={{
-              photo: t.comment.capturePhoto,
-              photoAria: t.comment.capturePhotoAria,
-              video: t.comment.captureVideo,
-              videoAria: t.comment.captureVideoAria,
-              gallery: t.comment.captureGallery,
-              galleryAria: t.comment.captureGalleryAria,
-            }}
-            unavailableReason={
-              !enabled
-                ? t.cardPage.attachmentsUnavailable
-                : locked
-                  ? t.cardPage.attachmentsLocalCard
-                  : undefined
+          {recording ? null : (
+            <MediaCaptureControls
+              disabled={!canAttach}
+              onFiles={addFiles}
+              labels={{
+                camera: applyAttachmentLimitCopy(t.comment.captureCamera),
+                cameraAria: t.comment.captureCameraAria,
+                gallery: t.comment.captureGallery,
+                galleryAria: t.comment.captureGalleryAria,
+              }}
+              unavailableReason={unavailableReason}
+            />
+          )}
+          <button
+            className={showSend ? "comment-send" : "comment-attach comment-mic"}
+            type={canSend && !recording ? "submit" : "button"}
+            onClick={onPrimaryClick}
+            disabled={!canAttach && !canSend}
+            aria-label={
+              recording || canSend ? t.comment.send : t.comment.recordVoiceAria
             }
-          />
-          {canSend ? (
-            <button
-              className="comment-send"
-              type="submit"
-              aria-label={t.comment.send}
-            >
-              <SendIcon size={18} />
-            </button>
-          ) : null}
+            title={
+              recording || canSend
+                ? t.comment.send
+                : (unavailableReason ?? t.comment.recordVoice)
+            }
+          >
+            {showSend ? <SendIcon size={18} /> : <VoiceMicIcon size={20} />}
+          </button>
         </div>
       </div>
       {error ? <p className="form-error">{error}</p> : null}
