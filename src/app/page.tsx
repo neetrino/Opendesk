@@ -1,12 +1,26 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
+import {
+  getParticipantBoardDestination,
+  getRememberedOwnerBoardPath,
+} from "@/lib/board-navigation";
 import { getOwnerSession } from "@/lib/owner-session";
 
 export default async function HomePage() {
+  const owner = await getOwnerSession();
+  if (owner) {
+    redirect((await getRememberedOwnerBoardPath()) ?? "/boards");
+  }
+
+  const participantBoard = await getParticipantBoardDestination();
+  if (participantBoard) {
+    redirect(participantBoard.path);
+  }
+
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const owner = await getOwnerSession();
 
   return (
     <section className="hero">
@@ -16,15 +30,9 @@ export default async function HomePage() {
           <h1>OpenDesk</h1>
           <p className="lede">{t.home.lede}</p>
           <div className="hero-cta-row">
-            {owner ? (
-              <Link className="button" href="/boards">
-                {t.home.boardsCta}
-              </Link>
-            ) : (
-              <Link className="button" href="/login">
-                {t.home.loginCta}
-              </Link>
-            )}
+            <Link className="button" href="/login">
+              {t.home.loginCta}
+            </Link>
           </div>
         </div>
         <div className="hero-preview" aria-hidden="true">

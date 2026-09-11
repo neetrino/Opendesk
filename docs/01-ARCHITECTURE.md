@@ -62,6 +62,7 @@ OpenDesk даёт команде общую доску: вход по посто
 - **Сессии.** HTTP-only signed cookies (`SESSION_SECRET`):
   - `opendesk_session` — participant `{ boardId, participantId, displayName }`
   - `opendesk_owner` — owner `{ role: "owner" }`
+  - `opendesk_last_board` — последний канонический URL доски; только навигационная подсказка, всегда перепроверяется по БД и активной сессии
 
 ### База
 
@@ -95,6 +96,7 @@ docs/
 2. Cookie opendesk_owner
 3. GET /boards → список всех Board + создание
 4. Open /b/:slug/:joinToken → workspace без join-формы
+5. Следующий запуск `/` → последняя посещённая доска, либо `/boards`, если её нет
 ```
 
 ### Join по постоянной ссылке
@@ -105,7 +107,11 @@ docs/
 3. Если Participant с таким именем есть → rejoin (новая cookie)
 4. Иначе создать Participant (если < 20), cookie
 5. Redirect → /b/:slug/:joinToken (workspace)
+6. Следующий запуск `/`, `/login` или `/boards` → эта же единственная доступная доска
 ```
+
+Если участник с действующей сессией открывает ссылку другой доски, сервер
+возвращает его на доску из сессии. Список всех досок доступен только owner.
 
 Legacy: `GET /join/:token` редиректит на `/b/:slug/:token`.  
 Legacy: `GET /b/:cuid` редиректит на canonical slug URL при наличии доступа.

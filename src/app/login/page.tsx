@@ -2,6 +2,7 @@ import Link from "next/link";
 import { OwnerLoginForm } from "@/components/owner-login-form";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
+import { getParticipantBoardDestination } from "@/lib/board-navigation";
 import { getOwnerSession } from "@/lib/owner-session";
 import { redirect } from "next/navigation";
 
@@ -9,6 +10,11 @@ export default async function LoginPage() {
   const owner = await getOwnerSession();
   if (owner) {
     redirect("/boards");
+  }
+
+  const participantBoard = await getParticipantBoardDestination();
+  if (participantBoard) {
+    redirect(participantBoard.path);
   }
 
   const locale = await getLocale();

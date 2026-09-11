@@ -4,12 +4,17 @@ import { CreateBoardForm } from "@/components/create-board-form";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
+import { getParticipantBoardDestination } from "@/lib/board-navigation";
 import { getOwnerSession } from "@/lib/owner-session";
 import { prisma } from "@/lib/prisma";
 
 export default async function BoardsPage() {
   const owner = await getOwnerSession();
   if (!owner) {
+    const participantBoard = await getParticipantBoardDestination();
+    if (participantBoard) {
+      redirect(participantBoard.path);
+    }
     redirect("/login");
   }
 

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { DM_Sans, Noto_Sans_Armenian, Syne } from "next/font/google";
+import { BrandLink } from "@/components/brand-link";
 import { InstallAppBanner } from "@/components/install-app-banner";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -88,7 +88,7 @@ export default async function RootLayout({
             <div className="workspace">
               <header className="site-header">
                 <div className="shell site-header-inner">
-                  <Link href="/" className="brand">
+                  <BrandLink className="brand">
                     <Image
                       src="/logo.png"
                       alt="OpenDesk"
@@ -103,7 +103,7 @@ export default async function RootLayout({
                       </span>
                       <span className="brand-credit">{dictionary.common.credit}</span>
                     </span>
-                  </Link>
+                  </BrandLink>
                   <LanguageSwitcher />
                 </div>
               </header>

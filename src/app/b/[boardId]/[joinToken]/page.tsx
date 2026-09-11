@@ -4,15 +4,14 @@ import { JoinBoardForm } from "@/components/join-board-form";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
 import {
-  canAccessBoard,
   ensureOwnerParticipant,
 } from "@/lib/board-access";
+import { getParticipantBoardDestination } from "@/lib/board-navigation";
 import { buildJoinPath } from "@/lib/join-url";
 import { getOwnerSession } from "@/lib/owner-session";
 import { ATTACHMENT_PUBLIC_SELECT } from "@/lib/attachments";
 import { prisma } from "@/lib/prisma";
 import { isR2Configured } from "@/lib/r2";
-import { getSession } from "@/lib/session";
 
 type BoardBySlugPageProps = {
   params: Promise<{ boardId: string; joinToken: string }>;
@@ -41,9 +40,15 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
   }
 
   const owner = await getOwnerSession();
-  const hasAccess = await canAccessBoard(boardMeta.id);
+  const participantBoard = owner
+    ? null
+    : await getParticipantBoardDestination();
 
-  if (!hasAccess) {
+  if (participantBoard && participantBoard.boardId !== boardMeta.id) {
+    redirect(participantBoard.path);
+  }
+
+  if (!owner && !participantBoard) {
     return (
       <section className="hero">
         <div className="hero-grid">
@@ -105,13 +110,12 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
       displayName: participant.displayName,
     };
   } else {
-    const session = await getSession();
-    if (!session || session.boardId !== board.id) {
+    if (!participantBoard || participantBoard.boardId !== board.id) {
       redirect(buildJoinPath(board.slug, board.joinToken));
     }
     currentUser = {
-      participantId: session.participantId,
-      displayName: session.displayName,
+      participantId: participantBoard.participantId,
+      displayName: participantBoard.displayName,
     };
   }
 
