@@ -440,6 +440,9 @@ export function KanbanBoard({
           isDraft={selectedIsDraft}
           onClose={closeSheet}
           onDraftCommit={commitDraft}
+          onStatusChange={(cardId, status) => {
+            setOptimisticCards({ kind: "status", cardId, status });
+          }}
           onUrgentChange={(cardId, urgent) => {
             setOptimisticCards({ kind: "urgent", cardId, urgent });
           }}
