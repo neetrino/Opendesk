@@ -109,6 +109,7 @@ a {
 }
 
 .site-header {
+  flex-shrink: 0;
   padding: 0.8rem 0;
   border-bottom: 1px solid var(--line);
   background: color-mix(in srgb, var(--paper) 78%, transparent);
@@ -767,8 +768,11 @@ textarea {
 .board-page {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 8.5rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   padding: 0.85rem 0 1.25rem;
+  overflow: hidden;
 }
 
 .board-top {
@@ -776,6 +780,7 @@ textarea {
   top: 0.55rem;
   z-index: 24;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
@@ -1003,7 +1008,7 @@ textarea {
   gap: 0.85rem;
   align-items: stretch;
   flex: 1 1 auto;
-  min-height: min(68vh, 44rem);
+  min-height: 0;
 }
 
 .board-column {
@@ -1011,11 +1016,12 @@ textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background: color-mix(in srgb, var(--column-accent) 8%, var(--paper));
   border: 1px solid color-mix(in srgb, var(--column-accent) 22%, var(--line));
   border-radius: 20px;
   padding: 0.55rem;
-  min-height: 18rem;
   transition:
     border-color 160ms ease,
     background 160ms ease,
@@ -1050,10 +1056,12 @@ textarea {
 
 .board-stage-nav {
   display: none;
+  flex-shrink: 0;
 }
 
 .column-header {
   display: grid;
+  flex-shrink: 0;
   margin-bottom: 0.45rem;
 }
 
@@ -1136,6 +1144,7 @@ textarea {
 
 .quick-add-trigger {
   width: 100%;
+  flex-shrink: 0;
   margin-bottom: 0.5rem;
   border: 1px dashed rgba(20, 32, 26, 0.16);
   border-radius: 12px;
@@ -1241,11 +1250,22 @@ textarea {
 }
 
 .column-stack {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.55rem;
   flex: 1 1 auto;
-  align-content: start;
-  min-height: 4rem;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.column-stack::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .column-empty {
@@ -1263,6 +1283,7 @@ textarea {
   display: grid;
   grid-template-rows: auto auto auto;
   gap: 0.4rem;
+  flex-shrink: 0;
   min-height: 0;
   padding: 0.75rem 0.8rem 0.7rem;
   border-radius: 14px;
@@ -2634,6 +2655,7 @@ textarea {
     display: flex;
     gap: 0.75rem;
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 0.15rem;
@@ -2643,8 +2665,9 @@ textarea {
 
   .board-column {
     flex: 0 0 min(292px, 78vw);
+    align-self: stretch;
     scroll-snap-align: start;
-    min-height: min(70vh, 36rem);
+    min-height: 0;
   }
 }
 
@@ -2928,8 +2951,9 @@ textarea {
   }
 
   .board-grid {
-    display: block;
-    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     scroll-snap-type: none;
     padding-bottom: 0;
   }
@@ -2938,13 +2962,16 @@ textarea {
     display: none;
     flex: none;
     width: 100%;
-    min-height: calc(100dvh - 11.5rem);
+    min-height: 0;
     padding: 0.65rem;
     border-radius: 18px;
   }
 
   .board-column.is-focused {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     animation: rise 280ms ease both;
   }
 
@@ -3025,8 +3052,24 @@ body:has(.card-sheet) .board-dock {
   display: none;
 }
 
+body:has(.board-page) {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body:has(.board-page) .desk {
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
 body:has(.board-page) main.shell {
   width: min(1600px, calc(100% - 1.1rem));
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
