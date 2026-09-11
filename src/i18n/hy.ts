@@ -145,6 +145,9 @@ export const hy: Dictionary = {
     recordVoiceAria: "Գրանցել ձայնային հաղորդագրություն",
     recordingVoice: "Գրանցում",
     cancelRecording: "Չեղարկել գրանցումը",
+    playVoice: "Նվագարկել ձայնայինը",
+    pauseVoice: "Դադար",
+    voiceSeek: "Ձայնայինի դիրք",
   },
   notFound: {
     title: "Էջը չի գտնվել",

@@ -140,6 +140,9 @@ export type Dictionary = {
     recordVoiceAria: string;
     recordingVoice: string;
     cancelRecording: string;
+    playVoice: string;
+    pauseVoice: string;
+    voiceSeek: string;
   };
   notFound: {
     title: string;
@@ -331,6 +334,9 @@ export const en: Dictionary = {
     recordVoiceAria: "Record a voice note",
     recordingVoice: "Recording…",
     cancelRecording: "Cancel recording",
+    playVoice: "Play voice note",
+    pauseVoice: "Pause voice note",
+    voiceSeek: "Voice note position",
   },
   notFound: {
     title: "Page not found",

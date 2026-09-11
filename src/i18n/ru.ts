@@ -145,6 +145,9 @@ export const ru: Dictionary = {
     recordVoiceAria: "Записать голосовое сообщение",
     recordingVoice: "Запись",
     cancelRecording: "Отменить запись",
+    playVoice: "Слушать голосовое",
+    pauseVoice: "Пауза",
+    voiceSeek: "Позиция голосового",
   },
   notFound: {
     title: "Страница не найдена",
