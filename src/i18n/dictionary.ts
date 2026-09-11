@@ -55,6 +55,7 @@ export type Dictionary = {
     participantsEmpty: string;
     joinedAt: string;
     closeParticipants: string;
+    emptyColumn: string;
   };
   columns: {
     new: string;
@@ -125,6 +126,7 @@ export type Dictionary = {
   };
   common: {
     stageAria: string;
+    credit: string;
   };
   errors: {
     validation: string;
@@ -217,6 +219,7 @@ export const en: Dictionary = {
     participantsEmpty: "No one has joined yet.",
     joinedAt: "Joined",
     closeParticipants: "Close",
+    emptyColumn: "Nothing here yet",
   },
   columns: {
     new: "New",
@@ -288,6 +291,7 @@ export const en: Dictionary = {
   },
   common: {
     stageAria: "Card stage",
+    credit: "by Neetrino",
   },
   errors: {
     validation: "Validation error",

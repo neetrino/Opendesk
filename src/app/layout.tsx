@@ -51,25 +51,37 @@ export default async function RootLayout({
     >
       <body className="min-h-full antialiased">
         <I18nProvider locale={locale} dictionary={dictionary}>
-          <header className="site-header">
-            <div className="shell site-header-inner">
-              <Link href="/" className="brand">
-                <Image
-                  src="/logo.png"
-                  alt="OpenDesk"
-                  width={32}
-                  height={32}
-                  className="brand-logo"
-                  priority
-                />
-                <span className="brand-text">
-                  Open<span>Desk</span>
-                </span>
-              </Link>
-              <LanguageSwitcher />
+          <div className="desk">
+            <div className="workspace">
+              <header className="site-header">
+                <div className="shell site-header-inner">
+                  <Link href="/" className="brand">
+                    <Image
+                      src="/logo.png"
+                      alt="OpenDesk"
+                      width={32}
+                      height={32}
+                      className="brand-logo"
+                      priority
+                    />
+                    <span className="brand-copy">
+                      <span className="brand-text">
+                        Open<span>Desk</span>
+                      </span>
+                      <span className="brand-credit">{dictionary.common.credit}</span>
+                    </span>
+                  </Link>
+                  <LanguageSwitcher />
+                </div>
+              </header>
+              <main className="shell">{children}</main>
+              <footer className="site-footer">
+                <div className="shell">
+                  <p className="site-footer-credit">{dictionary.common.credit}</p>
+                </div>
+              </footer>
             </div>
-          </header>
-          <main className="shell">{children}</main>
+          </div>
         </I18nProvider>
       </body>
     </html>

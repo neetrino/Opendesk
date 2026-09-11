@@ -27,6 +27,19 @@ export default async function HomePage() {
             )}
           </div>
         </div>
+        <div className="hero-preview" aria-hidden="true">
+          {(["new", "in_progress", "answered", "done"] as const).map((status) => (
+            <div key={status} className={`hero-lane column-${status}`}>
+              <div className="hero-lane-head">
+                <span />
+                <span />
+              </div>
+              <div className="hero-card" />
+              <div className={status === "new" ? "hero-card is-urgent" : "hero-card"} />
+              <div className="hero-card" />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

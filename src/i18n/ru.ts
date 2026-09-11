@@ -58,6 +58,7 @@ export const ru: Dictionary = {
     participantsEmpty: "Пока никто не подключился.",
     joinedAt: "Подключился",
     closeParticipants: "Закрыть",
+    emptyColumn: "Пока пусто",
   },
   columns: {
     new: "Новое",
@@ -130,6 +131,7 @@ export const ru: Dictionary = {
   },
   common: {
     stageAria: "Стадия карточки",
+    credit: "by Neetrino",
   },
   errors: {
     validation: "Ошибка валидации",

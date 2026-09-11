@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/i18n/provider";
+import { displayInitials } from "@/lib/initials";
 import { buildJoinPath } from "@/lib/join-url";
 
 type BoardListItemProps = {
@@ -35,6 +36,9 @@ export function BoardListItem({
 
   return (
     <li className="boards-list-item">
+      <span className="boards-list-mark" aria-hidden="true">
+        {displayInitials(title)}
+      </span>
       <div className="boards-list-main">
         <h2>
           <Link href={path} prefetch>

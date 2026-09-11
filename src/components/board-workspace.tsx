@@ -5,6 +5,7 @@ import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import { ParticipantsPanel } from "@/components/participants-panel";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionary";
+import { displayInitials } from "@/lib/initials";
 
 type BoardWorkspaceParticipant = {
   id: string;
@@ -41,13 +42,18 @@ export function BoardWorkspace({
 }: BoardWorkspaceProps) {
   return (
     <section className="board-page">
-      <div className="board-top">
+      <header className="board-top">
         <div className="board-top-main">
           <h1>{board.title}</h1>
-          <p className="muted">
-            {t.board.youAre} {currentUser.displayName}
+          <p className="board-identity">
+            <span className="board-avatar" aria-hidden="true">
+              {displayInitials(currentUser.displayName)}
+            </span>
+            <span>
+              {t.board.youAre}{" "}
+              <strong>{currentUser.displayName}</strong>
+            </span>
           </p>
-          <p className="muted board-join-hint">{t.board.inviteHint}</p>
         </div>
         <div className="board-top-actions">
           <ParticipantsPanel
@@ -55,9 +61,9 @@ export function BoardWorkspace({
             locale={locale}
           />
           <InviteButton slug={board.slug} joinToken={board.joinToken} compact />
+          {isOwner ? <OwnerLogoutButton /> : <LogoutButton />}
         </div>
-        {isOwner ? <OwnerLogoutButton /> : <LogoutButton />}
-      </div>
+      </header>
       <KanbanBoard
         boardId={board.id}
         cards={board.cards}

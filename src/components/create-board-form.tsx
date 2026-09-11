@@ -85,6 +85,10 @@ export function CreateBoardForm() {
 
   return (
     <form action={onSubmit} className="create-form">
+      <header className="create-form-head">
+        <p className="eyebrow">{t.boardsPage.eyebrow}</p>
+        <h2 className="create-form-title">{t.boardForm.create}</h2>
+      </header>
       <label className="field">
         <span>{t.boardForm.title}</span>
         <input
