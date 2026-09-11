@@ -15,6 +15,7 @@ import {
   VoiceMicIcon,
 } from "@/components/media-capture-controls";
 import { SendIcon } from "@/components/send-icon";
+import { VoiceNotePlayer } from "@/components/voice-note-player";
 import { addCommentAction } from "@/lib/actions";
 import { applyAttachmentLimitCopy, attachmentKindFor } from "@/lib/attachments";
 import { MAX_COMMENT_ATTACHMENTS, MAX_COMMENT_LENGTH } from "@/lib/constants";
@@ -359,7 +360,10 @@ export function CommentForm({
               ) : item.kind === "video" ? (
                 <video src={item.previewUrl} muted playsInline />
               ) : (
-                <audio src={item.previewUrl} controls preload="metadata" />
+                <VoiceNotePlayer
+                  src={item.previewUrl}
+                  filename={item.file.name}
+                />
               )}
               <button
                 type="button"
@@ -485,7 +489,6 @@ export function CommentForm({
         onTakePhoto={camera.takePhoto}
         onStartVideo={camera.startVideo}
         onStopVideo={camera.stopVideo}
-        onCancelVideo={camera.cancelVideo}
         labels={{
           close: t.comment.closeCamera,
           closeAria: t.comment.closeCameraAria,

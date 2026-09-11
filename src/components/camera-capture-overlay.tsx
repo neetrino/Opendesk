@@ -15,6 +15,11 @@ import {
 import { ATTACHMENT_FILE_ACCEPT } from "@/lib/attachments";
 import { CAMERA_LONG_PRESS_MS } from "@/lib/constants";
 import type { CameraCaptureError } from "@/lib/camera-capture";
+import {
+  shutterCancelAction,
+  shutterReleaseAction,
+  type ShutterPhase,
+} from "@/lib/shutter-gesture";
 import { formatVoiceElapsed } from "@/lib/voice-recorder";
 
 export type CameraOverlayLabels = {
@@ -45,7 +50,6 @@ type CameraCaptureOverlayProps = {
   onTakePhoto: (video: HTMLVideoElement | null) => Promise<File | null>;
   onStartVideo: () => boolean;
   onStopVideo: () => Promise<File | null>;
-  onCancelVideo: () => void;
   labels: CameraOverlayLabels;
   errors: Record<CameraCaptureError, string>;
 };
@@ -74,7 +78,6 @@ export function CameraCaptureOverlay({
   onTakePhoto,
   onStartVideo,
   onStopVideo,
-  onCancelVideo,
   labels,
   errors,
 }: CameraCaptureOverlayProps) {
@@ -85,7 +88,11 @@ export function CameraCaptureOverlay({
   const pressStartedAt = useRef<number | null>(null);
   const armedTimer = useRef<number | null>(null);
   const startingVideo = useRef(false);
+  const holdStartedRecording = useRef(false);
   const [videoArmed, setVideoArmed] = useState(false);
+  if (!open && videoArmed) {
+    setVideoArmed(false);
+  }
 
   useEffect(() => {
     const video = previewRef.current;
@@ -103,8 +110,17 @@ export function CameraCaptureOverlay({
 
   useEffect(() => {
     if (!open) {
+      pressStartedAt.current = null;
+      startingVideo.current = false;
+      holdStartedRecording.current = false;
+      if (armedTimer.current !== null) {
+        window.clearTimeout(armedTimer.current);
+        armedTimer.current = null;
+      }
       return;
     }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key !== "Escape") {
         return;
@@ -114,8 +130,21 @@ export function CameraCaptureOverlay({
       onClose();
     }
     window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
   }, [open, onClose]);
+
+  function shutterPhase(): ShutterPhase {
+    if (recording || startingVideo.current || videoArmed) {
+      return "recording";
+    }
+    if (pressStartedAt.current !== null) {
+      return "pressing";
+    }
+    return "idle";
+  }
 
   function clearArmTimer(): void {
     if (armedTimer.current !== null) {
@@ -124,40 +153,70 @@ export function CameraCaptureOverlay({
     }
   }
 
+  function releaseShutterPointer(
+    event: PointerEvent<HTMLButtonElement>,
+  ): void {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
   function onShutterPointerDown(event: PointerEvent<HTMLButtonElement>): void {
     if (!ready || (event.pointerType === "mouse" && event.button !== 0)) {
       return;
     }
+    event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
+    if (shutterPhase() === "recording") {
+      pressStartedAt.current = Date.now();
+      return;
+    }
     pressStartedAt.current = Date.now();
     startingVideo.current = false;
+    holdStartedRecording.current = false;
     setVideoArmed(false);
     clearArmTimer();
     armedTimer.current = window.setTimeout(() => {
+      const started = onStartVideo();
+      if (!started) {
+        startingVideo.current = false;
+        holdStartedRecording.current = false;
+        setVideoArmed(false);
+        return;
+      }
       startingVideo.current = true;
+      holdStartedRecording.current = true;
       setVideoArmed(true);
-      onStartVideo();
     }, CAMERA_LONG_PRESS_MS);
   }
 
   async function finishShutter(
     event: PointerEvent<HTMLButtonElement>,
   ): Promise<void> {
-    if (pressStartedAt.current === null) {
-      return;
-    }
+    const phase = shutterPhase();
+    const isHoldThatStartedRecording = holdStartedRecording.current;
+    const action = shutterReleaseAction({
+      phase,
+      isHoldThatStartedRecording,
+    });
     pressStartedAt.current = null;
     clearArmTimer();
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    releaseShutterPointer(event);
+    if (action === "keep-recording") {
+      holdStartedRecording.current = false;
+      return;
     }
-    if (recording || startingVideo.current || videoArmed) {
+    if (action === "stop-video") {
       startingVideo.current = false;
+      holdStartedRecording.current = false;
       setVideoArmed(false);
       const file = await onStopVideo();
       if (file) {
         onFiles([file]);
       }
+      return;
+    }
+    if (action !== "take-photo") {
       return;
     }
     const file = await onTakePhoto(previewRef.current);
@@ -167,14 +226,17 @@ export function CameraCaptureOverlay({
   }
 
   function onShutterPointerCancel(event: PointerEvent<HTMLButtonElement>): void {
-    pressStartedAt.current = null;
-    startingVideo.current = false;
+    const action = shutterCancelAction(shutterPhase());
     clearArmTimer();
-    setVideoArmed(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    releaseShutterPointer(event);
+    pressStartedAt.current = null;
+    if (action === "keep-recording") {
+      holdStartedRecording.current = false;
+      return;
     }
-    onCancelVideo();
+    startingVideo.current = false;
+    holdStartedRecording.current = false;
+    setVideoArmed(false);
   }
 
   if (!open || typeof document === "undefined") {
@@ -301,6 +363,7 @@ export function CameraCaptureOverlay({
               void finishShutter(event);
             }}
             onPointerCancel={onShutterPointerCancel}
+            onLostPointerCapture={onShutterPointerCancel}
             onContextMenu={(event) => event.preventDefault()}
           />
         )}

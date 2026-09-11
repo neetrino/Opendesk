@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_CAMERA_VIDEO_SECONDS } from "@/lib/constants";
 import {
   cameraErrorFromUnknown,
+  createVideoRecorder,
   isCameraCaptureSupported,
-  pickVideoMimeType,
   releaseMediaStream,
   requestCameraStream,
   snapshotVideoFrame,
@@ -129,21 +129,6 @@ export function useCameraCapture({
     return new File([blob], videoFilenameFor(mimeType), { type: contentType });
   }, []);
 
-  const cancelVideo = useCallback(() => {
-    clearTick();
-    autoStoppedRef.current = false;
-    const recorder = recorderRef.current;
-    recorderRef.current = null;
-    chunksRef.current = [];
-    if (recorder && recorder.state !== "inactive") {
-      recorder.ondataavailable = null;
-      recorder.onstop = null;
-      recorder.stop();
-    }
-    setRecording(false);
-    setElapsedMs(0);
-  }, [clearTick]);
-
   const stopVideo = useCallback((): Promise<File | null> => {
     const recorder = recorderRef.current;
     clearTick();
@@ -171,10 +156,7 @@ export function useCameraCapture({
     if (!live || recorderRef.current) {
       return false;
     }
-    const mimeType = pickVideoMimeType();
-    const recorder = mimeType
-      ? new MediaRecorder(live, { mimeType })
-      : new MediaRecorder(live);
+    const recorder = createVideoRecorder(live);
     chunksRef.current = [];
     autoStoppedRef.current = false;
     recorder.ondataavailable = (event) => {
@@ -229,6 +211,5 @@ export function useCameraCapture({
     takePhoto,
     startVideo,
     stopVideo,
-    cancelVideo,
   };
 }

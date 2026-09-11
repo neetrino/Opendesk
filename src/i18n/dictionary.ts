@@ -140,6 +140,9 @@ export type Dictionary = {
     recordVoiceAria: string;
     recordingVoice: string;
     cancelRecording: string;
+    playVoice: string;
+    pauseVoice: string;
+    voiceSeek: string;
   };
   notFound: {
     title: string;
@@ -312,7 +315,7 @@ export const en: Dictionary = {
     placeholder: "Message",
     sending: "Sending…",
     send: "Send",
-    captureCamera: "Tap for a photo. Hold for video, about {minutes} min",
+    captureCamera: "Tap for a photo. Hold to start video, tap again to stop, about {minutes} min",
     captureCameraAria: "Open camera",
     captureGallery: "Gallery",
     captureGalleryAria: "Choose from gallery",
@@ -321,8 +324,8 @@ export const en: Dictionary = {
     closeCameraAria: "Close camera",
     switchCamera: "Flip camera",
     switchCameraAria: "Switch camera",
-    cameraShutter: "Tap for a photo. Hold for video, about {minutes} min",
-    cameraShutterAria: "Tap for a photo, hold for video",
+    cameraShutter: "Tap for a photo. Hold to start video, tap again to stop, about {minutes} min",
+    cameraShutterAria: "Tap for a photo, hold to start video, tap again to stop",
     recordingVideo: "Recording",
     cameraUnavailable: "Camera is not available on this device",
     cameraFallbackPhoto: "Photo",
@@ -331,6 +334,9 @@ export const en: Dictionary = {
     recordVoiceAria: "Record a voice note",
     recordingVoice: "Recording…",
     cancelRecording: "Cancel recording",
+    playVoice: "Play voice note",
+    pauseVoice: "Pause voice note",
+    voiceSeek: "Voice note position",
   },
   notFound: {
     title: "Page not found",

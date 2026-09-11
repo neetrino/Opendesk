@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type MouseEvent } from "react";
+import { VoiceNotePlayer } from "@/components/voice-note-player";
 import { canPreviewInline } from "@/lib/attachments";
 
 export type MediaItem = {
@@ -33,14 +34,11 @@ export function MediaThumb({
 
   if (item.kind === "audio") {
     return (
-      <div className={uploading ? "voice-note is-uploading" : "voice-note"}>
-        <audio src={item.src} controls preload="metadata">
-          <a href={item.src}>{item.filename}</a>
-        </audio>
-        {uploading ? (
-          <span className="media-thumb-progress">{progress}%</span>
-        ) : null}
-      </div>
+      <VoiceNotePlayer
+        src={item.src}
+        filename={item.filename}
+        progress={progress}
+      />
     );
   }
 
@@ -136,7 +134,9 @@ export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps)
             onClick={keepOpen}
           />
         ) : previewable && item.kind === "audio" ? (
-          <audio src={item.src} controls autoPlay onClick={keepOpen} />
+          <div onClick={keepOpen}>
+            <VoiceNotePlayer src={item.src} filename={item.filename} />
+          </div>
         ) : (
           <a
             className="media-lightbox-link"
