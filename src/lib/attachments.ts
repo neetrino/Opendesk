@@ -3,7 +3,7 @@ import {
   MAX_ATTACHMENT_FILENAME_LENGTH,
   MAX_ATTACHMENT_SIZE_MB,
   MAX_CARD_ATTACHMENTS,
-  MAX_COMMENT_ATTACHMENTS,
+  MAX_CARD_COMMENT_ATTACHMENTS,
   VIDEO_DURATION_HINT_MINUTES,
 } from "@/lib/constants";
 
@@ -200,8 +200,9 @@ export function applyAttachmentLimitCopy(template: string): string {
 }
 
 /**
- * Card-level and comment-level attachment quotas are independent.
- * Comment uploads must not count files with `commentId: null`.
+ * Card-level and comment-thread quotas are independent.
+ * Comment uploads count only files with a commentId (not card-level files).
+ * The comment-thread cap is card-wide; one message is still limited separately.
  */
 export function attachmentLimitFor(
   cardId: string,
@@ -220,6 +221,6 @@ export function attachmentLimitFor(
   }
   return {
     where: { cardId, commentId: { not: null } },
-    limit: MAX_COMMENT_ATTACHMENTS,
+    limit: MAX_CARD_COMMENT_ATTACHMENTS,
   };
 }

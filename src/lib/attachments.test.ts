@@ -11,6 +11,7 @@ import {
 } from "@/lib/attachments";
 import {
   MAX_CARD_ATTACHMENTS,
+  MAX_CARD_COMMENT_ATTACHMENTS,
   MAX_COMMENT_ATTACHMENTS,
 } from "@/lib/constants";
 import { addCommentWithAttachmentsSchema } from "@/lib/validation";
@@ -53,14 +54,15 @@ describe("attachment helpers", () => {
     expect(canPreviewInline("audio/mp4", "audio")).toBe(true);
   });
 
-  it("keeps comment attachment quota independent of card-level files", () => {
+  it("keeps comment-thread quota independent of card-level and per-comment caps", () => {
     const card = attachmentLimitFor(cardId, "card");
     const comment = attachmentLimitFor(cardId, "comment");
 
     expect(card.where).toEqual({ cardId, commentId: null });
     expect(card.limit).toBe(MAX_CARD_ATTACHMENTS);
     expect(comment.where).toEqual({ cardId, commentId: { not: null } });
-    expect(comment.limit).toBe(MAX_COMMENT_ATTACHMENTS);
+    expect(comment.limit).toBe(MAX_CARD_COMMENT_ATTACHMENTS);
+    expect(comment.limit).toBeGreaterThan(MAX_COMMENT_ATTACHMENTS);
   });
 });
 
@@ -80,6 +82,25 @@ describe("comment attachments schema", () => {
       ],
     });
     expect(parsed.success).toBe(true);
+  });
+
+  it("rejects more than MAX_COMMENT_ATTACHMENTS on one comment", () => {
+    const attachments = Array.from(
+      { length: MAX_COMMENT_ATTACHMENTS + 1 },
+      (_, index) => ({
+        objectKey: `opendesk/${boardId}/${cardId}/11111111-1111-4111-8111-11111111111${index}.jpg`,
+        filename: `photo-${index}.jpg`,
+        contentType: "image/jpeg" as const,
+        byteSize: 1200,
+      }),
+    );
+    const parsed = addCommentWithAttachmentsSchema.safeParse({
+      boardId,
+      cardId,
+      body: "",
+      attachments,
+    });
+    expect(parsed.success).toBe(false);
   });
 
   it("rejects an empty comment without files", () => {
