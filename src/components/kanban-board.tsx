@@ -284,7 +284,7 @@ export function KanbanBoard({
                   return (
                     <article
                       key={card.id}
-                      className={`card-tile ${card.type}${card.urgent ? " is-urgent" : ""}${isLocal ? " is-syncing" : ""}`}
+                      className={`card-tile${card.urgent ? " is-urgent" : ""}${isLocal ? " is-syncing" : ""}`}
                       draggable={!isLocal}
                       onDragStart={(event) =>
                         onDragStart(event, card.id, card.status)
@@ -296,9 +296,7 @@ export function KanbanBoard({
                       }}
                     >
                       <div className="card-meta">
-                        <span className="type-pill">
-                          {t.cardTypes[card.type]}
-                        </span>
+                        <span className="author">{card.author.displayName}</span>
                         <span className="card-meta-right">
                           {card.urgent ? (
                             <span
@@ -308,19 +306,9 @@ export function KanbanBoard({
                               <FireIcon size={15} />
                             </span>
                           ) : null}
-                          <span className="author">{card.author.displayName}</span>
                         </span>
                       </div>
                       <h3 className="card-title">{card.title}</h3>
-                      <p
-                        className={
-                          card.description
-                            ? "card-excerpt"
-                            : "card-excerpt is-empty"
-                        }
-                      >
-                        {card.description || "—"}
-                      </p>
                       <p
                         className={
                           card.comments.length > 0 || card.attachments.length > 0

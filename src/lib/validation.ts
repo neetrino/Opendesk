@@ -5,7 +5,6 @@ import {
   MAX_ATTACHMENT_FILENAME_LENGTH,
   MAX_COMMENT_ATTACHMENTS,
   MAX_COMMENT_LENGTH,
-  MAX_DESCRIPTION_LENGTH,
   MAX_DISPLAY_NAME_LENGTH,
   MAX_TITLE_LENGTH,
 } from "@/lib/constants";
@@ -32,14 +31,12 @@ export const claimInviteSchema = joinBoardSchema;
 
 export const createCardSchema = z.object({
   boardId: z.string().cuid(),
-  type: z.enum(["question", "task"]),
   status: z.enum(["new", "in_progress", "answered", "done"]).default("new"),
   title: z
     .string()
     .trim()
     .min(2, "cardTitleShort")
     .max(MAX_TITLE_LENGTH),
-  description: z.string().trim().max(MAX_DESCRIPTION_LENGTH).default(""),
   urgent: z
     .union([z.literal("on"), z.literal("true"), z.literal("false"), z.boolean()])
     .optional()
@@ -68,7 +65,6 @@ export const updateCardContentSchema = z.object({
     .trim()
     .min(2, "cardTitleShort")
     .max(MAX_TITLE_LENGTH),
-  description: z.string().trim().max(MAX_DESCRIPTION_LENGTH).default(""),
 });
 
 export const addCommentSchema = z.object({

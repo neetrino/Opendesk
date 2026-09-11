@@ -1,4 +1,4 @@
-import type { Card, CardStatus, CardType, Comment, Participant } from "@prisma/client";
+import type { Card, CardStatus, Comment, Participant } from "@prisma/client";
 
 export const LOCAL_CARD_ID_PREFIX = "local-";
 
@@ -28,9 +28,7 @@ export type LocalCardAuthor = {
 type BuildLocalCardInput = {
   boardId: string;
   status: CardStatus;
-  type: CardType;
   title: string;
-  description: string;
   urgent: boolean;
   author: LocalCardAuthor;
 };
@@ -69,10 +67,8 @@ export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard 
     id: createLocalCardId(),
     boardId: input.boardId,
     authorId: input.author.participantId,
-    type: input.type,
     status: input.status,
     title: input.title,
-    description: input.description,
     urgent: input.urgent,
     position: Number.MAX_SAFE_INTEGER,
     createdAt: now,

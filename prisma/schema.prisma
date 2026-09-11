@@ -6,11 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum CardType {
-  question
-  task
-}
-
 enum CardStatus {
   new
   in_progress
@@ -62,17 +57,15 @@ model Participant {
 }
 
 model Card {
-  id          String     @id @default(cuid())
-  boardId     String
-  authorId    String
-  type        CardType
-  status      CardStatus @default(new)
-  title       String
-  description String     @default("")
-  urgent      Boolean    @default(false)
-  position    Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id        String     @id @default(cuid())
+  boardId   String
+  authorId  String
+  status    CardStatus @default(new)
+  title     String
+  urgent    Boolean    @default(false)
+  position  Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
   author      Participant  @relation(fields: [authorId], references: [id], onDelete: Restrict)

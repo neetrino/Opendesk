@@ -10,10 +10,6 @@
   --surface-strong: #ffffff;
   --accent: #0d6b5c;
   --accent-soft: #e4f3ef;
-  --question: #c45c1a;
-  --question-soft: #f6e8dc;
-  --task: #1f4e79;
-  --task-soft: #e3eef8;
   --danger: #9b2c2c;
   --shadow: 0 1px 0 rgba(20, 32, 26, 0.04), 0 12px 28px rgba(20, 32, 26, 0.06);
   --radius: 16px;
@@ -788,8 +784,20 @@ textarea {
   font-size: 0.85rem;
 }
 
+.quick-title {
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  min-height: calc(1.35em + 0.9rem);
+  max-height: calc(1.35em * 2 + 0.9rem);
+  field-sizing: content;
+}
+
 .quick-actions {
   display: flex;
+  align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
 }
@@ -831,9 +839,9 @@ textarea {
 
 .card-tile {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
   gap: 0.35rem;
-  height: 8.1rem;
+  min-height: 0;
   padding: 0.7rem 0.75rem 0.65rem 0.85rem;
   border-radius: 14px;
   border: 1px solid rgba(20, 32, 26, 0.07);
@@ -858,6 +866,7 @@ textarea {
   bottom: 0.7rem;
   width: 3px;
   border-radius: 999px;
+  background: var(--accent);
 }
 
 .card-tile:hover {
@@ -869,20 +878,6 @@ textarea {
 .card-tile:active {
   cursor: grabbing;
   transform: translateY(0);
-}
-
-.card-tile.question::before {
-  background: var(--question);
-}
-
-.card-tile.task::before {
-  background: var(--task);
-}
-
-.card-tile.question,
-.card-tile.task {
-  background: #fff;
-  border-left: none;
 }
 
 .card-tile.is-urgent {
@@ -920,36 +915,6 @@ textarea {
   flex-shrink: 0;
 }
 
-.quick-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.82rem;
-  color: var(--ink-soft);
-}
-
-.quick-check input {
-  width: auto;
-}
-
-.urgent-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: #fff4ec;
-  color: #c2410c;
-  border: 1px solid rgba(194, 65, 12, 0.25);
-  border-radius: 999px;
-  padding: 0.45rem 0.85rem;
-  font-size: 0.85rem;
-}
-
-.urgent-toggle.is-on {
-  background: #e2410d;
-  color: #fff;
-  border-color: transparent;
-}
-
 .card-sheet.is-urgent {
   border-top-color: #e2410d;
   box-shadow:
@@ -963,27 +928,6 @@ textarea {
   align-items: center;
   gap: 0.4rem;
   min-height: 1.15rem;
-}
-
-.type-pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0.16rem 0.48rem;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.question .type-pill {
-  color: var(--question);
-  background: var(--question-soft);
-}
-
-.task .type-pill {
-  color: var(--task);
-  background: var(--task-soft);
 }
 
 .author {
@@ -1000,26 +944,10 @@ textarea {
   letter-spacing: -0.01em;
   color: var(--ink);
   display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 1.15rem;
-}
-
-.card-excerpt {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 0.74rem;
-  line-height: 1.35;
-  display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 0;
-}
-
-.card-excerpt.is-empty {
-  visibility: hidden;
+  min-height: 1.15rem;
 }
 
 .card-foot {
@@ -1073,17 +1001,10 @@ textarea {
   border-radius: 18px;
   background: #fff;
   border: 1px solid rgba(22, 35, 28, 0.08);
+  border-top: 4px solid var(--accent);
   box-shadow: 0 24px 60px rgba(16, 24, 20, 0.22);
   overflow: hidden;
   animation: sheet-in 220ms ease;
-}
-
-.card-sheet.question {
-  border-top: 4px solid var(--question);
-}
-
-.card-sheet.task {
-  border-top: 4px solid var(--task);
 }
 
 .sheet-header {
@@ -1240,13 +1161,6 @@ textarea {
   line-height: 1.2;
 }
 
-.sheet-description {
-  margin: 0;
-  color: var(--ink-soft);
-  line-height: 1.55;
-  white-space: pre-wrap;
-}
-
 .sheet-block {
   display: grid;
   gap: 0.45rem;
@@ -1369,8 +1283,7 @@ textarea {
   text-transform: uppercase;
 }
 
-.sheet-title-input,
-.sheet-description-input {
+.sheet-title-input {
   width: 100%;
   border: 1px solid rgba(22, 35, 28, 0.12);
   border-radius: 12px;
@@ -1391,14 +1304,7 @@ textarea {
   letter-spacing: -0.02em;
 }
 
-.sheet-description-input {
-  resize: vertical;
-  min-height: 4.5rem;
-  line-height: 1.5;
-}
-
-.sheet-title-input:focus,
-.sheet-description-input:focus {
+.sheet-title-input:focus {
   outline: none;
   background: #fff;
   border-color: rgba(15, 107, 92, 0.45);

@@ -79,7 +79,7 @@
   - постоянная ссылка (join + workspace): `/b/{slug}/{joinToken}`
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
 - `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
-- `Card` — id, boardId, type (`question` \| `task`), status, title, description, authorId, position
+- `Card` — id, boardId, status, title, urgent, authorId, position
 - `Comment` — id, cardId, authorId, body, createdAt
 - `Attachment` — id, boardId, cardId, commentId?, authorId, objectKey, filename, contentType, byteSize, kind (`image` \| `video`)
 

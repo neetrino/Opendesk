@@ -35,9 +35,7 @@ describe("validation schemas", () => {
   it("rejects short card title", () => {
     const parsed = createCardSchema.safeParse({
       boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
-      type: "question",
       title: "a",
-      description: "",
     });
     expect(parsed.success).toBe(false);
   });
