@@ -1,7 +1,10 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { OWNER_COOKIE_NAME } from "@/lib/constants";
+import {
+  OWNER_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/constants";
 
 export type OwnerSessionPayload = {
   role: "owner";
@@ -86,7 +89,7 @@ export async function setOwnerSessionCookie(): Promise<void> {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_MAX_AGE_SECONDS,
   });
 }
 

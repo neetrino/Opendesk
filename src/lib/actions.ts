@@ -57,11 +57,13 @@ export async function ownerLoginAction(
     return { ok: false, error: errors.invalidCredentials };
   }
 
+  await clearSessionCookie();
   await setOwnerSessionCookie();
   redirect("/boards");
 }
 
 export async function logoutOwnerAction(): Promise<void> {
+  await clearSessionCookie();
   await clearOwnerSessionCookie();
   redirect("/login");
 }

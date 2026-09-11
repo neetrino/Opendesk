@@ -1,0 +1,79 @@
+import "server-only";
+
+import { cookies } from "next/headers";
+import { LAST_BOARD_COOKIE_NAME } from "@/lib/constants";
+import { buildJoinPath, parseJoinPath } from "@/lib/join-url";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+
+export type ParticipantBoardDestination = {
+  boardId: string;
+  participantId: string;
+  displayName: string;
+  path: string;
+};
+
+/**
+ * Resolve the only board available to the current participant. The database
+ * lookup prevents a stale or forged navigation hint from becoming access.
+ */
+export async function getParticipantBoardDestination(): Promise<ParticipantBoardDestination | null> {
+  const session = await getSession();
+  if (!session) {
+    return null;
+  }
+
+  const participant = await prisma.participant.findFirst({
+    where: {
+      id: session.participantId,
+      boardId: session.boardId,
+    },
+    select: {
+      id: true,
+      displayName: true,
+      board: {
+        select: {
+          id: true,
+          slug: true,
+          joinToken: true,
+        },
+      },
+    },
+  });
+
+  if (!participant) {
+    return null;
+  }
+
+  return {
+    boardId: participant.board.id,
+    participantId: participant.id,
+    displayName: participant.displayName,
+    path: buildJoinPath(participant.board.slug, participant.board.joinToken),
+  };
+}
+
+/** Resolve an owner's remembered board after validating the cookie against DB. */
+export async function getRememberedOwnerBoardPath(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const rememberedPath = cookieStore.get(LAST_BOARD_COOKIE_NAME)?.value;
+  if (!rememberedPath) {
+    return null;
+  }
+
+  const parsed = parseJoinPath(rememberedPath);
+  if (!parsed) {
+    return null;
+  }
+
+  const board = await prisma.board.findUnique({
+    where: { joinToken: parsed.joinToken },
+    select: { slug: true, joinToken: true },
+  });
+
+  if (!board || board.slug !== parsed.slug) {
+    return null;
+  }
+
+  return buildJoinPath(board.slug, board.joinToken);
+}

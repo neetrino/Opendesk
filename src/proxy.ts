@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  LAST_BOARD_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/constants";
 
 const JOIN_WINDOW_MS = 60_000;
 const JOIN_LIMIT = 20;
@@ -63,7 +67,18 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (request.method === "GET" && isSlugJoin) {
+    response.cookies.set(LAST_BOARD_COOKIE_NAME, path, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: request.nextUrl.protocol === "https:",
+      path: "/",
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
+  }
+
+  return response;
 }
 
 export const config = {
