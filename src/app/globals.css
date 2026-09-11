@@ -1275,6 +1275,7 @@ textarea {
   position: fixed;
   inset: 0;
   z-index: 60;
+  overscroll-behavior-x: none;
 }
 
 .sheet-backdrop {
@@ -2047,6 +2048,7 @@ textarea {
   color: #fff;
   touch-action: none;
   overscroll-behavior: none;
+  overscroll-behavior-x: none;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -2384,6 +2386,8 @@ textarea {
   display: grid;
   place-items: center;
   cursor: pointer;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
 }
 
 .media-lightbox-backdrop {

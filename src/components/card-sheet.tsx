@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions";
 import type { LocalBoardCard } from "@/lib/local-cards";
 import { useI18n } from "@/i18n/provider";
+import { useHistoryTrap } from "@/lib/use-history-trap";
 
 export type SheetCard = LocalBoardCard;
 
@@ -47,6 +48,12 @@ export function CardSheet({
   const [title, setTitle] = useState(card.title);
   const [error, setError] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+
+  useHistoryTrap({
+    id: "card",
+    active: true,
+    onBack: onClose,
+  });
 
   if (card.id !== cardId) {
     setCardId(card.id);

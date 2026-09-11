@@ -3,6 +3,7 @@
 import { useEffect, type MouseEvent } from "react";
 import { VoiceNotePlayer } from "@/components/voice-note-player";
 import { canPreviewInline } from "@/lib/attachments";
+import { useHistoryTrap } from "@/lib/use-history-trap";
 
 export type MediaItem = {
   id: string;
@@ -85,6 +86,12 @@ type MediaLightboxProps = {
 
 export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps) {
   const previewable = canPreviewInline(item.contentType, item.kind);
+
+  useHistoryTrap({
+    id: "media",
+    active: true,
+    onBack: onClose,
+  });
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {

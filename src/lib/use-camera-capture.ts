@@ -13,6 +13,7 @@ import {
   type CameraCaptureError,
   type CameraFacing,
 } from "@/lib/camera-capture";
+import { useHistoryTrap } from "@/lib/use-history-trap";
 
 type UseCameraCaptureOptions = {
   onAutoStopVideo?: (file: File) => void;
@@ -69,6 +70,12 @@ export function useCameraCapture({
     setErrorKey(null);
     setIsOpen(false);
   }, [clearTick, replaceStream]);
+
+  useHistoryTrap({
+    id: "camera",
+    active: isOpen,
+    onBack: close,
+  });
 
   useEffect(() => {
     return () => {
