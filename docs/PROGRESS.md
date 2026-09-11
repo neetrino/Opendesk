@@ -45,7 +45,7 @@
 
 ## Фаза 4. Деплой
 
-- [x] `vercel.json` + `vercel-build` (migrate deploy)
+- [x] `vercel.json` + `pnpm build` (без migrate; миграции локально)
 - [x] Env-контракт для Neon/Vercel в README и `.env.example`
 - [x] Миграции применены на Neon
 - [ ] Первый production deploy на Vercel

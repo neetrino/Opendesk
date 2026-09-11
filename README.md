@@ -47,7 +47,7 @@ pnpm dev
 | `DATABASE_CONNECTION_LIMIT` | `1` |
 | `DATABASE_SESSION_OPTIONS` | `false` |
 
-4. Build: `pnpm vercel-build` (см. `vercel.json`) — включает `prisma migrate deploy`.
+4. Миграции — локально: `pnpm db:migrate:deploy` (Vercel только собирает приложение).
 5. Deploy.
 
 ## Скрипты
@@ -56,7 +56,7 @@ pnpm dev
 |---------|------------|
 | `pnpm dev` | local dev |
 | `pnpm build` | build без migrate |
-| `pnpm vercel-build` | generate + migrate deploy + build |
+| `pnpm build` | generate + Next.js build (то, что гоняет Vercel) |
 | `pnpm db:migrate:deploy` | применить миграции к Neon |
 | `pnpm lint` / `typecheck` / `test` | качество |
 
