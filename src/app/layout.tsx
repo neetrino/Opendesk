@@ -62,14 +62,22 @@ export default async function RootLayout({
                   className="brand-logo"
                   priority
                 />
-                <span className="brand-text">
-                  Open<span>Desk</span>
+                <span className="brand-copy">
+                  <span className="brand-text">
+                    Open<span>Desk</span>
+                  </span>
+                  <span className="brand-credit">{dictionary.common.credit}</span>
                 </span>
               </Link>
               <LanguageSwitcher />
             </div>
           </header>
           <main className="shell">{children}</main>
+          <footer className="site-footer">
+            <div className="shell">
+              <p className="site-footer-credit">{dictionary.common.credit}</p>
+            </div>
+          </footer>
         </I18nProvider>
       </body>
     </html>

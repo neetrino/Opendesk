@@ -125,6 +125,7 @@ export type Dictionary = {
   };
   common: {
     stageAria: string;
+    credit: string;
   };
   errors: {
     validation: string;
@@ -288,6 +289,7 @@ export const en: Dictionary = {
   },
   common: {
     stageAria: "Card stage",
+    credit: "by Neetrino",
   },
   errors: {
     validation: "Validation error",

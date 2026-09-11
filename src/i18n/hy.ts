@@ -130,6 +130,7 @@ export const hy: Dictionary = {
   },
   common: {
     stageAria: "Քարտի փուլ",
+    credit: "by Neetrino",
   },
   errors: {
     validation: "Վալիդացիայի սխալ",

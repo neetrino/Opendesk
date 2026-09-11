@@ -130,6 +130,7 @@ export const ru: Dictionary = {
   },
   common: {
     stageAria: "Стадия карточки",
+    credit: "by Neetrino",
   },
   errors: {
     validation: "Ошибка валидации",
