@@ -9,6 +9,7 @@ import {
   type FormEvent,
 } from "react";
 import { PaperclipIcon } from "@/components/paperclip-icon";
+import { SendIcon } from "@/components/send-icon";
 import { addCommentAction } from "@/lib/actions";
 import {
   ATTACHMENT_FILE_ACCEPT,
@@ -91,6 +92,7 @@ export function CommentForm({
 }: CommentFormProps) {
   const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
+  const [hasText, setHasText] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingCommentFile[]>([]);
   const [, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -98,9 +100,12 @@ export function CommentForm({
   const locked = isLocalCardId(cardId);
   const canAttach = enabled && !locked;
 
+  const canSend = hasText || pendingFiles.length > 0;
+
   useLayoutEffect(() => {
     if (textareaRef.current) {
       fitTextarea(textareaRef.current);
+      setHasText(textareaRef.current.value.trim().length > 0);
     }
   }, [cardId]);
 
@@ -177,6 +182,7 @@ export function CommentForm({
 
     textarea.value = "";
     fitTextarea(textarea);
+    setHasText(false);
     setPendingFiles([]);
     setError(null);
 
@@ -211,6 +217,7 @@ export function CommentForm({
         setError(mapFileError(message, t.errors));
         textarea.value = body;
         fitTextarea(textarea);
+        setHasText(body.length > 0);
         setPendingFiles(files);
         textarea.focus();
       }
@@ -245,51 +252,74 @@ export function CommentForm({
           ))}
         </ul>
       ) : null}
-      <textarea
-        ref={textareaRef}
-        name="body"
-        rows={2}
-        maxLength={MAX_COMMENT_LENGTH}
-        placeholder={t.comment.placeholder}
-        autoComplete="off"
-        onPaste={onPaste}
-        onInput={(event) => fitTextarea(event.currentTarget)}
-      />
-      {error ? <p className="form-error">{error}</p> : null}
-      <div className="comment-toolbar">
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ATTACHMENT_FILE_ACCEPT}
-          multiple
-          hidden
-          disabled={!canAttach}
-          onChange={(event) => {
-            const files = event.target.files ? Array.from(event.target.files) : [];
-            event.target.value = "";
-            addFiles(files);
-          }}
-        />
-        <button
-          type="button"
-          className="sheet-icon-btn comment-attach"
-          onClick={() => inputRef.current?.click()}
-          disabled={!canAttach}
-          aria-label={t.comment.attachAria}
-          title={
-            !enabled
-              ? t.cardPage.attachmentsUnavailable
-              : locked
-                ? t.cardPage.attachmentsLocalCard
-                : t.comment.attach
-          }
-        >
-          <PaperclipIcon size={17} />
-        </button>
-        <button className="button" type="submit">
-          {t.comment.send}
-        </button>
+      <div className="comment-compose-row">
+        <div className="comment-compose-field">
+          <textarea
+            ref={textareaRef}
+            name="body"
+            rows={1}
+            maxLength={MAX_COMMENT_LENGTH}
+            placeholder={t.comment.placeholder}
+            autoComplete="off"
+            onPaste={onPaste}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }
+            }}
+            onInput={(event) => {
+              fitTextarea(event.currentTarget);
+              setHasText(event.currentTarget.value.trim().length > 0);
+            }}
+          />
+          {canSend ? null : (
+            <>
+              <input
+                ref={inputRef}
+                type="file"
+                accept={ATTACHMENT_FILE_ACCEPT}
+                multiple
+                hidden
+                disabled={!canAttach}
+                onChange={(event) => {
+                  const files = event.target.files
+                    ? Array.from(event.target.files)
+                    : [];
+                  event.target.value = "";
+                  addFiles(files);
+                }}
+              />
+              <button
+                type="button"
+                className="comment-attach"
+                onClick={() => inputRef.current?.click()}
+                disabled={!canAttach}
+                aria-label={t.comment.attachAria}
+                title={
+                  !enabled
+                    ? t.cardPage.attachmentsUnavailable
+                    : locked
+                      ? t.cardPage.attachmentsLocalCard
+                      : t.comment.attach
+                }
+              >
+                <PaperclipIcon size={20} />
+              </button>
+            </>
+          )}
+        </div>
+        {canSend ? (
+          <button
+            className="comment-send"
+            type="submit"
+            aria-label={t.comment.send}
+          >
+            <SendIcon size={18} />
+          </button>
+        ) : null}
       </div>
+      {error ? <p className="form-error">{error}</p> : null}
     </form>
   );
 }

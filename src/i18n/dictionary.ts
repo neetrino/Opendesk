@@ -56,6 +56,8 @@ export type Dictionary = {
     joinedAt: string;
     closeParticipants: string;
     emptyColumn: string;
+    dockAria: string;
+    newCard: string;
   };
   columns: {
     new: string;
@@ -220,6 +222,8 @@ export const en: Dictionary = {
     joinedAt: "Joined",
     closeParticipants: "Close",
     emptyColumn: "Nothing here yet",
+    dockAria: "Board actions",
+    newCard: "New task",
   },
   columns: {
     new: "New",
@@ -278,7 +282,7 @@ export const en: Dictionary = {
     attachmentClosePreview: "Close preview",
   },
   comment: {
-    placeholder: "Write a reply or comment…",
+    placeholder: "Message",
     sending: "Sending…",
     send: "Send",
     attach: "Attach",

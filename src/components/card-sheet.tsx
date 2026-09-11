@@ -18,6 +18,7 @@ type CardSheetProps = {
   boardId: string;
   card: SheetCard;
   locale: string;
+  currentUserId: string;
   attachmentsEnabled: boolean;
   onClose: () => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
@@ -33,6 +34,7 @@ export function CardSheet({
   boardId,
   card,
   locale,
+  currentUserId,
   attachmentsEnabled,
   onClose,
   onUrgentChange,
@@ -185,7 +187,11 @@ export function CardSheet({
 
         <div className="sheet-discussion">
           <div className="thread" ref={threadRef}>
-            <ThreadList comments={card.comments} locale={locale} />
+            <ThreadList
+              comments={card.comments}
+              locale={locale}
+              currentUserId={currentUserId}
+            />
           </div>
           <div className="sheet-composer">
             <CommentForm

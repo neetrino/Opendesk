@@ -59,6 +59,8 @@ export const hy: Dictionary = {
     joinedAt: "Միացել է",
     closeParticipants: "Փակել",
     emptyColumn: "Դեռ դատարկ է",
+    dockAria: "Տախտակի գործողություններ",
+    newCard: "Նոր խնդիր",
   },
   columns: {
     new: "Նոր",
@@ -118,7 +120,7 @@ export const hy: Dictionary = {
     attachmentClosePreview: "Փակել նախադիտումը",
   },
   comment: {
-    placeholder: "Գրեք պատասխան կամ մեկնաբանություն…",
+    placeholder: "Հաղորդագրություն",
     sending: "Ուղարկում…",
     send: "Ուղարկել",
     attach: "Ֆայլ",

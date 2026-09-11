@@ -17,6 +17,8 @@ type QuickCreateCardProps = {
   boardId: string;
   status: CardStatus;
   currentUser: LocalCardAuthor;
+  layout?: "column" | "dock";
+  onCancel?: () => void;
   onLocalCreate: (card: LocalBoardCard) => void;
   onLocalConfirm: (tempId: string, card: LocalBoardCard) => void;
   onLocalRollback: (tempId: string, error: string) => void;
@@ -26,6 +28,8 @@ export function QuickCreateCard({
   boardId,
   status,
   currentUser,
+  layout = "column",
+  onCancel,
   onLocalCreate,
   onLocalConfirm,
   onLocalRollback,
@@ -97,10 +101,15 @@ export function QuickCreateCard({
       }
 
       onLocalConfirm(localCard.id, toBoardCardFromCreated(response.data, currentUser));
+      if (layout === "dock") {
+        setOpen(false);
+        resetForm();
+        onCancel?.();
+      }
     });
   }
 
-  if (!open) {
+  if (!open && layout !== "dock") {
     return (
       <button
         type="button"
@@ -113,7 +122,15 @@ export function QuickCreateCard({
   }
 
   return (
-    <form onSubmit={onSubmit} className="quick-add-form animate-rise" autoComplete="off">
+    <form
+      onSubmit={onSubmit}
+      className={
+        layout === "dock"
+          ? "quick-add-form board-dock-form animate-rise"
+          : "quick-add-form animate-rise"
+      }
+      autoComplete="off"
+    >
       <input type="hidden" name="boardId" value={boardId} />
       <input type="hidden" name="status" value={status} />
 
@@ -172,6 +189,7 @@ export function QuickCreateCard({
           onClick={() => {
             setOpen(false);
             resetForm();
+            onCancel?.();
           }}
         >
           {t.quickAdd.cancel}

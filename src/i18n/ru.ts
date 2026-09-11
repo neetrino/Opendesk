@@ -59,6 +59,8 @@ export const ru: Dictionary = {
     joinedAt: "Подключился",
     closeParticipants: "Закрыть",
     emptyColumn: "Пока пусто",
+    dockAria: "Действия доски",
+    newCard: "Новая задача",
   },
   columns: {
     new: "Новое",
@@ -118,7 +120,7 @@ export const ru: Dictionary = {
     attachmentClosePreview: "Закрыть просмотр",
   },
   comment: {
-    placeholder: "Напишите ответ или комментарий…",
+    placeholder: "Сообщение",
     sending: "Отправляем…",
     send: "Отправить",
     attach: "Файл",
