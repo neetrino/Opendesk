@@ -126,6 +126,16 @@ export type Dictionary = {
     captureGallery: string;
     captureGalleryAria: string;
     captureLimitHint: string;
+    closeCamera: string;
+    closeCameraAria: string;
+    switchCamera: string;
+    switchCameraAria: string;
+    cameraShutter: string;
+    cameraShutterAria: string;
+    recordingVideo: string;
+    cameraUnavailable: string;
+    cameraFallbackPhoto: string;
+    cameraFallbackVideo: string;
     recordVoice: string;
     recordVoiceAria: string;
     recordingVoice: string;
@@ -169,6 +179,8 @@ export type Dictionary = {
     uploadFailed: string;
     microphoneDenied: string;
     voiceUnsupported: string;
+    cameraDenied: string;
+    cameraUnsupported: string;
     attachmentLimit: string;
     attachmentNotFound: string;
     deleteAttachment: string;
@@ -301,10 +313,20 @@ export const en: Dictionary = {
     sending: "Sending…",
     send: "Send",
     captureCamera: "Tap for a photo. Hold for video, about {minutes} min",
-    captureCameraAria: "Tap for a photo, hold for video",
+    captureCameraAria: "Open camera",
     captureGallery: "Gallery",
     captureGalleryAria: "Choose from gallery",
     captureLimitHint: "Video about {minutes} min, up to {n} MB",
+    closeCamera: "Close camera",
+    closeCameraAria: "Close camera",
+    switchCamera: "Flip camera",
+    switchCameraAria: "Switch camera",
+    cameraShutter: "Tap for a photo. Hold for video, about {minutes} min",
+    cameraShutterAria: "Tap for a photo, hold for video",
+    recordingVideo: "Recording",
+    cameraUnavailable: "Camera is not available on this device",
+    cameraFallbackPhoto: "Photo",
+    cameraFallbackVideo: "Video",
     recordVoice: "Voice",
     recordVoiceAria: "Record a voice note",
     recordingVoice: "Recording…",
@@ -349,6 +371,8 @@ export const en: Dictionary = {
     uploadFailed: "Could not upload the file",
     microphoneDenied: "Microphone access was denied",
     voiceUnsupported: "Voice notes are not supported in this browser",
+    cameraDenied: "Allow camera access to take a photo or video",
+    cameraUnsupported: "This browser cannot open the camera",
     attachmentLimit: "Too many files on this card",
     attachmentNotFound: "File not found",
     deleteAttachment: "Could not remove the file",

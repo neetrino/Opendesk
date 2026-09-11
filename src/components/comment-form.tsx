@@ -9,6 +9,7 @@ import {
   type FormEvent,
   type MouseEvent,
 } from "react";
+import { CameraCaptureOverlay } from "@/components/camera-capture-overlay";
 import {
   MediaCaptureControls,
   VoiceMicIcon,
@@ -23,6 +24,8 @@ import {
   requestAndUploadFile,
   validateLocalFile,
 } from "@/lib/upload-client";
+import { useCameraCapture } from "@/lib/use-camera-capture";
+import { useComposerPrimaryAction } from "@/lib/use-composer-primary-action";
 import { useVoiceRecorder } from "@/lib/use-voice-recorder";
 import { formatVoiceElapsed } from "@/lib/voice-recorder";
 import { useI18n } from "@/i18n/provider";
@@ -126,10 +129,14 @@ export function CommentForm({
   const locked = isLocalCardId(cardId);
   const canAttach = enabled && !locked;
   const canSend = hasText || pendingFiles.length > 0;
+  const { primaryAction, rememberPrimary } = useComposerPrimaryAction();
 
   const { recording, elapsedMs, start, stop, cancel } = useVoiceRecorder({
     onError: (key) => setError(mapFileError(key, t.errors)),
     onAutoStop: (file) => addFiles([file]),
+  });
+  const camera = useCameraCapture({
+    onAutoStopVideo: (file) => addFiles([file]),
   });
 
   useLayoutEffect(() => {
@@ -280,6 +287,29 @@ export function CommentForm({
     sendComment(body, [...pendingFiles, pending]);
   }
 
+  function startVoice(): void {
+    if (!canAttach) {
+      return;
+    }
+    rememberPrimary("voice");
+    setError(null);
+    void start();
+  }
+
+  function openCamera(): void {
+    if (!canAttach || recording) {
+      return;
+    }
+    rememberPrimary("camera");
+    setError(null);
+    void camera.open();
+  }
+
+  function onCameraFiles(files: File[]): void {
+    camera.close();
+    addFiles(files);
+  }
+
   function onPrimaryClick(event: MouseEvent<HTMLButtonElement>): void {
     if (recording) {
       event.preventDefault();
@@ -290,11 +320,7 @@ export function CommentForm({
       return;
     }
     event.preventDefault();
-    if (!canAttach) {
-      return;
-    }
-    setError(null);
-    void start();
+    startVoice();
   }
 
   const unavailableReason = !enabled
@@ -349,16 +375,6 @@ export function CommentForm({
       ) : null}
       <div className="comment-compose-row">
         <div className="comment-compose-field">
-          {recording ? null : (
-            <MediaCaptureControls
-              mode="gallery"
-              className="is-gallery"
-              disabled={!canAttach}
-              onFiles={addFiles}
-              labels={captureLabels}
-              unavailableReason={unavailableReason}
-            />
-          )}
           {recording ? (
             <div className="voice-recording" aria-live="polite">
               <button
@@ -404,33 +420,91 @@ export function CommentForm({
             />
           )}
           {recording ? null : (
-            <MediaCaptureControls
-              mode="camera"
-              className="is-camera"
-              disabled={!canAttach}
-              onFiles={addFiles}
-              labels={captureLabels}
-              unavailableReason={unavailableReason}
-            />
+            <div className="comment-compose-secondary">
+              {primaryAction === "camera" ? (
+                <button
+                  type="button"
+                  className="comment-attach"
+                  onClick={startVoice}
+                  disabled={!canAttach}
+                  aria-label={t.comment.recordVoiceAria}
+                  title={unavailableReason ?? t.comment.recordVoice}
+                >
+                  <VoiceMicIcon size={20} />
+                </button>
+              ) : (
+                <MediaCaptureControls
+                  disabled={!canAttach}
+                  onOpenCamera={openCamera}
+                  labels={captureLabels}
+                  unavailableReason={unavailableReason}
+                />
+              )}
+            </div>
           )}
         </div>
-        <button
-          className="comment-action"
-          type={canSend && !recording ? "submit" : "button"}
-          onClick={onPrimaryClick}
-          disabled={!canAttach && !canSend}
-          aria-label={
-            recording || canSend ? t.comment.send : t.comment.recordVoiceAria
-          }
-          title={
-            recording || canSend
-              ? t.comment.send
-              : (unavailableReason ?? t.comment.recordVoice)
-          }
-        >
-          {showSend ? <SendIcon size={20} /> : <VoiceMicIcon size={20} />}
-        </button>
+        {showSend || primaryAction === "voice" ? (
+          <button
+            className="comment-action"
+            type={canSend && !recording ? "submit" : "button"}
+            onClick={onPrimaryClick}
+            disabled={!canAttach && !canSend}
+            aria-label={
+              recording || canSend ? t.comment.send : t.comment.recordVoiceAria
+            }
+            title={
+              recording || canSend
+                ? t.comment.send
+                : (unavailableReason ?? t.comment.recordVoice)
+            }
+          >
+            {showSend ? <SendIcon size={20} /> : <VoiceMicIcon size={20} />}
+          </button>
+        ) : (
+          <MediaCaptureControls
+            appearance="action"
+            disabled={!canAttach}
+            onOpenCamera={openCamera}
+            labels={captureLabels}
+            unavailableReason={unavailableReason}
+          />
+        )}
       </div>
+      <CameraCaptureOverlay
+        open={camera.isOpen}
+        stream={camera.stream}
+        ready={camera.ready}
+        errorKey={camera.errorKey}
+        recording={camera.recording}
+        elapsedMs={camera.elapsedMs}
+        onClose={camera.close}
+        onFiles={onCameraFiles}
+        onFlip={() => {
+          void camera.flip();
+        }}
+        onTakePhoto={camera.takePhoto}
+        onStartVideo={camera.startVideo}
+        onStopVideo={camera.stopVideo}
+        onCancelVideo={camera.cancelVideo}
+        labels={{
+          close: t.comment.closeCamera,
+          closeAria: t.comment.closeCameraAria,
+          switchCamera: t.comment.switchCamera,
+          switchCameraAria: t.comment.switchCameraAria,
+          shutter: applyAttachmentLimitCopy(t.comment.cameraShutter),
+          shutterAria: t.comment.cameraShutterAria,
+          gallery: t.comment.captureGallery,
+          galleryAria: t.comment.captureGalleryAria,
+          recording: t.comment.recordingVideo,
+          unavailable: t.comment.cameraUnavailable,
+          fallbackPhoto: t.comment.cameraFallbackPhoto,
+          fallbackVideo: t.comment.cameraFallbackVideo,
+        }}
+        errors={{
+          cameraDenied: t.errors.cameraDenied,
+          cameraUnsupported: t.errors.cameraUnsupported,
+        }}
+      />
       {error ? <p className="form-error">{error}</p> : null}
     </form>
   );

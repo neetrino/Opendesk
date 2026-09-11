@@ -28,8 +28,10 @@ export const MAX_CARD_ATTACHMENTS = 20;
 export const MAX_COMMENT_ATTACHMENTS = 4;
 /** Field voice notes: long enough to describe a site, still a small upload. */
 export const MAX_VOICE_NOTE_SECONDS = 5 * 60;
-/** Hold the camera button this long, then release to open video capture. */
+/** Hold the in-app shutter this long, then keep holding to record video. */
 export const CAMERA_LONG_PRESS_MS = 450;
+/** Soft cap for in-app camera video, aligned with the size hint. */
+export const MAX_CAMERA_VIDEO_SECONDS = VIDEO_DURATION_HINT_MINUTES * 60;
 /** Long enough for a 200 MB PUT on a slow mobile link. */
 export const ATTACHMENT_UPLOAD_URL_TTL_SECONDS = 15 * 60;
 export const ATTACHMENT_DOWNLOAD_URL_TTL_SECONDS = 60 * 60;

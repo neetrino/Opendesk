@@ -1,25 +1,19 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type PointerEvent } from "react";
-import { ATTACHMENT_FILE_ACCEPT } from "@/lib/attachments";
-import { CAMERA_LONG_PRESS_MS } from "@/lib/constants";
-
 type CaptureLabels = {
   camera: string;
   cameraAria: string;
-  gallery: string;
-  galleryAria: string;
 };
 
-type MediaCaptureMode = "all" | "gallery" | "camera";
+type MediaCaptureAppearance = "ghost" | "action";
 
 type MediaCaptureControlsProps = {
   disabled: boolean;
-  onFiles: (files: File[]) => void;
   labels: CaptureLabels;
   unavailableReason?: string;
-  mode?: MediaCaptureMode;
+  appearance?: MediaCaptureAppearance;
   className?: string;
+  onOpenCamera?: () => void;
 };
 
 function CameraIcon({ size = 20 }: { size?: number }) {
@@ -51,7 +45,7 @@ function CameraIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function GalleryIcon({ size = 20 }: { size?: number }) {
+export function GalleryIcon({ size = 20 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -90,6 +84,27 @@ function GalleryIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+export function FlipCameraIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M7 7.5 4.5 10 7 12.5M4.5 10h10a4 4 0 0 1 4 4v.5M17 16.5 19.5 14 17 11.5M19.5 14h-10a4 4 0 0 1-4-4V9.5"
+      />
+    </svg>
+  );
+}
+
 function MicIcon({ size = 20 }: { size?: number }) {
   return (
     <svg
@@ -120,152 +135,36 @@ function MicIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function onHiddenInputChange(
-  event: ChangeEvent<HTMLInputElement>,
-  onFiles: (files: File[]) => void,
-): void {
-  const files = event.target.files ? Array.from(event.target.files) : [];
-  event.target.value = "";
-  if (files.length > 0) {
-    onFiles(files);
-  }
-}
-
 /**
- * Gallery picker plus one camera control: tap opens a photo, hold then
- * release opens video. The file dialog is opened on pointerup so iOS keeps
- * the user gesture.
+ * Opens the in-app camera overlay. Photo, video, and gallery live there.
  */
 export function MediaCaptureControls({
   disabled,
-  onFiles,
   labels,
   unavailableReason,
-  mode = "all",
+  appearance = "ghost",
   className,
+  onOpenCamera,
 }: MediaCaptureControlsProps) {
-  const photoRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLInputElement>(null);
-  const galleryRef = useRef<HTMLInputElement>(null);
-  const pressStartedAt = useRef<number | null>(null);
-  const armedTimer = useRef<number | null>(null);
-  const [videoArmed, setVideoArmed] = useState(false);
-
-  function clearArmTimer(): void {
-    if (armedTimer.current !== null) {
-      window.clearTimeout(armedTimer.current);
-      armedTimer.current = null;
-    }
-  }
-
-  function onCameraPointerDown(event: PointerEvent<HTMLButtonElement>): void {
-    if (disabled) {
-      return;
-    }
-    if (event.pointerType === "mouse" && event.button !== 0) {
-      return;
-    }
-    event.currentTarget.setPointerCapture(event.pointerId);
-    pressStartedAt.current = Date.now();
-    setVideoArmed(false);
-    clearArmTimer();
-    armedTimer.current = window.setTimeout(() => {
-      setVideoArmed(true);
-    }, CAMERA_LONG_PRESS_MS);
-  }
-
-  function onCameraPointerUp(event: PointerEvent<HTMLButtonElement>): void {
-    if (disabled || pressStartedAt.current === null) {
-      return;
-    }
-    const heldMs = Date.now() - pressStartedAt.current;
-    pressStartedAt.current = null;
-    clearArmTimer();
-    setVideoArmed(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    if (heldMs >= CAMERA_LONG_PRESS_MS) {
-      videoRef.current?.click();
-      return;
-    }
-    photoRef.current?.click();
-  }
-
-  function onCameraPointerCancel(event: PointerEvent<HTMLButtonElement>): void {
-    pressStartedAt.current = null;
-    clearArmTimer();
-    setVideoArmed(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  const showGallery = mode === "all" || mode === "gallery";
-  const showCamera = mode === "all" || mode === "camera";
+  const buttonClass =
+    appearance === "action" ? "comment-action" : "comment-attach";
 
   return (
     <div className={className ? `media-capture ${className}` : "media-capture"}>
-      {showGallery ? (
-        <>
-          <input
-            ref={galleryRef}
-            type="file"
-            accept={ATTACHMENT_FILE_ACCEPT}
-            multiple
-            hidden
-            disabled={disabled}
-            onChange={(event) => onHiddenInputChange(event, onFiles)}
-          />
-          <button
-            type="button"
-            className="comment-attach"
-            onClick={() => galleryRef.current?.click()}
-            disabled={disabled}
-            aria-label={labels.galleryAria}
-            title={unavailableReason ?? labels.gallery}
-          >
-            <GalleryIcon size={20} />
-          </button>
-        </>
-      ) : null}
-      {showCamera ? (
-        <>
-          <input
-            ref={photoRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            hidden
-            disabled={disabled}
-            onChange={(event) => onHiddenInputChange(event, onFiles)}
-          />
-          <input
-            ref={videoRef}
-            type="file"
-            accept="video/*"
-            capture="environment"
-            hidden
-            disabled={disabled}
-            onChange={(event) => onHiddenInputChange(event, onFiles)}
-          />
-          <button
-            type="button"
-            className={
-              videoArmed ? "comment-attach is-video-armed" : "comment-attach"
-            }
-            disabled={disabled}
-            aria-label={labels.cameraAria}
-            title={unavailableReason ?? labels.camera}
-            onPointerDown={onCameraPointerDown}
-            onPointerUp={onCameraPointerUp}
-            onPointerCancel={onCameraPointerCancel}
-            onContextMenu={(event) => event.preventDefault()}
-          >
-            <CameraIcon size={20} />
-          </button>
-        </>
-      ) : null}
+      <button
+        type="button"
+        className={buttonClass}
+        disabled={disabled}
+        aria-label={labels.cameraAria}
+        title={unavailableReason ?? labels.camera}
+        onClick={() => {
+          if (!disabled) {
+            onOpenCamera?.();
+          }
+        }}
+      >
+        <CameraIcon size={20} />
+      </button>
     </div>
   );
 }
