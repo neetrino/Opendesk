@@ -296,6 +296,7 @@ export function KanbanBoard({
             <button
               key={status}
               type="button"
+              aria-pressed={activeStatus === status}
               className={
                 activeStatus === status
                   ? `board-stage-tab stage-${status} is-active`
@@ -322,6 +323,7 @@ export function KanbanBoard({
           return (
             <section
               key={status}
+              aria-label={t.columns[status]}
               className={
                 dragOverStatus === status
                   ? `board-column column-${status} is-drop-target${isFocused ? " is-focused" : ""}`
@@ -332,8 +334,12 @@ export function KanbanBoard({
               onDrop={(event) => onDrop(event, status)}
             >
               <header className="column-header">
-                <h2>{t.columns[status]}</h2>
-                <span className="count">{columnCards.length}</span>
+                <div className={`board-stage-tab stage-${status} is-active`}>
+                  <h2 className="board-stage-label">{t.columns[status]}</h2>
+                  <span className="board-stage-count">
+                    {columnCards.length}
+                  </span>
+                </div>
               </header>
 
               <button

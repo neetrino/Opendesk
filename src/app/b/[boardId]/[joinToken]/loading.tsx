@@ -13,7 +13,9 @@ export default function BoardLoading() {
             className={`board-column column-${status}`}
           >
             <header className="column-header">
-              <div className="boards-skel boards-skel-col" />
+              <div className={`board-stage-tab stage-${status} is-active`}>
+                <div className="boards-skel boards-skel-col" />
+              </div>
             </header>
             <div className="boards-skel boards-skel-tile" />
             <div className="boards-skel boards-skel-tile" />

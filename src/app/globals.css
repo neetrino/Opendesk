@@ -1048,50 +1048,90 @@ textarea {
   opacity: 0.92;
 }
 
+.board-stage-nav {
+  display: none;
+}
+
 .column-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  display: grid;
   margin-bottom: 0.45rem;
-  padding: 0.6rem 0.7rem;
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--paper-raised) 88%, white);
-  border: 1px solid color-mix(in srgb, var(--column-accent) 16%, var(--line));
 }
 
-.column-header h2 {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+.column-header .board-stage-tab {
+  width: 100%;
+  cursor: default;
+  box-shadow: var(--shadow);
+}
+
+.column-header .board-stage-label {
+  font-size: 0.72rem;
+}
+
+.board-stage-tab {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: center;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  padding: 0.45rem 0.2rem;
+  min-height: 3.1rem;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.board-stage-label {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--ink);
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  text-align: center;
 }
 
-.column-header h2::before {
-  content: "";
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 999px;
-  background: var(--column-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--column-accent) 18%, transparent);
-}
-
-.count {
-  font-size: 0.68rem;
+.board-stage-count {
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--column-accent);
-  background: color-mix(in srgb, var(--column-accent) 12%, #fff);
-  border-radius: 999px;
-  min-width: 1.35rem;
-  height: 1.35rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: rgba(20, 32, 26, 0.06);
+  color: var(--ink-soft);
+}
+
+.board-stage-tab.is-active {
+  background: var(--paper-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-hard);
+}
+
+.board-stage-tab.stage-new.is-active {
+  color: #1d4f91;
+}
+
+.board-stage-tab.stage-in_progress.is-active {
+  color: #9a5b00;
+}
+
+.board-stage-tab.stage-answered.is-active {
+  color: #0f6b5c;
+}
+
+.board-stage-tab.stage-done.is-active {
+  color: #334155;
+}
+
+.board-stage-tab.is-active .board-stage-count {
+  background: color-mix(in srgb, currentColor 14%, #fff);
+  color: inherit;
 }
 
 .quick-add-trigger {
@@ -1673,10 +1713,6 @@ textarea {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.board-stage-nav {
-  display: none;
 }
 
 .sheet-edit-field {
@@ -2874,6 +2910,7 @@ textarea {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.35rem;
+    width: 100%;
     margin-bottom: 0.75rem;
     padding: 0.3rem;
     border-radius: 16px;
@@ -2886,70 +2923,8 @@ textarea {
     backdrop-filter: blur(10px);
   }
 
-  .board-stage-tab {
-    display: grid;
-    gap: 0.15rem;
-    justify-items: center;
-    border: none;
-    background: transparent;
-    border-radius: 12px;
-    padding: 0.45rem 0.2rem;
-    min-height: 3.1rem;
-    color: var(--ink-soft);
-    font: inherit;
-    cursor: pointer;
-    transition:
-      background 150ms ease,
-      color 150ms ease,
-      transform 150ms ease;
-  }
-
-  .board-stage-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    line-height: 1.15;
-    text-align: center;
-  }
-
-  .board-stage-count {
-    font-size: 0.72rem;
-    font-weight: 700;
-    min-width: 1.25rem;
-    height: 1.25rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    background: rgba(20, 32, 26, 0.06);
-    color: var(--ink-soft);
-  }
-
-  .board-stage-tab.is-active {
-    background: var(--paper-raised);
-    color: var(--ink);
-    box-shadow: var(--shadow-hard);
-  }
-
-  .board-stage-tab.stage-new.is-active {
-    color: #1d4f91;
-  }
-
-  .board-stage-tab.stage-in_progress.is-active {
-    color: #9a5b00;
-  }
-
-  .board-stage-tab.stage-answered.is-active {
-    color: #0f6b5c;
-  }
-
-  .board-stage-tab.stage-done.is-active {
-    color: #334155;
-  }
-
-  .board-stage-tab.is-active .board-stage-count {
-    background: color-mix(in srgb, currentColor 14%, #fff);
-    color: inherit;
+  .column-header {
+    display: none;
   }
 
   .board-grid {
@@ -2971,14 +2946,6 @@ textarea {
   .board-column.is-focused {
     display: block;
     animation: rise 280ms ease both;
-  }
-
-  .column-header {
-    padding: 0.65rem 0.75rem;
-  }
-
-  .column-header h2 {
-    font-size: 0.86rem;
   }
 
   .card-tile {
