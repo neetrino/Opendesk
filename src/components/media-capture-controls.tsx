@@ -11,11 +11,14 @@ type CaptureLabels = {
   galleryAria: string;
 };
 
+type MediaCaptureMode = "all" | "gallery" | "camera";
+
 type MediaCaptureControlsProps = {
   disabled: boolean;
   onFiles: (files: File[]) => void;
   labels: CaptureLabels;
   unavailableReason?: string;
+  mode?: MediaCaptureMode;
 };
 
 function CameraIcon({ size = 20 }: { size?: number }) {
@@ -137,6 +140,7 @@ export function MediaCaptureControls({
   onFiles,
   labels,
   unavailableReason,
+  mode = "all",
 }: MediaCaptureControlsProps) {
   const photoRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -195,60 +199,71 @@ export function MediaCaptureControls({
     }
   }
 
+  const showGallery = mode === "all" || mode === "gallery";
+  const showCamera = mode === "all" || mode === "camera";
+
   return (
     <div className="media-capture">
-      <input
-        ref={galleryRef}
-        type="file"
-        accept={ATTACHMENT_FILE_ACCEPT}
-        multiple
-        hidden
-        disabled={disabled}
-        onChange={(event) => onHiddenInputChange(event, onFiles)}
-      />
-      <input
-        ref={photoRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        hidden
-        disabled={disabled}
-        onChange={(event) => onHiddenInputChange(event, onFiles)}
-      />
-      <input
-        ref={videoRef}
-        type="file"
-        accept="video/*"
-        capture="environment"
-        hidden
-        disabled={disabled}
-        onChange={(event) => onHiddenInputChange(event, onFiles)}
-      />
-      <button
-        type="button"
-        className="comment-attach"
-        onClick={() => galleryRef.current?.click()}
-        disabled={disabled}
-        aria-label={labels.galleryAria}
-        title={unavailableReason ?? labels.gallery}
-      >
-        <GalleryIcon size={20} />
-      </button>
-      <button
-        type="button"
-        className={
-          videoArmed ? "comment-attach is-video-armed" : "comment-attach"
-        }
-        disabled={disabled}
-        aria-label={labels.cameraAria}
-        title={unavailableReason ?? labels.camera}
-        onPointerDown={onCameraPointerDown}
-        onPointerUp={onCameraPointerUp}
-        onPointerCancel={onCameraPointerCancel}
-        onContextMenu={(event) => event.preventDefault()}
-      >
-        <CameraIcon size={20} />
-      </button>
+      {showGallery ? (
+        <>
+          <input
+            ref={galleryRef}
+            type="file"
+            accept={ATTACHMENT_FILE_ACCEPT}
+            multiple
+            hidden
+            disabled={disabled}
+            onChange={(event) => onHiddenInputChange(event, onFiles)}
+          />
+          <button
+            type="button"
+            className="comment-attach"
+            onClick={() => galleryRef.current?.click()}
+            disabled={disabled}
+            aria-label={labels.galleryAria}
+            title={unavailableReason ?? labels.gallery}
+          >
+            <GalleryIcon size={20} />
+          </button>
+        </>
+      ) : null}
+      {showCamera ? (
+        <>
+          <input
+            ref={photoRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            disabled={disabled}
+            onChange={(event) => onHiddenInputChange(event, onFiles)}
+          />
+          <input
+            ref={videoRef}
+            type="file"
+            accept="video/*"
+            capture="environment"
+            hidden
+            disabled={disabled}
+            onChange={(event) => onHiddenInputChange(event, onFiles)}
+          />
+          <button
+            type="button"
+            className={
+              videoArmed ? "comment-attach is-video-armed" : "comment-attach"
+            }
+            disabled={disabled}
+            aria-label={labels.cameraAria}
+            title={unavailableReason ?? labels.camera}
+            onPointerDown={onCameraPointerDown}
+            onPointerUp={onCameraPointerUp}
+            onPointerCancel={onCameraPointerCancel}
+            onContextMenu={(event) => event.preventDefault()}
+          >
+            <CameraIcon size={20} />
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }

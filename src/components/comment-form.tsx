@@ -288,6 +288,12 @@ export function CommentForm({
       ? t.cardPage.attachmentsLocalCard
       : undefined;
   const showSend = recording || canSend;
+  const captureLabels = {
+    camera: applyAttachmentLimitCopy(t.comment.captureCamera),
+    cameraAria: t.comment.captureCameraAria,
+    gallery: t.comment.captureGallery,
+    galleryAria: t.comment.captureGalleryAria,
+  };
 
   return (
     <form
@@ -328,6 +334,15 @@ export function CommentForm({
       ) : null}
       <div className="comment-compose-row">
         <div className="comment-compose-field">
+          {recording ? null : (
+            <MediaCaptureControls
+              mode="gallery"
+              disabled={!canAttach}
+              onFiles={addFiles}
+              labels={captureLabels}
+              unavailableReason={unavailableReason}
+            />
+          )}
           {recording ? (
             <div className="voice-recording" aria-live="polite">
               <button
@@ -372,38 +387,32 @@ export function CommentForm({
               }}
             />
           )}
-        </div>
-        <div className="comment-toolbar">
           {recording ? null : (
             <MediaCaptureControls
+              mode="camera"
               disabled={!canAttach}
               onFiles={addFiles}
-              labels={{
-                camera: applyAttachmentLimitCopy(t.comment.captureCamera),
-                cameraAria: t.comment.captureCameraAria,
-                gallery: t.comment.captureGallery,
-                galleryAria: t.comment.captureGalleryAria,
-              }}
+              labels={captureLabels}
               unavailableReason={unavailableReason}
             />
           )}
-          <button
-            className={showSend ? "comment-send" : "comment-attach comment-mic"}
-            type={canSend && !recording ? "submit" : "button"}
-            onClick={onPrimaryClick}
-            disabled={!canAttach && !canSend}
-            aria-label={
-              recording || canSend ? t.comment.send : t.comment.recordVoiceAria
-            }
-            title={
-              recording || canSend
-                ? t.comment.send
-                : (unavailableReason ?? t.comment.recordVoice)
-            }
-          >
-            {showSend ? <SendIcon size={18} /> : <VoiceMicIcon size={20} />}
-          </button>
         </div>
+        <button
+          className="comment-action"
+          type={canSend && !recording ? "submit" : "button"}
+          onClick={onPrimaryClick}
+          disabled={!canAttach && !canSend}
+          aria-label={
+            recording || canSend ? t.comment.send : t.comment.recordVoiceAria
+          }
+          title={
+            recording || canSend
+              ? t.comment.send
+              : (unavailableReason ?? t.comment.recordVoice)
+          }
+        >
+          {showSend ? <SendIcon size={20} /> : <VoiceMicIcon size={20} />}
+        </button>
       </div>
       {error ? <p className="form-error">{error}</p> : null}
     </form>
