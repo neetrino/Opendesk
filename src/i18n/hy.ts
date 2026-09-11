@@ -58,6 +58,7 @@ export const hy: Dictionary = {
     participantsEmpty: "Դեռ ոչ ոք չի միացել։",
     joinedAt: "Միացել է",
     closeParticipants: "Փակել",
+    emptyColumn: "Դեռ դատարկ է",
   },
   columns: {
     new: "Նոր",

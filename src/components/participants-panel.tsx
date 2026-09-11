@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { useI18n } from "@/i18n/provider";
+import { displayInitials } from "@/lib/initials";
 
 export type BoardParticipant = {
   id: string;
@@ -119,6 +120,9 @@ export function ParticipantsPanel({
                       return (
                         <li key={person.id} className="participants-row">
                           <span className="participants-name">
+                            <span className="card-avatar" aria-hidden="true">
+                              {displayInitials(person.displayName)}
+                            </span>
                             {person.displayName}
                           </span>
                           <span className="participants-joined">

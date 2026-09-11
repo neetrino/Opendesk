@@ -58,6 +58,7 @@ export const ru: Dictionary = {
     participantsEmpty: "Пока никто не подключился.",
     joinedAt: "Подключился",
     closeParticipants: "Закрыть",
+    emptyColumn: "Пока пусто",
   },
   columns: {
     new: "Новое",

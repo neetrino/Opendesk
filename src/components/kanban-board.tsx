@@ -15,6 +15,7 @@ import { PaperclipIcon } from "@/components/paperclip-icon";
 import { QuickCreateCard } from "@/components/quick-create-card";
 import { moveCardAction } from "@/lib/actions";
 import { CARD_STATUSES } from "@/lib/constants";
+import { displayInitials } from "@/lib/initials";
 import { useI18n } from "@/i18n/provider";
 import {
   isLocalCardId,
@@ -278,6 +279,9 @@ export function KanbanBoard({
               />
 
               <div className="column-stack">
+                {columnCards.length === 0 ? (
+                  <p className="column-empty">{t.board.emptyColumn}</p>
+                ) : null}
                 {columnCards.map((card) => {
                   const isLocal = isLocalCardId(card.id);
 
@@ -296,7 +300,12 @@ export function KanbanBoard({
                       }}
                     >
                       <div className="card-meta">
-                        <span className="author">{card.author.displayName}</span>
+                        <span className="author">
+                          <span className="card-avatar" aria-hidden="true">
+                            {displayInitials(card.author.displayName)}
+                          </span>
+                          {card.author.displayName}
+                        </span>
                         <span className="card-meta-right">
                           {card.urgent ? (
                             <span
