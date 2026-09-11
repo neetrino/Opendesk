@@ -16,6 +16,47 @@ type ParticipantsPanelProps = {
   locale: string;
 };
 
+type ParticipantsListProps = {
+  participants: BoardParticipant[];
+  locale: string;
+};
+
+export function ParticipantsList({
+  participants,
+  locale,
+}: ParticipantsListProps) {
+  const { t } = useI18n();
+
+  if (participants.length === 0) {
+    return <p className="muted">{t.board.participantsEmpty}</p>;
+  }
+
+  return (
+    <ul className="participants-list">
+      {participants.map((person) => {
+        const joined = new Date(person.createdAt);
+        return (
+          <li key={person.id} className="participants-row">
+            <span className="participants-name">
+              <span className="card-avatar" aria-hidden="true">
+                {displayInitials(person.displayName)}
+              </span>
+              {person.displayName}
+            </span>
+            <span className="participants-joined">
+              {t.board.joinedAt}{" "}
+              {joined.toLocaleString(locale, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function PersonIcon() {
   return (
     <svg
@@ -111,32 +152,7 @@ export function ParticipantsPanel({
 
             <div className="sheet-body">
               <div className="sheet-details">
-                {participants.length === 0 ? (
-                  <p className="muted">{t.board.participantsEmpty}</p>
-                ) : (
-                  <ul className="participants-list">
-                    {participants.map((person) => {
-                      const joined = new Date(person.createdAt);
-                      return (
-                        <li key={person.id} className="participants-row">
-                          <span className="participants-name">
-                            <span className="card-avatar" aria-hidden="true">
-                              {displayInitials(person.displayName)}
-                            </span>
-                            {person.displayName}
-                          </span>
-                          <span className="participants-joined">
-                            {t.board.joinedAt}{" "}
-                            {joined.toLocaleString(locale, {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                <ParticipantsList participants={participants} locale={locale} />
               </div>
             </div>
           </aside>

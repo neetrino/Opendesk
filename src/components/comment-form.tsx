@@ -8,12 +8,9 @@ import {
   type ClipboardEvent,
   type FormEvent,
 } from "react";
-import { PaperclipIcon } from "@/components/paperclip-icon";
+import { MediaCaptureControls } from "@/components/media-capture-controls";
 import { SendIcon } from "@/components/send-icon";
 import { addCommentAction } from "@/lib/actions";
-import {
-  ATTACHMENT_FILE_ACCEPT,
-} from "@/lib/attachments";
 import { MAX_COMMENT_ATTACHMENTS, MAX_COMMENT_LENGTH } from "@/lib/constants";
 import { isLocalCardId } from "@/lib/local-cards";
 import type { BoardAttachment } from "@/lib/local-cards";
@@ -96,7 +93,6 @@ export function CommentForm({
   const [pendingFiles, setPendingFiles] = useState<PendingCommentFile[]>([]);
   const [, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const locked = isLocalCardId(cardId);
   const canAttach = enabled && !locked;
 
@@ -273,51 +269,37 @@ export function CommentForm({
               setHasText(event.currentTarget.value.trim().length > 0);
             }}
           />
-          {canSend ? null : (
-            <>
-              <input
-                ref={inputRef}
-                type="file"
-                accept={ATTACHMENT_FILE_ACCEPT}
-                multiple
-                hidden
-                disabled={!canAttach}
-                onChange={(event) => {
-                  const files = event.target.files
-                    ? Array.from(event.target.files)
-                    : [];
-                  event.target.value = "";
-                  addFiles(files);
-                }}
-              />
-              <button
-                type="button"
-                className="comment-attach"
-                onClick={() => inputRef.current?.click()}
-                disabled={!canAttach}
-                aria-label={t.comment.attachAria}
-                title={
-                  !enabled
-                    ? t.cardPage.attachmentsUnavailable
-                    : locked
-                      ? t.cardPage.attachmentsLocalCard
-                      : t.comment.attach
-                }
-              >
-                <PaperclipIcon size={20} />
-              </button>
-            </>
-          )}
         </div>
-        {canSend ? (
-          <button
-            className="comment-send"
-            type="submit"
-            aria-label={t.comment.send}
-          >
-            <SendIcon size={18} />
-          </button>
-        ) : null}
+        <div className="comment-toolbar">
+          <MediaCaptureControls
+            disabled={!canAttach}
+            onFiles={addFiles}
+            labels={{
+              photo: t.comment.capturePhoto,
+              photoAria: t.comment.capturePhotoAria,
+              video: t.comment.captureVideo,
+              videoAria: t.comment.captureVideoAria,
+              gallery: t.comment.captureGallery,
+              galleryAria: t.comment.captureGalleryAria,
+            }}
+            unavailableReason={
+              !enabled
+                ? t.cardPage.attachmentsUnavailable
+                : locked
+                  ? t.cardPage.attachmentsLocalCard
+                  : undefined
+            }
+          />
+          {canSend ? (
+            <button
+              className="comment-send"
+              type="submit"
+              aria-label={t.comment.send}
+            >
+              <SendIcon size={18} />
+            </button>
+          ) : null}
+        </div>
       </div>
       {error ? <p className="form-error">{error}</p> : null}
     </form>

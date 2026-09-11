@@ -58,6 +58,9 @@ export type Dictionary = {
     emptyColumn: string;
     dockAria: string;
     newCard: string;
+    settings: string;
+    settingsAria: string;
+    closeSettings: string;
   };
   columns: {
     new: string;
@@ -118,8 +121,12 @@ export type Dictionary = {
     placeholder: string;
     sending: string;
     send: string;
-    attach: string;
-    attachAria: string;
+    capturePhoto: string;
+    capturePhotoAria: string;
+    captureVideo: string;
+    captureVideoAria: string;
+    captureGallery: string;
+    captureGalleryAria: string;
   };
   notFound: {
     title: string;
@@ -224,6 +231,9 @@ export const en: Dictionary = {
     emptyColumn: "Nothing here yet",
     dockAria: "Board actions",
     newCard: "New task",
+    settings: "Settings",
+    settingsAria: "Board settings",
+    closeSettings: "Close settings",
   },
   columns: {
     new: "New",
@@ -285,8 +295,12 @@ export const en: Dictionary = {
     placeholder: "Message",
     sending: "Sending…",
     send: "Send",
-    attach: "Attach",
-    attachAria: "Attach a photo or video",
+    capturePhoto: "Photo",
+    capturePhotoAria: "Take a photo",
+    captureVideo: "Video",
+    captureVideoAria: "Record a video",
+    captureGallery: "Gallery",
+    captureGalleryAria: "Choose from gallery",
   },
   notFound: {
     title: "Page not found",

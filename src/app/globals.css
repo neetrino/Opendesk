@@ -806,6 +806,28 @@ textarea {
   font-weight: 600;
 }
 
+.settings-section-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.settings-sheet .invite-actions {
+  display: grid;
+  width: 100%;
+  gap: 0.4rem;
+}
+
+.settings-sheet .button-invite {
+  width: 100%;
+}
+
+.settings-sheet .invite-hint {
+  margin: 0;
+  max-width: none;
+}
+
 .participants-list {
   list-style: none;
   margin: 0;
@@ -1735,20 +1757,39 @@ textarea {
 
 .comment-compose-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.45rem;
+  gap: 0.35rem 0.45rem;
 }
 
 .comment-compose-field {
   display: flex;
   align-items: flex-end;
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   min-width: 0;
-  padding: 0.15rem 0.25rem 0.15rem 0.9rem;
+  padding: 0.15rem 0.9rem;
   border: none;
   border-radius: 1.4rem;
   background: var(--paper-raised);
   box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.comment-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.media-capture {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+}
+
+.media-capture-action {
+  display: inline-flex;
 }
 
 .comment-compose-field:focus-within {
@@ -1757,7 +1798,7 @@ textarea {
 
 .comment-form textarea {
   flex: 1 1 auto;
-  width: 0;
+  width: 100%;
   min-width: 0;
   min-height: 2.55rem;
   max-height: 8.5rem;
@@ -1766,7 +1807,7 @@ textarea {
   overflow-wrap: anywhere;
   resize: none;
   line-height: 1.4;
-  padding: 0.65rem 0.35rem 0.65rem 0;
+  padding: 0.65rem 0;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -1800,6 +1841,10 @@ textarea {
   cursor: pointer;
 }
 
+.comment-attach:hover:not(:disabled) {
+  color: var(--ink);
+}
+
 .comment-attach:disabled {
   opacity: 0.45;
   cursor: default;
@@ -1809,6 +1854,7 @@ textarea {
   flex-shrink: 0;
   width: 2.75rem;
   height: 2.75rem;
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2294,28 +2340,26 @@ textarea {
     gap: 0.4rem;
   }
 
-  .board-dock .participants-count,
-  .board-dock .button-invite,
+  .board-dock-settings,
   .board-dock-primary {
     min-height: 2.75rem;
     border-radius: 999px;
   }
 
-  .board-dock .participants-count,
-  .board-dock .button-invite {
+  .board-dock-settings {
     flex: 0 0 auto;
-    padding: 0 0.85rem;
-    font-size: 0.78rem;
-  }
-
-  .board-dock .invite-actions.compact {
-    width: auto;
-    flex: 0 0 auto;
-  }
-
-  .board-dock .invite-actions.compact .button-invite {
-    width: auto;
-    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0 1rem;
+    border: 1px solid var(--line-strong);
+    background: var(--paper-raised);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
   }
 
   .board-dock-primary {

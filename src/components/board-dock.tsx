@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import type { CardStatus } from "@prisma/client";
-import { InviteButton } from "@/components/invite-button";
-import {
-  ParticipantsPanel,
-  type BoardParticipant,
-} from "@/components/participants-panel";
+import { BoardSettingsSheet } from "@/components/board-settings-sheet";
 import { QuickCreateCard } from "@/components/quick-create-card";
+import type { BoardParticipant } from "@/components/participants-panel";
 import { useI18n } from "@/i18n/provider";
 import type { LocalBoardCard, LocalCardAuthor } from "@/lib/local-cards";
 
@@ -73,8 +70,12 @@ export function BoardDock({
         />
       ) : (
         <div className="board-dock-actions">
-          <ParticipantsPanel participants={participants} locale={locale} />
-          <InviteButton slug={slug} joinToken={joinToken} compact />
+          <BoardSettingsSheet
+            slug={slug}
+            joinToken={joinToken}
+            participants={participants}
+            locale={locale}
+          />
           <button
             type="button"
             className="board-dock-primary"
