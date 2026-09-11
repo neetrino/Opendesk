@@ -19,6 +19,7 @@ type MediaCaptureControlsProps = {
   labels: CaptureLabels;
   unavailableReason?: string;
   mode?: MediaCaptureMode;
+  className?: string;
 };
 
 function CameraIcon({ size = 20 }: { size?: number }) {
@@ -141,6 +142,7 @@ export function MediaCaptureControls({
   labels,
   unavailableReason,
   mode = "all",
+  className,
 }: MediaCaptureControlsProps) {
   const photoRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -203,7 +205,7 @@ export function MediaCaptureControls({
   const showCamera = mode === "all" || mode === "camera";
 
   return (
-    <div className="media-capture">
+    <div className={className ? `media-capture ${className}` : "media-capture"}>
       {showGallery ? (
         <>
           <input

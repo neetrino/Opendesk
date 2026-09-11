@@ -1764,8 +1764,8 @@ textarea {
 }
 
 .comment-compose-field {
-  display: flex;
-  align-items: flex-end;
+  position: relative;
+  display: block;
   flex: 1 1 auto;
   min-width: 0;
   min-height: var(--composer-control);
@@ -1776,10 +1776,26 @@ textarea {
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
+.comment-compose-field.is-expanded {
+  border-radius: 1.15rem;
+}
+
 .media-capture {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.comment-compose-field .media-capture.is-gallery {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.comment-compose-field .media-capture.is-camera {
+  position: absolute;
+  right: 0;
+  bottom: 0;
 }
 
 .comment-attach.is-video-armed {
@@ -1861,21 +1877,36 @@ textarea {
 }
 
 .comment-form textarea {
-  flex: 1 1 auto;
-  width: 0;
+  display: block;
+  width: 100%;
   min-width: 0;
   min-height: var(--composer-control);
-  max-height: 8.5rem;
+  max-height: 10.5rem;
   overflow-x: hidden;
   overflow-y: hidden;
   overflow-wrap: anywhere;
   resize: none;
-  line-height: 1.35;
-  padding: 0.72rem 0.35rem;
+  line-height: 1.4;
+  padding: 0.72rem var(--composer-control);
   border: none;
-  border-radius: 0;
+  border-radius: inherit;
   background: transparent;
   box-shadow: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(23, 33, 27, 0.22) transparent;
+}
+
+.comment-form textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.comment-form textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.comment-form textarea::-webkit-scrollbar-thumb {
+  background: rgba(23, 33, 27, 0.2);
+  border-radius: 999px;
 }
 
 .comment-form textarea:focus {

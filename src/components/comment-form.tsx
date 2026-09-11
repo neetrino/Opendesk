@@ -34,7 +34,8 @@ export type OptimisticCommentAttachment = Pick<
   previewUrl?: string;
 };
 
-const COMPOSER_MAX_HEIGHT_PX = 200;
+const COMPOSER_MAX_HEIGHT_PX = 168;
+const COMPOSER_EXPAND_AFTER_PX = 52;
 
 type PendingCommentFile = {
   localId: string;
@@ -43,10 +44,24 @@ type PendingCommentFile = {
   kind: BoardAttachment["kind"];
 };
 
+function syncFieldExpanded(
+  textarea: HTMLTextAreaElement,
+  contentHeight: number,
+): void {
+  const field = textarea.closest(".comment-compose-field");
+  if (field instanceof HTMLElement) {
+    field.classList.toggle(
+      "is-expanded",
+      contentHeight > COMPOSER_EXPAND_AFTER_PX,
+    );
+  }
+}
+
 function fitTextarea(textarea: HTMLTextAreaElement): void {
   textarea.style.overflowY = "hidden";
   textarea.style.height = "auto";
   const contentHeight = textarea.scrollHeight;
+  syncFieldExpanded(textarea, contentHeight);
   if (contentHeight > COMPOSER_MAX_HEIGHT_PX) {
     textarea.style.height = `${COMPOSER_MAX_HEIGHT_PX}px`;
     textarea.style.overflowY = "auto";
@@ -337,6 +352,7 @@ export function CommentForm({
           {recording ? null : (
             <MediaCaptureControls
               mode="gallery"
+              className="is-gallery"
               disabled={!canAttach}
               onFiles={addFiles}
               labels={captureLabels}
@@ -390,6 +406,7 @@ export function CommentForm({
           {recording ? null : (
             <MediaCaptureControls
               mode="camera"
+              className="is-camera"
               disabled={!canAttach}
               onFiles={addFiles}
               labels={captureLabels}
