@@ -126,7 +126,7 @@
 |---|----------|---------|--------|---------|
 | 8.1 | Frontend hosting | Vercel | ✅ | vercel.json готов |
 | 8.2 | Backend hosting | — | ➖ | |
-| 8.3 | CI/CD | GitHub Actions | ✅ | `.github/workflows/ci.yml` |
+| 8.3 | CI/CD | GitHub Actions | ✅ | `.github/workflows/ci.yml`; PR в `main` требует зелёный `Quality checks` |
 | 8.4 | Docker | не нужно | ➖ | убран local compose |
 | 8.5 | WAF | не нужно | ➖ | |
 | 8.6 | Monitoring | не нужно | ➖ | |
