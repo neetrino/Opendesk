@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { OWNER_LAST_BOARD_API_PATH } from "@/lib/constants";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const JOIN_WINDOW_MS = 60_000;
@@ -63,6 +64,29 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  const isBoardActivityGet =
+    request.method === "GET" &&
+    /^\/api\/boards\/[^/]+\/activity$/.test(path);
+  if (isBoardActivityGet) {
+    const result = checkRateLimit(`activity:${ip}`, 120, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+
+  const isLastBoardPost =
+    request.method === "POST" && path === OWNER_LAST_BOARD_API_PATH;
+  if (isLastBoardPost) {
+    const result = checkRateLimit(`last-board:${ip}`, 60, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -73,5 +97,7 @@ export const config = {
     "/b/:path*",
     "/login",
     "/api/attachments/:path*",
+    "/api/boards/:path*",
+    "/api/owner/last-board",
   ],
 };

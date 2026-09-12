@@ -50,6 +50,7 @@ export const ru: Dictionary = {
     inviteHint: "Постоянная ссылка — то же имя = снова вы",
     copied: "Скопировано",
     replies: "{n} ответов",
+    unreadAria: "{n} новых ответов",
     stagesNav: "Этапы доски",
     logout: "Выйти",
     logoutConfirm: "Выйти с этой доски?",

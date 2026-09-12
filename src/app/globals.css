@@ -1142,6 +1142,16 @@ textarea {
   color: inherit;
 }
 
+.board-stage-tab.has-unread .board-stage-count {
+  background: var(--accent);
+  color: #fff;
+}
+
+.board-stage-tab.has-unread.is-active .board-stage-count {
+  background: var(--accent);
+  color: #fff;
+}
+
 .quick-add-trigger {
   width: 100%;
   flex-shrink: 0;
@@ -1307,6 +1317,11 @@ textarea {
   border-color: color-mix(in srgb, var(--column-accent) 28%, var(--line));
 }
 
+.card-tile.is-unread:hover {
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--accent) 26%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
 .card-tile:active {
   cursor: grabbing;
   transform: translateY(0);
@@ -1340,6 +1355,44 @@ textarea {
   justify-content: center;
   color: var(--urgent);
   flex-shrink: 0;
+}
+
+.card-tile.is-unread {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.card-tile.is-unread .card-title {
+  font-weight: 800;
+}
+
+.unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: unread-pop 280ms var(--ease-ui);
+}
+
+@keyframes unread-pop {
+  0% {
+    transform: scale(0.72);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .card-sheet.is-urgent {
@@ -3197,6 +3250,11 @@ textarea {
   .boards-list-item:hover {
     box-shadow: 3px 3px 0 color-mix(in srgb, var(--column-accent, var(--ink)) 14%, transparent);
     border-color: var(--line);
+  }
+
+  .card-tile.is-unread:hover {
+    box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 22%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
   }
 }
 

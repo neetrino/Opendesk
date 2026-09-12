@@ -47,6 +47,7 @@ export type Dictionary = {
     inviteHint: string;
     copied: string;
     replies: string;
+    unreadAria: string;
     stagesNav: string;
     logout: string;
     logoutConfirm: string;
@@ -252,6 +253,7 @@ export const en: Dictionary = {
     inviteHint: "Permanent join link — same name rejoins",
     copied: "Copied",
     replies: "{n} replies",
+    unreadAria: "{n} new replies",
     stagesNav: "Board stages",
     logout: "Log out",
     logoutConfirm: "Log out of this board?",

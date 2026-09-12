@@ -14,7 +14,7 @@ export function BrandLink({ children, className }: BrandLinkProps) {
   const href = pathname.startsWith("/b/") ? "/boards" : "/";
 
   return (
-    <Link href={href} className={className}>
+    <Link href={href} prefetch className={className}>
       {children}
     </Link>
   );

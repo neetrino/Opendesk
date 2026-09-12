@@ -82,6 +82,7 @@
 - `Card` — id, boardId, status, title, urgent, authorId, position
 - `Comment` — id, cardId, authorId, body, createdAt
 - `Attachment` — id, boardId, cardId, commentId?, authorId, objectKey, filename, contentType, byteSize, kind (`image` \| `video` \| `audio`)
+- Last-read непрочитанных ответов — `localStorage` на устройстве участника, не таблица БД. Пока доска открыта, `GET /api/boards/{boardId}/activity` отдаёт курсоры чужих комментариев
 
 **Колонки:** `new` → `in_progress` → `answered` → `done`
 

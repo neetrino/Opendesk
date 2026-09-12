@@ -15,9 +15,13 @@ import { FireIcon } from "@/components/fire-icon";
 import { PaperclipIcon } from "@/components/paperclip-icon";
 import type { BoardParticipant } from "@/components/participants-panel";
 import { createCardAction, moveCardAction } from "@/lib/actions";
+import {
+  applyForeignActivity,
+  countUnreadComments,
+  lastReadDate,
+} from "@/lib/card-reads";
 import { CARD_STATUSES } from "@/lib/constants";
 import { displayInitials } from "@/lib/initials";
-import { useI18n } from "@/i18n/provider";
 import {
   buildLocalBoardCard,
   isLocalCardId,
@@ -26,6 +30,9 @@ import {
   toBoardCardFromCreated,
   type LocalBoardCard,
 } from "@/lib/local-cards";
+import { useBoardActivity } from "@/lib/use-board-activity";
+import { useCardReads } from "@/lib/use-card-reads";
+import { useI18n } from "@/i18n/provider";
 
 export type BoardCard = LocalBoardCard;
 
@@ -87,6 +94,12 @@ export function KanbanBoard({
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
   const pendingLocalCards = pruneConfirmedLocalCards(cards, localCards);
+  const { reads, markCardRead } = useCardReads(
+    boardId,
+    currentUser.participantId,
+    cards.map((card) => card.id),
+  );
+  const activity = useBoardActivity(boardId);
 
   const [optimisticCards, setOptimisticCards] = useOptimistic(
     mergeLocalCards(cards, pendingLocalCards),
@@ -174,7 +187,23 @@ export function KanbanBoard({
     setSelectedCardId(draft.id);
   }
 
+  function unreadCountFor(card: BoardCard): number {
+    if (isLocalCardId(card.id) || selectedCardId === card.id || reads === null) {
+      return 0;
+    }
+
+    const lastReadAt = lastReadDate(reads, card.id);
+    return applyForeignActivity(
+      countUnreadComments(card.comments, lastReadAt, currentUser.participantId),
+      lastReadAt,
+      activity[card.id]?.lastForeignCommentAt,
+    );
+  }
+
   function closeSheet(): void {
+    if (selectedCardId !== null && !isLocalCardId(selectedCardId)) {
+      markCardRead(selectedCardId);
+    }
     setSelectedCardId(null);
     setDraftCard(null);
   }
@@ -288,9 +317,12 @@ export function KanbanBoard({
 
       <nav className="board-stage-nav" aria-label={t.board.stagesNav}>
         {CARD_STATUSES.map((status) => {
-          const count = optimisticCards.filter(
+          const columnCards = optimisticCards.filter(
             (card) => card.status === status,
-          ).length;
+          );
+          const unreadInColumn = columnCards.some(
+            (card) => unreadCountFor(card) > 0,
+          );
 
           return (
             <button
@@ -299,13 +331,13 @@ export function KanbanBoard({
               aria-pressed={activeStatus === status}
               className={
                 activeStatus === status
-                  ? `board-stage-tab stage-${status} is-active`
-                  : `board-stage-tab stage-${status}`
+                  ? `board-stage-tab stage-${status} is-active${unreadInColumn ? " has-unread" : ""}`
+                  : `board-stage-tab stage-${status}${unreadInColumn ? " has-unread" : ""}`
               }
               onClick={() => setActiveStatus(status)}
             >
               <span className="board-stage-label">{t.columns[status]}</span>
-              <span className="board-stage-count">{count}</span>
+              <span className="board-stage-count">{columnCards.length}</span>
             </button>
           );
         })}
@@ -319,6 +351,9 @@ export function KanbanBoard({
             (card) => card.status === status,
           );
           const isFocused = activeStatus === status;
+          const unreadInColumn = columnCards.some(
+            (card) => unreadCountFor(card) > 0,
+          );
 
           return (
             <section
@@ -334,7 +369,9 @@ export function KanbanBoard({
               onDrop={(event) => onDrop(event, status)}
             >
               <header className="column-header">
-                <div className={`board-stage-tab stage-${status} is-active`}>
+                <div
+                  className={`board-stage-tab stage-${status} is-active${unreadInColumn ? " has-unread" : ""}`}
+                >
                   <h2 className="board-stage-label">{t.columns[status]}</h2>
                   <span className="board-stage-count">
                     {columnCards.length}
@@ -356,11 +393,12 @@ export function KanbanBoard({
                 ) : null}
                 {columnCards.map((card) => {
                   const isLocal = isLocalCardId(card.id);
+                  const unreadCount = unreadCountFor(card);
 
                   return (
                     <article
                       key={card.id}
-                      className={`card-tile${card.urgent ? " is-urgent" : ""}${isLocal ? " is-syncing" : ""}`}
+                      className={`card-tile${card.urgent ? " is-urgent" : ""}${isLocal ? " is-syncing" : ""}${unreadCount > 0 ? " is-unread" : ""}`}
                       draggable={!isLocal}
                       onDragStart={(event) =>
                         onDragStart(event, card.id, card.status)
@@ -377,6 +415,17 @@ export function KanbanBoard({
                           {card.author.displayName}
                         </span>
                         <span className="card-meta-right">
+                          {unreadCount > 0 ? (
+                            <span
+                              className="unread-badge"
+                              aria-label={t.board.unreadAria.replace(
+                                "{n}",
+                                String(unreadCount),
+                              )}
+                            >
+                              {unreadCount}
+                            </span>
+                          ) : null}
                           {card.urgent ? (
                             <span
                               className="fire-badge"

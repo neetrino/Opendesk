@@ -50,6 +50,7 @@ export const hy: Dictionary = {
     inviteHint: "Մշտական հղում — նույն անունը = նորից դուք",
     copied: "Պատճենված է",
     replies: "{n} պատասխան",
+    unreadAria: "{n} նոր պատասխան",
     stagesNav: "Տախտակի փուլեր",
     logout: "Դուրս գալ",
     logoutConfirm: "Դուրս գա՞լ այս տախտակից։",
