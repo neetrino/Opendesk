@@ -53,7 +53,11 @@ export async function getParticipantBoardDestination(): Promise<ParticipantBoard
   };
 }
 
-/** Resolve an owner's remembered board after validating the cookie against DB. */
+/**
+ * Resolve an owner's remembered canonical path. This is only a navigation hint:
+ * the destination route still validates that the board exists and that the
+ * owner session grants access.
+ */
 export async function getRememberedOwnerBoardPath(): Promise<string | null> {
   const cookieStore = await cookies();
   const rememberedPath = cookieStore.get(LAST_BOARD_COOKIE_NAME)?.value;
@@ -66,14 +70,5 @@ export async function getRememberedOwnerBoardPath(): Promise<string | null> {
     return null;
   }
 
-  const board = await prisma.board.findUnique({
-    where: { joinToken: parsed.joinToken },
-    select: { slug: true, joinToken: true },
-  });
-
-  if (!board || board.slug !== parsed.slug) {
-    return null;
-  }
-
-  return buildJoinPath(board.slug, board.joinToken);
+  return buildJoinPath(parsed.slug, parsed.joinToken);
 }

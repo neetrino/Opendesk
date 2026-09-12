@@ -26,7 +26,7 @@ describe("buildBoardManifestPath", () => {
 
 describe("buildWebAppManifest", () => {
   it("uses the site name and root start URL by default", () => {
-    const manifest = buildWebAppManifest({ startUrl: "/" });
+    const manifest = buildWebAppManifest({});
     expect(manifest.id).toBe("/");
     expect(manifest.name).toBe(WEB_APP_NAME);
     expect(manifest.short_name).toBe(WEB_APP_NAME);
@@ -35,14 +35,12 @@ describe("buildWebAppManifest", () => {
     expect(manifest.scope).toBe("/");
   });
 
-  it("scopes a board install to that board URL", () => {
-    const startUrl = "/b/sprint-q3/tok_abc";
+  it("keeps a board install on the shared root launch URL", () => {
     const manifest = buildWebAppManifest({
-      startUrl,
       name: "Sprint Q3",
     });
-    expect(manifest.id).toBe(startUrl);
+    expect(manifest.id).toBe("/");
     expect(manifest.name).toBe("Sprint Q3");
-    expect(manifest.start_url).toBe(startUrl);
+    expect(manifest.start_url).toBe("/");
   });
 });

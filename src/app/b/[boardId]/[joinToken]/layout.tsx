@@ -1,35 +1,19 @@
 import type { Metadata } from "next";
-import { buildBoardManifestPath } from "@/lib/web-app-manifest";
-import { prisma } from "@/lib/prisma";
+import { WEB_APP_NAME } from "@/lib/web-app-manifest";
 
 type BoardSegmentLayoutProps = {
   children: React.ReactNode;
-  params: Promise<{ boardId: string; joinToken: string }>;
 };
 
-export async function generateMetadata({
-  params,
-}: BoardSegmentLayoutProps): Promise<Metadata> {
-  const { boardId: boardSlug, joinToken } = await params;
-  const board = await prisma.board.findUnique({
-    where: { joinToken },
-    select: { title: true, slug: true },
-  });
-
-  if (!board || board.slug !== boardSlug) {
-    return { title: "OpenDesk" };
-  }
-
-  return {
-    title: `${board.title} · OpenDesk`,
-    manifest: buildBoardManifestPath(board.slug, joinToken),
-    appleWebApp: {
-      capable: true,
-      title: board.title,
-      statusBarStyle: "black-translucent",
-    },
-  };
-}
+export const metadata: Metadata = {
+  title: WEB_APP_NAME,
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: WEB_APP_NAME,
+    statusBarStyle: "black-translucent",
+  },
+};
 
 export default function BoardSegmentLayout({
   children,

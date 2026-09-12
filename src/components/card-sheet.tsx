@@ -66,10 +66,12 @@ export function CardSheet({
   const [cardId, setCardId] = useState(card.id);
   const [title, setTitle] = useState(card.title);
   const [draftUrgent, setDraftUrgent] = useState(card.urgent);
+  const [stageMenuOpen, setStageMenuOpen] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const stageMenuRef = useRef<HTMLDivElement>(null);
   const createConfirmRef = useRef<HTMLButtonElement>(null);
   const dismissIntentRef = useRef(false);
   const skipCommitRef = useRef(false);
@@ -101,6 +103,7 @@ export function CardSheet({
     setCardId(card.id);
     setTitle(card.title);
     setDraftUrgent(card.urgent);
+    setStageMenuOpen(false);
     setLeaveConfirm(false);
     setError(null);
   }
@@ -121,6 +124,10 @@ export function CardSheet({
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {
+        if (stageMenuOpen) {
+          setStageMenuOpen(false);
+          return;
+        }
         requestClose();
       }
     }
@@ -131,7 +138,27 @@ export function CardSheet({
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [requestClose]);
+  }, [requestClose, stageMenuOpen]);
+
+  useEffect(() => {
+    if (!stageMenuOpen) {
+      return;
+    }
+
+    function onPointerDown(event: globalThis.PointerEvent): void {
+      if (
+        event.target instanceof Node &&
+        !stageMenuRef.current?.contains(event.target)
+      ) {
+        setStageMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [stageMenuOpen]);
 
   useEffect(() => {
     const thread = threadRef.current;
@@ -312,59 +339,36 @@ export function CardSheet({
       >
         <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
-          <div className="sheet-heading">
-            <label
-              className={
-                isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"
-              }
-            >
-              <span className="visually-hidden">{t.cardPage.editTitle}</span>
-              <input
-                ref={titleRef}
-                id={`card-sheet-title-${card.id}`}
-                className="sheet-title-input"
-                value={title}
-                maxLength={120}
-                placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                autoFocus={isDraft}
-                onChange={(event) => {
-                  setTitle(event.target.value);
-                  if (leaveConfirm) {
-                    setLeaveConfirm(false);
-                  }
-                }}
-                onBlur={onTitleBlur}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.currentTarget.blur();
-                  }
-                }}
-              />
-              <PencilIcon className="sheet-title-edit" size={16} />
-            </label>
-            <span
-              className={`sheet-stage-control stage-${card.status}${isPending ? " is-pending" : ""}`}
-            >
-              <select
-                className="sheet-stage-select"
-                value={card.status}
-                disabled={isPending || isDraft || isLocalCardId(card.id)}
-                aria-label={t.common.stageAria}
-                onChange={(event) => {
-                  changeStatus(event.target.value as CardStatus);
-                }}
-              >
-                {CARD_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {t.columns[status]}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </div>
+          <label
+            className={isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"}
+          >
+            <span className="visually-hidden">{t.cardPage.editTitle}</span>
+            <input
+              ref={titleRef}
+              id={`card-sheet-title-${card.id}`}
+              className="sheet-title-input"
+              value={title}
+              maxLength={120}
+              placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              autoFocus={isDraft}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                if (leaveConfirm) {
+                  setLeaveConfirm(false);
+                }
+              }}
+              onBlur={onTitleBlur}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+            <PencilIcon className="sheet-title-edit" size={16} />
+          </label>
           <div className="sheet-actions">
             <button
               type="button"
@@ -397,6 +401,52 @@ export function CardSheet({
             </button>
           </div>
         </header>
+        <div className="sheet-stage-anchor">
+          <div
+            ref={stageMenuRef}
+            className={`sheet-stage-control stage-${card.status}${isPending ? " is-pending" : ""}`}
+            onPointerDown={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <button
+              type="button"
+              className="sheet-stage-trigger"
+              disabled={isPending || isDraft || isLocalCardId(card.id)}
+              aria-label={t.common.stageAria}
+              aria-haspopup="listbox"
+              aria-expanded={stageMenuOpen}
+              onClick={() => {
+                setStageMenuOpen((current) => !current);
+              }}
+            >
+              {t.columns[card.status]}
+            </button>
+            {stageMenuOpen ? (
+              <div
+                className="sheet-stage-menu"
+                role="listbox"
+                aria-label={t.common.stageAria}
+              >
+                {CARD_STATUSES.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    role="option"
+                    aria-selected={status === card.status}
+                    className={`sheet-stage-option stage-${status}${status === card.status ? " is-active" : ""}`}
+                    onClick={() => {
+                      setStageMenuOpen(false);
+                      changeStatus(status);
+                    }}
+                  >
+                    {t.columns[status]}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
         {error ? <p className="form-error sheet-title-error">{error}</p> : null}
 
         <div className="sheet-discussion">
