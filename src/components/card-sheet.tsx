@@ -405,6 +405,9 @@ export function CardSheet({
           <div
             ref={stageMenuRef}
             className={`sheet-stage-control stage-${card.status}${isPending ? " is-pending" : ""}`}
+            onPointerDown={(event) => {
+              event.stopPropagation();
+            }}
           >
             <button
               type="button"
