@@ -50,27 +50,25 @@ export function BoardWorkspace({
     <BoardSearchProvider>
       <section className="board-page">
         <header className="board-top">
-          <div className="board-top-main">
-            <h1>{board.title}</h1>
+          <h1 className="board-top-title">{board.title}</h1>
+          <BoardSearchField />
+          <div className="board-top-actions">
             <p className="board-identity">
               <span className="board-avatar" aria-hidden="true">
                 {displayInitials(currentUser.displayName)}
               </span>
               <span>
-                {t.board.youAre}{" "}
+                <span className="visually-hidden">{t.board.youAre} </span>
                 <strong>{currentUser.displayName}</strong>
               </span>
             </p>
-          </div>
-          <BoardSearchField />
-          <div className="board-top-actions">
             <ParticipantsPanel
               participants={board.participants}
               locale={locale}
             />
             <InviteButton slug={board.slug} joinToken={board.joinToken} compact />
+            {isOwner ? <OwnerLogoutButton /> : <LogoutButton />}
           </div>
-          {isOwner ? <OwnerLogoutButton /> : <LogoutButton />}
         </header>
         <KanbanBoard
           boardId={board.id}

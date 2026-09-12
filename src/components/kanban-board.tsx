@@ -21,6 +21,12 @@ import {
   columnDisplayCount,
   type BoardColumnPages,
 } from "@/lib/board-card-view";
+import {
+  applyCardMove,
+  compareCardsByPosition,
+  writeMovePlacement,
+  type MovePlacement,
+} from "@/lib/card-position";
 import { applyForeignActivity, resolveLastReadAt } from "@/lib/card-reads";
 import { CARD_STATUSES } from "@/lib/constants";
 import { displayInitials } from "@/lib/initials";
@@ -28,6 +34,7 @@ import {
   buildLocalBoardCard,
   isLocalCardId,
   mergeVisibleCards,
+  pruneConfirmedHeldCards,
   pruneConfirmedLocalCards,
   toBoardCardFromCreated,
   type LocalBoardCard,
@@ -62,8 +69,64 @@ type DragPayload = {
   fromStatus: CardStatus;
 };
 
+type DropTarget = {
+  status: CardStatus;
+  placement: MovePlacement;
+};
+
+function sameDropTarget(
+  left: DropTarget | null,
+  right: DropTarget,
+): boolean {
+  if (!left || left.status !== right.status) {
+    return false;
+  }
+  if (left.placement.kind === "start" || right.placement.kind === "start") {
+    return left.placement.kind === "start" && right.placement.kind === "start";
+  }
+  return (
+    left.placement.kind === right.placement.kind &&
+    left.placement.cardId === right.placement.cardId
+  );
+}
+
+function dropLineBefore(
+  dropTarget: DropTarget | null,
+  status: CardStatus,
+  cardId: string,
+): boolean {
+  return (
+    dropTarget?.status === status &&
+    dropTarget.placement.kind === "before" &&
+    dropTarget.placement.cardId === cardId
+  );
+}
+
+function dropLineAfter(
+  dropTarget: DropTarget | null,
+  status: CardStatus,
+  cardId: string,
+): boolean {
+  return (
+    dropTarget?.status === status &&
+    dropTarget.placement.kind === "after" &&
+    dropTarget.placement.cardId === cardId
+  );
+}
+
 type OptimisticUpdate =
-  | { kind: "status"; cardId: string; status: CardStatus }
+  | {
+      kind: "move";
+      cardId: string;
+      status: CardStatus;
+      placement: MovePlacement;
+    }
+  | {
+      kind: "status";
+      cardId: string;
+      status: CardStatus;
+      position?: number;
+    }
   | { kind: "urgent"; cardId: string; urgent: boolean }
   | { kind: "comment-count"; cardId: string; delta: number };
 
@@ -83,7 +146,7 @@ export function KanbanBoard({
   const { t } = useI18n();
   const { query } = useBoardSearch();
   const [isPending, startTransition] = useTransition();
-  const [dragOverStatus, setDragOverStatus] = useState<CardStatus | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [draftCard, setDraftCard] = useState<BoardCard | null>(null);
   const [activeStatus, setActiveStatus] = useState<CardStatus>("new");
@@ -101,7 +164,7 @@ export function KanbanBoard({
     knownServerCards,
     localCards,
   );
-  const pendingHeldCards = pruneConfirmedLocalCards(
+  const pendingHeldCards = pruneConfirmedHeldCards(
     knownServerCards,
     heldCards,
   );
@@ -123,10 +186,24 @@ export function KanbanBoard({
       pendingLocalCards,
     ),
     (current, update: OptimisticUpdate) => {
+      if (update.kind === "move") {
+        return applyCardMove(current, {
+          cardId: update.cardId,
+          toStatus: update.status,
+          placement: update.placement,
+        });
+      }
+
       if (update.kind === "status") {
         return current.map((card) =>
           card.id === update.cardId
-            ? { ...card, status: update.status }
+            ? {
+                ...card,
+                status: update.status,
+                ...(update.position === undefined
+                  ? {}
+                  : { position: update.position }),
+              }
             : card,
         );
       }
@@ -241,6 +318,12 @@ export function KanbanBoard({
     return null;
   }
 
+  function setDropTargetIfChanged(next: DropTarget): void {
+    setDropTarget((current) =>
+      sameDropTarget(current, next) ? current : next,
+    );
+  }
+
   function onDragStart(
     event: DragEvent<HTMLElement>,
     cardId: string,
@@ -252,52 +335,108 @@ export function KanbanBoard({
     event.dataTransfer.setData("text/plain", cardId);
   }
 
-  function onDragOver(event: DragEvent<HTMLElement>, status: CardStatus): void {
+  function onColumnDragOver(
+    event: DragEvent<HTMLElement>,
+    status: CardStatus,
+  ): void {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
-    if (dragOverStatus !== status) {
-      setDragOverStatus(status);
+    if (event.target instanceof Element && event.target.closest(".card-tile")) {
+      return;
     }
+    setDropTargetIfChanged({ status, placement: { kind: "start" } });
   }
 
-  function onDragLeave(): void {
-    setDragOverStatus(null);
+  function onCardDragOver(
+    event: DragEvent<HTMLElement>,
+    status: CardStatus,
+    cardId: string,
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "move";
+    if (dragPayload.current?.cardId === cardId) {
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const placement: MovePlacement =
+      event.clientY < rect.top + rect.height / 2
+        ? { kind: "before", cardId }
+        : { kind: "after", cardId };
+    setDropTargetIfChanged({ status, placement });
+  }
+
+  function onColumnDragLeave(
+    event: DragEvent<HTMLElement>,
+    status: CardStatus,
+  ): void {
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) {
+      return;
+    }
+    setDropTarget((current) => (current?.status === status ? null : current));
   }
 
   function onDrop(event: DragEvent<HTMLElement>, status: CardStatus): void {
     event.preventDefault();
-    setDragOverStatus(null);
+    const placement =
+      dropTarget?.status === status
+        ? dropTarget.placement
+        : { kind: "start" as const };
+    setDropTarget(null);
 
     const cardId =
       dragPayload.current?.cardId || event.dataTransfer.getData("text/plain");
     const fromStatus = dragPayload.current?.fromStatus;
     dragPayload.current = null;
 
-    if (!cardId || fromStatus === undefined || fromStatus === status) {
+    if (!cardId || fromStatus === undefined) {
       return;
     }
 
     const moved = optimisticCards.find((card) => card.id === cardId);
+    if (!moved) {
+      return;
+    }
+
+    const nextCards = applyCardMove(optimisticCards, {
+      cardId,
+      toStatus: status,
+      placement,
+    });
+    const nextMoved = nextCards.find((card) => card.id === cardId);
+    if (
+      !nextMoved ||
+      (moved.status === nextMoved.status &&
+        moved.position === nextMoved.position)
+    ) {
+      return;
+    }
+
     setBoardError(null);
     startTransition(async () => {
-      setOptimisticCards({ kind: "status", cardId, status });
+      setOptimisticCards({ kind: "move", cardId, status, placement });
       const formData = new FormData();
       formData.set("boardId", boardId);
       formData.set("cardId", cardId);
       formData.set("status", status);
+      writeMovePlacement(formData, placement);
       const result = await moveCardAction(formData);
       if (!result.ok) {
-        setOptimisticCards({ kind: "status", cardId, status: fromStatus });
+        setOptimisticCards({
+          kind: "status",
+          cardId,
+          status: fromStatus,
+          position: moved.position,
+        });
         setBoardError(result.error);
         return;
       }
 
-      if (moved) {
-        setHeldCards((current) => [
-          ...current.filter((card) => card.id !== cardId),
-          { ...moved, status },
-        ]);
-      }
+      setHeldCards((current) => [
+        ...current.filter((card) => card.id !== cardId),
+        nextMoved,
+      ]);
     });
   }
 
@@ -317,9 +456,9 @@ export function KanbanBoard({
 
       <nav className="board-stage-nav" aria-label={t.board.stagesNav}>
         {CARD_STATUSES.map((status) => {
-          const columnCards = visibleCards.filter(
-            (card) => card.status === status,
-          );
+          const columnCards = visibleCards
+            .filter((card) => card.status === status)
+            .sort(compareCardsByPosition);
           const columnCount = isSearching
             ? columnCards.length
             : columnDisplayCount(
@@ -355,9 +494,9 @@ export function KanbanBoard({
         className={`board-grid focus-${activeStatus}${isPending ? " is-moving" : ""}`}
       >
         {CARD_STATUSES.map((status) => {
-          const columnCards = visibleCards.filter(
-            (card) => card.status === status,
-          );
+          const columnCards = visibleCards
+            .filter((card) => card.status === status)
+            .sort(compareCardsByPosition);
           const columnCount = isSearching
             ? columnCards.length
             : columnDisplayCount(
@@ -376,12 +515,12 @@ export function KanbanBoard({
               key={status}
               aria-label={t.columns[status]}
               className={
-                dragOverStatus === status
+                dropTarget?.status === status
                   ? `board-column column-${status} is-drop-target${isFocused ? " is-focused" : ""}`
                   : `board-column column-${status}${isFocused ? " is-focused" : ""}`
               }
-              onDragOver={(event) => onDragOver(event, status)}
-              onDragLeave={onDragLeave}
+              onDragOver={(event) => onColumnDragOver(event, status)}
+              onDragLeave={(event) => onColumnDragLeave(event, status)}
               onDrop={(event) => onDrop(event, status)}
             >
               <header className="column-header">
@@ -404,6 +543,10 @@ export function KanbanBoard({
               </button>
 
               <div className="column-stack">
+                {dropTarget?.status === status &&
+                dropTarget.placement.kind === "start" ? (
+                  <div className="card-drop-line" aria-hidden="true" />
+                ) : null}
                 {columnCards.length === 0 ? (
                   <p className="column-empty">
                     {isSearching ? t.board.searchEmpty : t.board.emptyColumn}
@@ -421,10 +564,22 @@ export function KanbanBoard({
                       onDragStart={(event) =>
                         onDragStart(event, card.id, card.status)
                       }
+                      onDragOver={(event) =>
+                        onCardDragOver(event, status, card.id)
+                      }
+                      onDragEnd={() => {
+                        setDropTarget(null);
+                      }}
                       onClick={() => {
                         onCardClick(card.id);
                       }}
                     >
+                      {dropLineBefore(dropTarget, status, card.id) ? (
+                        <span className="card-drop-line is-over-card is-before" aria-hidden="true" />
+                      ) : null}
+                      {dropLineAfter(dropTarget, status, card.id) ? (
+                        <span className="card-drop-line is-over-card is-after" aria-hidden="true" />
+                      ) : null}
                       <div className="card-meta">
                         <span className="author">
                           <span className="card-avatar" aria-hidden="true">
@@ -514,13 +669,35 @@ export function KanbanBoard({
           onClose={closeSheet}
           onDraftCommit={commitDraft}
           currentUserName={currentUser.displayName}
-          onStatusChange={(cardId, status) => {
-            setOptimisticCards({ kind: "status", cardId, status });
+          onStatusChange={(cardId, status, position) => {
+            if (position === undefined) {
+              setOptimisticCards({
+                kind: "move",
+                cardId,
+                status,
+                placement: { kind: "start" },
+              });
+              const nextCards = applyCardMove(optimisticCards, {
+                cardId,
+                toStatus: status,
+                placement: { kind: "start" },
+              });
+              const moved = nextCards.find((card) => card.id === cardId);
+              if (moved) {
+                setHeldCards((current) => [
+                  ...current.filter((card) => card.id !== cardId),
+                  moved,
+                ]);
+              }
+              return;
+            }
+
+            setOptimisticCards({ kind: "status", cardId, status, position });
             const moved = optimisticCards.find((card) => card.id === cardId);
             if (moved) {
               setHeldCards((current) => [
                 ...current.filter((card) => card.id !== cardId),
-                { ...moved, status },
+                { ...moved, status, position },
               ]);
             }
           }}

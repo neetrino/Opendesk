@@ -68,6 +68,55 @@ export function pruneConfirmedLocalCards<T extends { id: string }>(
   return next.length === localCards.length ? localCards : next;
 }
 
+export function pruneConfirmedHeldCards<
+  T extends { id: string; status: unknown; position: number },
+>(serverCards: T[], heldCards: T[]): T[] {
+  if (heldCards.length === 0) {
+    return heldCards;
+  }
+
+  const serverById = new Map(serverCards.map((card) => [card.id, card]));
+  const next = heldCards.filter((held) => {
+    const server = serverById.get(held.id);
+    if (!server) {
+      return true;
+    }
+    return server.status !== held.status || server.position !== held.position;
+  });
+  return next.length === heldCards.length ? heldCards : next;
+}
+
+export function overlayHeldCards<T extends { id: string }>(
+  cards: T[],
+  heldCards: T[],
+): T[] {
+  if (heldCards.length === 0) {
+    return cards;
+  }
+
+  const heldById = new Map(heldCards.map((card) => [card.id, card]));
+  const seen = new Set<string>();
+  const next: T[] = [];
+
+  for (const card of cards) {
+    const held = heldById.get(card.id);
+    if (held) {
+      next.push(held);
+      seen.add(card.id);
+    } else {
+      next.push(card);
+    }
+  }
+
+  for (const card of heldCards) {
+    if (!seen.has(card.id)) {
+      next.push(card);
+    }
+  }
+
+  return next;
+}
+
 export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard {
   const now = new Date();
   return {
@@ -120,7 +169,7 @@ export function mergeVisibleCards<T extends { id: string }>(
   localCards: T[],
 ): T[] {
   return mergeLocalCards(
-    mergeLocalCards(mergeLocalCards(serverCards, extraCards), heldCards),
+    overlayHeldCards(mergeLocalCards(serverCards, extraCards), heldCards),
     localCards,
   );
 }

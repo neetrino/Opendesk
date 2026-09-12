@@ -49,6 +49,30 @@ describe("validation schemas", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("accepts a move with an insert anchor", () => {
+    const parsed = moveCardSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      cardId: "clyyyyyyyyyyyyyyyyyyyyyyyyy",
+      status: "in_progress",
+      beforeCardId: "clzzzzzzzzzzzzzzzzzzzzzzzzz",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.beforeCardId).toBe("clzzzzzzzzzzzzzzzzzzzzzzzzz");
+    }
+  });
+
+  it("rejects a move with both insert anchors", () => {
+    const parsed = moveCardSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      cardId: "clyyyyyyyyyyyyyyyyyyyyyyyyy",
+      status: "in_progress",
+      beforeCardId: "clzzzzzzzzzzzzzzzzzzzzzzzzz",
+      afterCardId: "claaaaaaaaaaaaaaaaaaaaaaaaa",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
   it("parses urgent false from string correctly", () => {
     const parsed = setCardUrgentSchema.safeParse({
       boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",

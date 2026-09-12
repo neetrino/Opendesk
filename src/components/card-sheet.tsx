@@ -39,7 +39,11 @@ type CardSheetProps = {
   isDraft?: boolean;
   onClose: () => void;
   onDraftCommit?: (title: string, urgent: boolean) => Promise<string | null>;
-  onStatusChange: (cardId: string, status: CardStatus) => void;
+  onStatusChange: (
+    cardId: string,
+    status: CardStatus,
+    position?: number,
+  ) => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
   onCommentSend: () => void;
   onCommentRollback: () => void;
@@ -252,6 +256,7 @@ export function CardSheet({
     }
 
     const previousStatus = card.status;
+    const previousPosition = card.position;
     setError(null);
     const formData = new FormData();
     formData.set("boardId", boardId);
@@ -262,7 +267,7 @@ export function CardSheet({
       onStatusChange(card.id, nextStatus);
       const response = await moveCardAction(formData);
       if (!response.ok) {
-        onStatusChange(card.id, previousStatus);
+        onStatusChange(card.id, previousStatus, previousPosition);
         setError(response.error);
       }
     });

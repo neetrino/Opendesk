@@ -4,6 +4,11 @@ import type { Card } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireBoardAccess } from "@/lib/board-access";
+import {
+  computeMovedCardPosition,
+  planDestinationShift,
+  resolveMovePlacement,
+} from "@/lib/card-position";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { allocateBoardSlug } from "@/lib/allocate-board-slug";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
@@ -330,6 +335,8 @@ export async function moveCardAction(
     boardId: formData.get("boardId"),
     cardId: formData.get("cardId"),
     status: formData.get("status"),
+    beforeCardId: formData.get("beforeCardId") || undefined,
+    afterCardId: formData.get("afterCardId") || undefined,
   });
 
   if (!parsed.success) {
@@ -350,17 +357,62 @@ export async function moveCardAction(
       return { ok: false, error: errors.cardNotFound };
     }
 
-    const maxPosition = await prisma.card.aggregate({
-      where: { boardId: parsed.data.boardId, status: parsed.data.status },
-      _max: { position: true },
-    });
-
-    await prisma.card.update({
-      where: { id: card.id },
-      data: {
-        status: parsed.data.status,
-        position: (maxPosition._max.position ?? -1) + 1,
+    const destination = await prisma.card.findMany({
+      where: {
+        boardId: parsed.data.boardId,
+        OR: [{ status: parsed.data.status }, { id: card.id }],
       },
+      select: { id: true, status: true, position: true },
+    });
+    const targetPosition = computeMovedCardPosition({
+      moving: card,
+      destination,
+      toStatus: parsed.data.status,
+      placement: resolveMovePlacement(parsed.data),
+    });
+    const shift = planDestinationShift(
+      card,
+      parsed.data.status,
+      targetPosition,
+    );
+
+    await prisma.$transaction(async (tx) => {
+      if (shift.kind === "increment") {
+        await tx.card.updateMany({
+          where: {
+            boardId: parsed.data.boardId,
+            status: parsed.data.status,
+            id: { not: card.id },
+            position: {
+              gte: shift.from,
+              ...(shift.toExclusive === undefined
+                ? {}
+                : { lt: shift.toExclusive }),
+            },
+          },
+          data: { position: { increment: 1 } },
+        });
+      }
+
+      if (shift.kind === "decrement") {
+        await tx.card.updateMany({
+          where: {
+            boardId: parsed.data.boardId,
+            status: parsed.data.status,
+            id: { not: card.id },
+            position: { gt: shift.fromExclusive, lte: shift.to },
+          },
+          data: { position: { decrement: 1 } },
+        });
+      }
+
+      await tx.card.update({
+        where: { id: card.id },
+        data: {
+          status: parsed.data.status,
+          position: targetPosition,
+        },
+      });
     });
 
     await revalidateBoardPath(parsed.data.boardId);

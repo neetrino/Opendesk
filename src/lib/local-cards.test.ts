@@ -5,6 +5,8 @@ import {
   isLocalCardId,
   mergeLocalCards,
   mergeVisibleCards,
+  overlayHeldCards,
+  pruneConfirmedHeldCards,
   pruneConfirmedLocalCards,
   toBoardCardFromCreated,
 } from "@/lib/local-cards";
@@ -99,5 +101,19 @@ describe("local cards", () => {
       { id: "held-1" },
       { id: "local-1" },
     ]);
+  });
+
+  it("lets a held move replace the stale server copy of the same card", () => {
+    const server = [{ id: "card-1", status: "new" as const, position: 3 }];
+    const held = [{ id: "card-1", status: "done" as const, position: 0 }];
+
+    expect(overlayHeldCards(server, held)).toEqual(held);
+    expect(pruneConfirmedHeldCards(server, held)).toEqual(held);
+    expect(
+      pruneConfirmedHeldCards(
+        [{ id: "card-1", status: "done" as const, position: 0 }],
+        held,
+      ),
+    ).toEqual([]);
   });
 });

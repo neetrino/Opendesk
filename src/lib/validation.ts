@@ -43,11 +43,22 @@ export const createCardSchema = z.object({
     .transform((value) => value === true || value === "on" || value === "true"),
 });
 
-export const moveCardSchema = z.object({
-  boardId: z.string().cuid(),
-  cardId: z.string().cuid(),
-  status: z.enum(["new", "in_progress", "answered", "done"]),
-});
+const optionalCuid = z
+  .union([z.string().cuid(), z.literal("")])
+  .optional()
+  .transform((value) => (value ? value : undefined));
+
+export const moveCardSchema = z
+  .object({
+    boardId: z.string().cuid(),
+    cardId: z.string().cuid(),
+    status: z.enum(["new", "in_progress", "answered", "done"]),
+    beforeCardId: optionalCuid,
+    afterCardId: optionalCuid,
+  })
+  .refine((value) => !(value.beforeCardId && value.afterCardId), {
+    message: "validation",
+  });
 
 export const setCardUrgentSchema = z.object({
   boardId: z.string().cuid(),

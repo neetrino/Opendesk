@@ -36,12 +36,12 @@ export default async function BoardsPage() {
   return (
     <section className="boards-page">
       <div className="boards-page-top">
-        <div>
-          <p className="eyebrow">{t.boardsPage.eyebrow}</p>
+        <div className="boards-page-heading">
           <h1>{t.boardsPage.title}</h1>
-          <p className="lede">{t.boardsPage.lede}</p>
+          <p className="boards-page-role">{t.boardsPage.eyebrow}</p>
         </div>
         <OwnerLogoutButton />
+        <p className="lede boards-page-lede">{t.boardsPage.lede}</p>
       </div>
 
       <div className="boards-page-grid">
