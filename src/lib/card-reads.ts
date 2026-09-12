@@ -5,6 +5,7 @@ export const CARD_READ_STATE_VERSION = 1;
 export type CardReadState = {
   version: typeof CARD_READ_STATE_VERSION;
   reads: Record<string, string>;
+  seededAt?: string;
 };
 
 export type CommentReadCursor = {
@@ -30,7 +31,11 @@ export function parseCardReadState(raw: string | null): CardReadState | null {
       return null;
     }
 
-    const record = parsed as { version?: unknown; reads?: unknown };
+    const record = parsed as {
+      version?: unknown;
+      reads?: unknown;
+      seededAt?: unknown;
+    };
     if (record.version !== CARD_READ_STATE_VERSION) {
       return null;
     }
@@ -49,7 +54,15 @@ export function parseCardReadState(raw: string | null): CardReadState | null {
       }
     }
 
-    return { version: CARD_READ_STATE_VERSION, reads };
+    const seededAt =
+      typeof record.seededAt === "string" &&
+      Number.isFinite(Date.parse(record.seededAt))
+        ? record.seededAt
+        : undefined;
+
+    return seededAt
+      ? { version: CARD_READ_STATE_VERSION, reads, seededAt }
+      : { version: CARD_READ_STATE_VERSION, reads };
   } catch {
     return null;
   }
@@ -68,7 +81,11 @@ export function seedCardReads(
     }
   }
 
-  return { version: CARD_READ_STATE_VERSION, reads };
+  return {
+    version: CARD_READ_STATE_VERSION,
+    reads,
+    seededAt: readAt.toISOString(),
+  };
 }
 
 export function commentTimestamp(value: Date | string): number {
@@ -89,6 +106,39 @@ export function lastReadDate(
   }
   const time = Date.parse(raw);
   return Number.isFinite(time) ? new Date(time) : null;
+}
+
+export function resolveSeededAt(state: CardReadState | null): Date | null {
+  if (!state) {
+    return null;
+  }
+  if (state.seededAt) {
+    const explicit = Date.parse(state.seededAt);
+    if (Number.isFinite(explicit)) {
+      return new Date(explicit);
+    }
+  }
+
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const value of Object.values(state.reads)) {
+    const time = Date.parse(value);
+    if (Number.isFinite(time) && time < earliest) {
+      earliest = time;
+    }
+  }
+  return Number.isFinite(earliest) ? new Date(earliest) : null;
+}
+
+/**
+ * Per-card last-read, or the first-visit seed so unloaded cards
+ * do not look unread.
+ */
+export function resolveLastReadAt(
+  reads: Record<string, string> | null,
+  cardId: string,
+  seededAt: Date | null,
+): Date | null {
+  return lastReadDate(reads, cardId) ?? seededAt;
 }
 
 /**
@@ -165,10 +215,17 @@ export function readCardReadState(
 
 export const CARD_READS_CHANGED_EVENT = "opendesk:card-reads-changed";
 
-const memoryReads = new Map<string, Record<string, string>>();
+const memoryStates = new Map<string, CardReadState>();
 
 function memoryKey(boardId: string, participantId: string): string {
   return `${boardId}:${participantId}`;
+}
+
+function sameState(left: CardReadState, right: CardReadState): boolean {
+  return (
+    left.seededAt === right.seededAt &&
+    JSON.stringify(left.reads) === JSON.stringify(right.reads)
+  );
 }
 
 export function writeCardReadState(
@@ -176,7 +233,7 @@ export function writeCardReadState(
   participantId: string,
   state: CardReadState,
 ): void {
-  memoryReads.set(memoryKey(boardId, participantId), state.reads);
+  memoryStates.set(memoryKey(boardId, participantId), state);
 
   if (typeof window === "undefined") {
     return;
@@ -192,11 +249,30 @@ export function writeCardReadState(
   }
 }
 
-function sameReads(
-  left: Record<string, string>,
-  right: Record<string, string>,
-): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
+export function getClientCardReadState(
+  boardId: string,
+  participantId: string,
+  cardIds: string[],
+): CardReadState {
+  const key = memoryKey(boardId, participantId);
+  const stored = readCardReadState(boardId, participantId);
+  if (stored) {
+    const cached = memoryStates.get(key);
+    if (cached && sameState(cached, stored)) {
+      return cached;
+    }
+    memoryStates.set(key, stored);
+    return stored;
+  }
+
+  const cached = memoryStates.get(key);
+  if (cached) {
+    return cached;
+  }
+
+  const seeded = seedCardReads(cardIds, new Date());
+  writeCardReadState(boardId, participantId, seeded);
+  return seeded;
 }
 
 export function getClientCardReads(
@@ -204,25 +280,7 @@ export function getClientCardReads(
   participantId: string,
   cardIds: string[],
 ): Record<string, string> {
-  const key = memoryKey(boardId, participantId);
-  const stored = readCardReadState(boardId, participantId);
-  if (stored) {
-    const cached = memoryReads.get(key);
-    if (cached && sameReads(cached, stored.reads)) {
-      return cached;
-    }
-    memoryReads.set(key, stored.reads);
-    return stored.reads;
-  }
-
-  const cached = memoryReads.get(key);
-  if (cached) {
-    return cached;
-  }
-
-  const seeded = seedCardReads(cardIds, new Date());
-  writeCardReadState(boardId, participantId, seeded);
-  return seeded.reads;
+  return getClientCardReadState(boardId, participantId, cardIds).reads;
 }
 
 export function subscribeClientCardReads(

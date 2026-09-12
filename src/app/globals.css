@@ -595,7 +595,13 @@ textarea {
 }
 
 .boards-page {
-  padding: 1rem 0 2.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  padding: 1rem 0 1.25rem;
+  overflow: hidden;
 }
 
 .boards-page-top {
@@ -603,7 +609,8 @@ textarea {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+  margin-bottom: 1.15rem;
 }
 
 .boards-page-top h1 {
@@ -614,23 +621,104 @@ textarea {
 }
 
 .boards-page-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
-  gap: 1.25rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .boards-list-panel {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.boards-list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  margin-bottom: 0.75rem;
+}
+
+.boards-list-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.boards-create-btn {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.boards-create-btn:hover {
+  background: var(--accent-hover);
+}
+
+.create-board-sheet {
+  height: auto;
+  max-height: min(90vh, 40rem);
+  top: 12vh;
+}
+
+.create-board-fields {
+  display: grid;
+  gap: 0.15rem;
+  padding: 1rem 1.05rem 1.2rem;
+}
+
+.create-board-fields .button {
+  justify-self: start;
+}
+
+.create-board-fields .save-link-lede {
+  margin: 0 0 0.85rem;
+}
+
+.boards-list-search input[type="search"] {
+  appearance: none;
+  padding: 0.7rem 0.95rem;
+}
+
+.boards-list-search input[type="search"]::-webkit-search-decoration,
+.boards-list-search input[type="search"]::-webkit-search-results-button,
+.boards-list-search input[type="search"]::-webkit-search-results-decoration {
+  display: none;
 }
 
 .boards-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.2rem 0.15rem 0.55rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.boards-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .boards-list-item {
@@ -712,6 +800,11 @@ textarea {
   background: color-mix(in srgb, var(--paper) 72%, transparent);
   color: var(--ink-soft);
   line-height: 1.55;
+}
+
+.boards-list-empty-inline {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .boards-skel {
@@ -799,6 +892,38 @@ textarea {
   gap: 0.5rem;
   flex-shrink: 0;
   margin-left: auto;
+}
+
+.board-search {
+  flex: 1 1 12rem;
+  min-width: 9rem;
+  max-width: 22rem;
+}
+
+.board-search input[type="search"],
+.board-search-mobile input[type="search"] {
+  appearance: none;
+  height: 2.15rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.board-search input[type="search"]::-webkit-search-decoration,
+.board-search input[type="search"]::-webkit-search-results-button,
+.board-search input[type="search"]::-webkit-search-results-decoration,
+.board-search-mobile input[type="search"]::-webkit-search-decoration,
+.board-search-mobile input[type="search"]::-webkit-search-results-button,
+.board-search-mobile input[type="search"]::-webkit-search-results-decoration {
+  display: none;
+}
+
+.board-search-mobile {
+  display: none;
+}
+
+.board-dock-search {
+  display: none;
 }
 
 .board-logout {
@@ -1276,6 +1401,17 @@ textarea {
   display: none;
   width: 0;
   height: 0;
+}
+
+.load-more-sentinel {
+  height: 1px;
+  flex-shrink: 0;
+}
+
+.thread-loading-older {
+  margin: 0;
+  padding: 0.15rem 0.35rem;
+  text-align: center;
 }
 
 .column-empty {
@@ -2879,8 +3015,7 @@ textarea {
 
 @media (max-width: 960px) {
   .hero-grid,
-  .detail-layout,
-  .boards-page-grid {
+  .detail-layout {
     grid-template-columns: 1fr;
   }
 
@@ -2913,6 +3048,11 @@ textarea {
     height: min(92dvh, 100%);
     border-radius: 22px 22px 0 0;
     animation: sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .card-sheet.create-board-sheet {
+    height: auto;
+    max-height: min(92dvh, 100%);
   }
 
   .sheet-discussion {
@@ -3018,8 +3158,13 @@ textarea {
     font-size: 0.98rem;
   }
 
-  .board-page {
+  .board-page,
+  .boards-page {
     padding-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .boards-create-btn {
+    display: none;
   }
 
   .board-top-actions {
@@ -3053,9 +3198,39 @@ textarea {
   }
 
   .board-dock-settings,
+  .board-dock-search,
   .board-dock-primary {
     min-height: 2.75rem;
     border-radius: 999px;
+  }
+
+  .board-search {
+    display: none;
+  }
+
+  .board-search-mobile {
+    display: block;
+    flex-shrink: 0;
+    margin-bottom: 0.65rem;
+  }
+
+  .board-dock-search {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    background: var(--paper-raised);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .board-dock-search.is-active {
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+    background: var(--accent-soft);
+    color: var(--accent);
   }
 
   .board-dock-settings {
@@ -3267,24 +3442,30 @@ body:has(.card-sheet) .board-dock {
   display: none;
 }
 
-body:has(.board-page) {
+body:has(.board-page),
+body:has(.boards-page) {
   height: 100dvh;
   overflow: hidden;
 }
 
-body:has(.board-page) .desk {
+body:has(.board-page) .desk,
+body:has(.boards-page) .desk {
   height: 100%;
   max-height: 100dvh;
   overflow: hidden;
 }
 
-body:has(.board-page) main.shell {
-  width: min(1600px, calc(100% - 1.1rem));
+body:has(.board-page) main.shell,
+body:has(.boards-page) main.shell {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+body:has(.board-page) main.shell {
+  width: min(1600px, calc(100% - 1.1rem));
 }
 
 @media (prefers-reduced-motion: reduce) {

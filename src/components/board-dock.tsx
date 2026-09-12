@@ -1,5 +1,6 @@
 "use client";
 
+import { BoardSearchDockButton } from "@/components/board-search";
 import { BoardSettingsSheet } from "@/components/board-settings-sheet";
 import type { BoardParticipant } from "@/components/participants-panel";
 import { useI18n } from "@/i18n/provider";
@@ -58,6 +59,7 @@ export function BoardDock({
           displayName={displayName}
           isOwner={isOwner}
         />
+        <BoardSearchDockButton />
         <button
           type="button"
           className="board-dock-primary"

@@ -1,4 +1,4 @@
-import type { Card, CardStatus, Comment, Participant } from "@prisma/client";
+import type { Card, CardStatus, Participant } from "@prisma/client";
 
 export const LOCAL_CARD_ID_PREFIX = "local-";
 
@@ -16,8 +16,15 @@ export type BoardAttachment = {
 
 export type LocalBoardCard = Card & {
   author: Participant;
-  attachments: BoardAttachment[];
-  comments: Array<Comment & { author: Participant; attachments: BoardAttachment[] }>;
+  commentCount: number;
+  attachmentCount: number;
+};
+
+export type OptimisticCommentAttachment = Pick<
+  BoardAttachment,
+  "id" | "filename" | "contentType" | "kind" | "byteSize"
+> & {
+  previewUrl?: string;
 };
 
 export type LocalCardAuthor = {
@@ -79,8 +86,8 @@ export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard 
       displayName: input.author.displayName,
       createdAt: now,
     },
-    comments: [],
-    attachments: [],
+    commentCount: 0,
+    attachmentCount: 0,
   };
 }
 
@@ -101,7 +108,19 @@ export function toBoardCardFromCreated(
       displayName: author.displayName,
       createdAt,
     },
-    comments: [],
-    attachments: [],
+    commentCount: 0,
+    attachmentCount: 0,
   };
+}
+
+export function mergeVisibleCards<T extends { id: string }>(
+  serverCards: T[],
+  extraCards: T[],
+  heldCards: T[],
+  localCards: T[],
+): T[] {
+  return mergeLocalCards(
+    mergeLocalCards(mergeLocalCards(serverCards, extraCards), heldCards),
+    localCards,
+  );
 }

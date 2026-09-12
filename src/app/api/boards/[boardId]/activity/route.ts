@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 
 /**
  * Lightweight comment cursors for unread badges while the board is open.
- * Bodies and attachments stay on the board page.
+ * Chat bodies load only when a card is opened.
  */
 export async function GET(
   _request: Request,

@@ -22,6 +22,10 @@ export const MAX_TITLE_LENGTH = 120;
 export const MAX_COMMENT_LENGTH = 2000;
 /** Soft cap for people on one board. */
 export const MAX_BOARD_PARTICIPANTS = 20;
+/** First paint per column; the rest load when that column is scrolled. */
+export const COLUMN_PAGE_SIZE = 10;
+/** Newest messages when a card chat opens; older pages load on scroll up. */
+export const COMMENT_PAGE_SIZE = 20;
 
 export const MAX_ATTACHMENT_SIZE_MB = 200;
 export const MAX_ATTACHMENT_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;

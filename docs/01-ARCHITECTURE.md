@@ -13,7 +13,7 @@ OpenDesk даёт команде общую доску: вход по посто
 
 ### Основные возможности
 
-- Owner login (`OWNER_LOGIN` / `OWNER_PASSWORD`) → `/boards` (список + создание)
+- Owner login (`OWNER_LOGIN` / `OWNER_PASSWORD`) → `/boards` (список; создание по кнопке у поиска / в нижнем меню на мобильном)
 - Постоянная ссылка `/b/{slug}/{joinToken}` (и join, и работа на доске)
 - Вход участника без регистрации (ссылка + display name; то же имя = тот же участник)
 - Карточки: заголовок, срочность, 4 колонки, обсуждение в чате
@@ -95,8 +95,8 @@ docs/
 ```
 1. GET /login → логин/пароль из env
 2. Cookie opendesk_owner
-3. GET /boards → список всех Board + создание
-4. Open /b/:slug/:joinToken → workspace без join-формы; URL запоминается
+3. GET /boards → список всех Board с поиском + создание
+4. Open /b/:slug/:joinToken → workspace без join-формы, с поиском задач; URL запоминается
    POST `/api/owner/last-board` (без Server Action, чтобы не сбрасывать client cache)
 5. PWA всегда запускает `/` → последняя посещённая доска, либо `/boards`, если её нет
 ```
@@ -132,11 +132,17 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 
 ```
 1. Access: participant cookie для boardId ИЛИ owner cookie
-2. RSC загружает колонки + карточки. Повторный переход `/boards` ↔ доска
-   берётся из Client Router Cache (~30s), а не из нового loading-скелетона
-3. Actions: createCard, moveCard, addComment, attachment upload (requireBoardAccess)
-4. Пока workspace открыт: GET `/api/boards/{boardId}/activity` (курсоры чужих комментариев) → при изменении `router.refresh()`
-5. Last-read карточки хранится в `localStorage` на устройстве участника (`opendesk.cardReads.v1.{boardId}.{participantId}`)
+2. RSC загружает по 10 карточек на колонку (название, автор, счётчики) без тел чата.
+   Повторный переход `/boards` ↔ доска берётся из Client Router Cache (~30s),
+   а не из нового loading-скелетона
+3. Скролл колонки: GET `/api/boards/{boardId}/cards?status&cursor` — следующие 10
+4. Открытие карточки: GET `/api/boards/{boardId}/cards/{cardId}/comments` —
+   последние 20; скролл вверх — более старые
+5. Actions: createCard, moveCard, addComment, attachment upload (requireBoardAccess)
+6. Пока workspace открыт: GET `/api/boards/{boardId}/activity` (курсоры чужих комментариев) → при изменении `router.refresh()`
+7. Last-read карточки хранится в `localStorage` на устройстве участника
+   (`opendesk.cardReads.v1.{boardId}.{participantId}`); `seededAt` покрывает
+   ещё не подгруженные карточки
 ```
 
 ---

@@ -22,6 +22,12 @@ export type Dictionary = {
     title: string;
     lede: string;
     empty: string;
+    searchLabel: string;
+    searchPlaceholder: string;
+    searchEmpty: string;
+    createAria: string;
+    closeCreate: string;
+    dockAria: string;
     openBoard: string;
     copyLink: string;
     createdAt: string;
@@ -57,6 +63,11 @@ export type Dictionary = {
     joinedAt: string;
     closeParticipants: string;
     emptyColumn: string;
+    searchLabel: string;
+    searchPlaceholder: string;
+    searchEmpty: string;
+    searchOpen: string;
+    searchClose: string;
     dockAria: string;
     newCard: string;
     settings: string;
@@ -106,6 +117,7 @@ export type Dictionary = {
     urgentBadge: string;
     discussion: string;
     emptyThread: string;
+    loadingThread: string;
     editTitle: string;
     titlePlaceholder: string;
     draftLeavePrompt: string;
@@ -181,6 +193,8 @@ export type Dictionary = {
     moveCard: string;
     updateCard: string;
     addComment: string;
+    loadCards: string;
+    loadComments: string;
     joinFailed: string;
     invalidCredentials: string;
     titleShort: string;
@@ -226,7 +240,13 @@ export const en: Dictionary = {
     eyebrow: "Owner",
     title: "All boards",
     lede: "Create boards and open any of them without joining by name.",
-    empty: "No boards yet. Create the first one below.",
+    empty: "No boards yet. Create the first one.",
+    searchLabel: "Search boards",
+    searchPlaceholder: "Search boards…",
+    searchEmpty: "No boards match this search.",
+    createAria: "Create board",
+    closeCreate: "Close create board",
+    dockAria: "Board list actions",
     openBoard: "Open",
     copyLink: "Copy link",
     createdAt: "Created",
@@ -263,6 +283,11 @@ export const en: Dictionary = {
     joinedAt: "Joined",
     closeParticipants: "Close",
     emptyColumn: "Nothing here yet",
+    searchLabel: "Search tasks",
+    searchPlaceholder: "Search tasks…",
+    searchEmpty: "No tasks match this search.",
+    searchOpen: "Search",
+    searchClose: "Close search",
     dockAria: "Board actions",
     newCard: "New task",
     settings: "Settings",
@@ -313,6 +338,7 @@ export const en: Dictionary = {
     urgentBadge: "Urgent",
     discussion: "Discussion",
     emptyThread: "No replies yet. Write the first one.",
+    loadingThread: "Loading messages…",
     editTitle: "Title",
     titlePlaceholder: "Task title",
     draftLeavePrompt: "This task is not created yet. Create it?",
@@ -388,6 +414,8 @@ export const en: Dictionary = {
     moveCard: "Could not move card",
     updateCard: "Could not update card",
     addComment: "Could not add comment",
+    loadCards: "Could not load more tasks",
+    loadComments: "Could not load messages",
     joinFailed: "Could not join",
     invalidCredentials: "Invalid login or password",
     titleShort: "Name is too short",

@@ -83,6 +83,7 @@
 - `Comment` — id, cardId, authorId, body, createdAt
 - `Attachment` — id, boardId, cardId, commentId?, authorId, objectKey, filename, contentType, byteSize, kind (`image` \| `video` \| `audio`)
 - Last-read непрочитанных ответов — `localStorage` на устройстве участника, не таблица БД. Пока доска открыта, `GET /api/boards/{boardId}/activity` отдаёт курсоры чужих комментариев
+- Список доски: первые 10 карточек в каждой колонке без истории чата; дальше по скроллу колонки. Чат карточки: последние 20 сообщений при открытии, старше — по скроллу вверх (`GET /api/boards/{boardId}/cards`, `GET /api/boards/{boardId}/cards/{cardId}/comments`)
 
 **Колонки:** `new` → `in_progress` → `answered` → `done`
 

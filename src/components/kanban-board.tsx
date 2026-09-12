@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useMemo,
   useOptimistic,
   useRef,
   useState,
@@ -9,29 +10,32 @@ import {
 } from "react";
 import type { CardStatus } from "@prisma/client";
 import { BoardDock } from "@/components/board-dock";
+import { BoardSearchMobileBar, useBoardSearch } from "@/components/board-search";
 import { CardSheet } from "@/components/card-sheet";
-import type { OptimisticCommentAttachment } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
+import { LoadMoreSentinel } from "@/components/load-more-sentinel";
 import { PaperclipIcon } from "@/components/paperclip-icon";
 import type { BoardParticipant } from "@/components/participants-panel";
 import { createCardAction, moveCardAction } from "@/lib/actions";
 import {
-  applyForeignActivity,
-  countUnreadComments,
-  lastReadDate,
-} from "@/lib/card-reads";
+  columnDisplayCount,
+  type BoardColumnPages,
+} from "@/lib/board-card-view";
+import { applyForeignActivity, resolveLastReadAt } from "@/lib/card-reads";
 import { CARD_STATUSES } from "@/lib/constants";
 import { displayInitials } from "@/lib/initials";
 import {
   buildLocalBoardCard,
   isLocalCardId,
-  mergeLocalCards,
+  mergeVisibleCards,
   pruneConfirmedLocalCards,
   toBoardCardFromCreated,
   type LocalBoardCard,
 } from "@/lib/local-cards";
 import { useBoardActivity } from "@/lib/use-board-activity";
 import { useCardReads } from "@/lib/use-card-reads";
+import { useColumnPages } from "@/lib/use-column-pages";
+import { filterCardsByQuery } from "@/lib/filter-cards";
 import { useI18n } from "@/i18n/provider";
 
 export type BoardCard = LocalBoardCard;
@@ -40,6 +44,7 @@ type KanbanBoardProps = {
   boardId: string;
   boardTitle: string;
   cards: BoardCard[];
+  columnPages: BoardColumnPages;
   locale: string;
   attachmentsEnabled: boolean;
   slug: string;
@@ -60,21 +65,13 @@ type DragPayload = {
 type OptimisticUpdate =
   | { kind: "status"; cardId: string; status: CardStatus }
   | { kind: "urgent"; cardId: string; urgent: boolean }
-  | {
-      kind: "comment-add";
-      cardId: string;
-      tempId: string;
-      body: string;
-      authorId: string;
-      displayName: string;
-      attachments: OptimisticCommentAttachment[];
-    }
-  | { kind: "comment-rollback"; cardId: string; tempId: string };
+  | { kind: "comment-count"; cardId: string; delta: number };
 
 export function KanbanBoard({
   boardId,
   boardTitle,
   cards,
+  columnPages,
   locale,
   attachmentsEnabled,
   slug,
@@ -84,6 +81,7 @@ export function KanbanBoard({
   isOwner,
 }: KanbanBoardProps) {
   const { t } = useI18n();
+  const { query } = useBoardSearch();
   const [isPending, startTransition] = useTransition();
   const [dragOverStatus, setDragOverStatus] = useState<CardStatus | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -91,18 +89,39 @@ export function KanbanBoard({
   const [activeStatus, setActiveStatus] = useState<CardStatus>("new");
   const [boardError, setBoardError] = useState<string | null>(null);
   const [localCards, setLocalCards] = useState<BoardCard[]>([]);
+  const [heldCards, setHeldCards] = useState<BoardCard[]>([]);
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
-  const pendingLocalCards = pruneConfirmedLocalCards(cards, localCards);
-  const { reads, markCardRead } = useCardReads(
+  const { extraCards, hasMore, loadMore } = useColumnPages(
+    boardId,
+    columnPages,
+  );
+  const knownServerCards = mergeVisibleCards(cards, extraCards, [], []);
+  const pendingLocalCards = pruneConfirmedLocalCards(
+    knownServerCards,
+    localCards,
+  );
+  const pendingHeldCards = pruneConfirmedLocalCards(
+    knownServerCards,
+    heldCards,
+  );
+  const { reads, seededAt, markCardRead } = useCardReads(
     boardId,
     currentUser.participantId,
-    cards.map((card) => card.id),
+    knownServerCards.map((card) => card.id),
   );
   const activity = useBoardActivity(boardId);
+  const sourceById = new Map(
+    knownServerCards.map((card) => [card.id, card.status]),
+  );
 
   const [optimisticCards, setOptimisticCards] = useOptimistic(
-    mergeLocalCards(cards, pendingLocalCards),
+    mergeVisibleCards(
+      cards,
+      extraCards,
+      pendingHeldCards,
+      pendingLocalCards,
+    ),
     (current, update: OptimisticUpdate) => {
       if (update.kind === "status") {
         return current.map((card) =>
@@ -120,52 +139,22 @@ export function KanbanBoard({
         );
       }
 
-      if (update.kind === "comment-add") {
-        const optimisticComment: BoardCard["comments"][number] = {
-          id: update.tempId,
-          cardId: update.cardId,
-          authorId: update.authorId,
-          body: update.body,
-          createdAt: new Date(),
-          author: {
-            id: update.authorId,
-            boardId,
-            displayName: update.displayName,
-            createdAt: new Date(),
-          },
-          attachments: update.attachments.map((attachment) => ({
-            id: attachment.id,
-            filename: attachment.filename,
-            contentType: attachment.contentType,
-            byteSize: attachment.byteSize,
-            kind: attachment.kind,
-            createdAt: new Date(),
-            commentId: update.tempId,
-            authorId: update.authorId,
-            previewUrl: attachment.previewUrl,
-          })),
-        };
-
-        return current.map((card) =>
-          card.id === update.cardId
-            ? { ...card, comments: [...card.comments, optimisticComment] }
-            : card,
-        );
-      }
-
       return current.map((card) =>
         card.id === update.cardId
           ? {
               ...card,
-              comments: card.comments.filter(
-                (comment) => comment.id !== update.tempId,
-              ),
+              commentCount: Math.max(0, card.commentCount + update.delta),
             }
           : card,
       );
     },
   );
 
+  const isSearching = query.trim().length > 0;
+  const visibleCards = useMemo(
+    () => filterCardsByQuery(optimisticCards, query),
+    [optimisticCards, query],
+  );
   const selectedCard =
     selectedCardId === null
       ? null
@@ -192,9 +181,9 @@ export function KanbanBoard({
       return 0;
     }
 
-    const lastReadAt = lastReadDate(reads, card.id);
+    const lastReadAt = resolveLastReadAt(reads, card.id, seededAt);
     return applyForeignActivity(
-      countUnreadComments(card.comments, lastReadAt, currentUser.participantId),
+      0,
       lastReadAt,
       activity[card.id]?.lastForeignCommentAt,
     );
@@ -288,6 +277,7 @@ export function KanbanBoard({
       return;
     }
 
+    const moved = optimisticCards.find((card) => card.id === cardId);
     setBoardError(null);
     startTransition(async () => {
       setOptimisticCards({ kind: "status", cardId, status });
@@ -299,6 +289,14 @@ export function KanbanBoard({
       if (!result.ok) {
         setOptimisticCards({ kind: "status", cardId, status: fromStatus });
         setBoardError(result.error);
+        return;
+      }
+
+      if (moved) {
+        setHeldCards((current) => [
+          ...current.filter((card) => card.id !== cardId),
+          { ...moved, status },
+        ]);
       }
     });
   }
@@ -315,11 +313,21 @@ export function KanbanBoard({
     <>
       {boardError ? <p className="form-error board-move-error">{boardError}</p> : null}
 
+      <BoardSearchMobileBar />
+
       <nav className="board-stage-nav" aria-label={t.board.stagesNav}>
         {CARD_STATUSES.map((status) => {
-          const columnCards = optimisticCards.filter(
+          const columnCards = visibleCards.filter(
             (card) => card.status === status,
           );
+          const columnCount = isSearching
+            ? columnCards.length
+            : columnDisplayCount(
+                status,
+                columnPages[status].totalCount,
+                sourceById,
+                optimisticCards,
+              );
           const unreadInColumn = columnCards.some(
             (card) => unreadCountFor(card) > 0,
           );
@@ -337,7 +345,7 @@ export function KanbanBoard({
               onClick={() => setActiveStatus(status)}
             >
               <span className="board-stage-label">{t.columns[status]}</span>
-              <span className="board-stage-count">{columnCards.length}</span>
+              <span className="board-stage-count">{columnCount}</span>
             </button>
           );
         })}
@@ -347,9 +355,17 @@ export function KanbanBoard({
         className={`board-grid focus-${activeStatus}${isPending ? " is-moving" : ""}`}
       >
         {CARD_STATUSES.map((status) => {
-          const columnCards = optimisticCards.filter(
+          const columnCards = visibleCards.filter(
             (card) => card.status === status,
           );
+          const columnCount = isSearching
+            ? columnCards.length
+            : columnDisplayCount(
+                status,
+                columnPages[status].totalCount,
+                sourceById,
+                optimisticCards,
+              );
           const isFocused = activeStatus === status;
           const unreadInColumn = columnCards.some(
             (card) => unreadCountFor(card) > 0,
@@ -374,7 +390,7 @@ export function KanbanBoard({
                 >
                   <h2 className="board-stage-label">{t.columns[status]}</h2>
                   <span className="board-stage-count">
-                    {columnCards.length}
+                    {columnCount}
                   </span>
                 </div>
               </header>
@@ -389,7 +405,9 @@ export function KanbanBoard({
 
               <div className="column-stack">
                 {columnCards.length === 0 ? (
-                  <p className="column-empty">{t.board.emptyColumn}</p>
+                  <p className="column-empty">
+                    {isSearching ? t.board.searchEmpty : t.board.emptyColumn}
+                  </p>
                 ) : null}
                 {columnCards.map((card) => {
                   const isLocal = isLocalCardId(card.id);
@@ -439,29 +457,35 @@ export function KanbanBoard({
                       <h3 className="card-title">{card.title}</h3>
                       <p
                         className={
-                          card.comments.length > 0 || card.attachments.length > 0
+                          card.commentCount > 0 || card.attachmentCount > 0
                             ? "card-foot"
                             : "card-foot is-empty"
                         }
                       >
-                        {card.attachments.length > 0 ? (
+                        {card.attachmentCount > 0 ? (
                           <span className="card-foot-media">
                             <PaperclipIcon size={11} />
-                            {card.attachments.length}
+                            {card.attachmentCount}
                           </span>
                         ) : null}
-                        {card.comments.length > 0
+                        {card.commentCount > 0
                           ? t.board.replies.replace(
                               "{n}",
-                              String(card.comments.length),
+                              String(card.commentCount),
                             )
-                          : card.attachments.length > 0
+                          : card.attachmentCount > 0
                             ? null
                             : "\u00a0"}
                       </p>
                     </article>
                   );
                 })}
+                <LoadMoreSentinel
+                  active={hasMore(status)}
+                  onVisible={() => {
+                    loadMore(status);
+                  }}
+                />
               </div>
             </section>
           );
@@ -489,28 +513,32 @@ export function KanbanBoard({
           isDraft={selectedIsDraft}
           onClose={closeSheet}
           onDraftCommit={commitDraft}
+          currentUserName={currentUser.displayName}
           onStatusChange={(cardId, status) => {
             setOptimisticCards({ kind: "status", cardId, status });
+            const moved = optimisticCards.find((card) => card.id === cardId);
+            if (moved) {
+              setHeldCards((current) => [
+                ...current.filter((card) => card.id !== cardId),
+                { ...moved, status },
+              ]);
+            }
           }}
           onUrgentChange={(cardId, urgent) => {
             setOptimisticCards({ kind: "urgent", cardId, urgent });
           }}
-          onCommentSend={(body, tempId, attachments) => {
+          onCommentSend={() => {
             setOptimisticCards({
-              kind: "comment-add",
+              kind: "comment-count",
               cardId: selectedCard.id,
-              tempId,
-              body,
-              authorId: currentUser.participantId,
-              displayName: currentUser.displayName,
-              attachments,
+              delta: 1,
             });
           }}
-          onCommentRollback={(tempId) => {
+          onCommentRollback={() => {
             setOptimisticCards({
-              kind: "comment-rollback",
+              kind: "comment-count",
               cardId: selectedCard.id,
-              tempId,
+              delta: -1,
             });
           }}
         />

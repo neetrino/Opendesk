@@ -10,7 +10,7 @@ import {
   type PointerEvent,
 } from "react";
 import type { CardStatus } from "@prisma/client";
-import { CommentForm, type OptimisticCommentAttachment } from "@/components/comment-form";
+import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
 import { PencilIcon } from "@/components/pencil-icon";
 import { ThreadList } from "@/components/thread-list";
@@ -21,6 +21,7 @@ import {
 } from "@/lib/actions";
 import { CARD_STATUSES } from "@/lib/constants";
 import { isLocalCardId, type LocalBoardCard } from "@/lib/local-cards";
+import { useCardThread } from "@/lib/use-card-thread";
 import { useI18n } from "@/i18n/provider";
 import { useHistoryTrap } from "@/lib/use-history-trap";
 
@@ -33,18 +34,15 @@ type CardSheetProps = {
   card: SheetCard;
   locale: string;
   currentUserId: string;
+  currentUserName: string;
   attachmentsEnabled: boolean;
   isDraft?: boolean;
   onClose: () => void;
   onDraftCommit?: (title: string, urgent: boolean) => Promise<string | null>;
   onStatusChange: (cardId: string, status: CardStatus) => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
-  onCommentSend: (
-    body: string,
-    tempId: string,
-    attachments: OptimisticCommentAttachment[],
-  ) => void;
-  onCommentRollback: (tempId: string) => void;
+  onCommentSend: () => void;
+  onCommentRollback: () => void;
 };
 
 export function CardSheet({
@@ -52,6 +50,7 @@ export function CardSheet({
   card,
   locale,
   currentUserId,
+  currentUserName,
   attachmentsEnabled,
   isDraft = false,
   onClose,
@@ -69,6 +68,8 @@ export function CardSheet({
   const [stageMenuOpen, setStageMenuOpen] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const threadEnabled = !isDraft && !isLocalCardId(card.id);
+  const thread = useCardThread(boardId, card.id, threadEnabled);
   const threadRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const stageMenuRef = useRef<HTMLDivElement>(null);
@@ -160,13 +161,26 @@ export function CardSheet({
     };
   }, [stageMenuOpen]);
 
+  const newestCommentId = thread.comments[thread.comments.length - 1]?.id;
+
   useEffect(() => {
-    const thread = threadRef.current;
-    if (!thread) {
+    const node = threadRef.current;
+    if (!node || thread.loading || thread.loadingOlder) {
       return;
     }
-    thread.scrollTop = thread.scrollHeight;
-  }, [card.id, card.comments.length]);
+    node.scrollTop = node.scrollHeight;
+  }, [card.id, newestCommentId, thread.loading, thread.loadingOlder]);
+
+  async function loadOlderMessages(): Promise<void> {
+    const node = threadRef.current;
+    const previousHeight = node?.scrollHeight ?? 0;
+    const previousTop = node?.scrollTop ?? 0;
+    const added = await thread.loadOlder();
+    if (!added || !node) {
+      return;
+    }
+    node.scrollTop = node.scrollHeight - previousHeight + previousTop;
+  }
 
   async function commitDraft(nextUrgent = draftUrgent): Promise<boolean> {
     if (!isDraft || !onDraftCommit) {
@@ -450,12 +464,40 @@ export function CardSheet({
         {error ? <p className="form-error sheet-title-error">{error}</p> : null}
 
         <div className="sheet-discussion">
-          <div className="thread" ref={threadRef}>
-            <ThreadList
-              comments={card.comments}
-              locale={locale}
-              currentUserId={currentUserId}
-            />
+          <div
+            className="thread"
+            ref={threadRef}
+            onScroll={() => {
+              const node = threadRef.current;
+              if (
+                !node ||
+                !thread.hasMore ||
+                thread.loading ||
+                thread.loadingOlder
+              ) {
+                return;
+              }
+              if (node.scrollTop < 48) {
+                void loadOlderMessages();
+              }
+            }}
+          >
+            {thread.loadingOlder ? (
+              <p className="muted thread-loading-older">
+                {t.cardPage.loadingThread}
+              </p>
+            ) : null}
+            {thread.loading ? (
+              <p className="muted thread-empty">{t.cardPage.loadingThread}</p>
+            ) : thread.error ? (
+              <p className="form-error thread-empty">{t.errors.loadComments}</p>
+            ) : (
+              <ThreadList
+                comments={thread.comments}
+                locale={locale}
+                currentUserId={currentUserId}
+              />
+            )}
           </div>
           <div className="sheet-composer">
             {leaveConfirm ? (
@@ -493,8 +535,20 @@ export function CardSheet({
                   boardId={boardId}
                   cardId={card.id}
                   enabled={attachmentsEnabled}
-                  onOptimisticSend={onCommentSend}
-                  onOptimisticRollback={onCommentRollback}
+                  onOptimisticSend={(body, tempId, attachments) => {
+                    thread.addOptimistic(
+                      body,
+                      tempId,
+                      currentUserId,
+                      currentUserName,
+                      attachments,
+                    );
+                    onCommentSend();
+                  }}
+                  onOptimisticRollback={(tempId) => {
+                    thread.rollbackOptimistic(tempId);
+                    onCommentRollback();
+                  }}
                 />
               </div>
             )}

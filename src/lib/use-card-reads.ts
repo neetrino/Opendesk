@@ -4,9 +4,11 @@ import { useCallback, useSyncExternalStore } from "react";
 import {
   CARD_READ_STATE_VERSION,
   emitCardReadsChanged,
-  getClientCardReads,
+  getClientCardReadState,
+  resolveSeededAt,
   subscribeClientCardReads,
   writeCardReadState,
+  type CardReadState,
 } from "@/lib/card-reads";
 
 function cardIdsFromKey(cardIdsKey: string): string[] {
@@ -19,6 +21,7 @@ export function useCardReads(
   cardIds: string[],
 ): {
   reads: Record<string, string> | null;
+  seededAt: Date | null;
   markCardRead: (cardId: string, readAt?: Date) => void;
 } {
   const cardIdsKey = cardIds.join(",");
@@ -30,24 +33,31 @@ export function useCardReads(
   );
 
   const getSnapshot = useCallback(
-    (): Record<string, string> =>
-      getClientCardReads(boardId, participantId, cardIdsFromKey(cardIdsKey)),
+    (): CardReadState =>
+      getClientCardReadState(
+        boardId,
+        participantId,
+        cardIdsFromKey(cardIdsKey),
+      ),
     [boardId, cardIdsKey, participantId],
   );
 
-  const reads = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const state = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const reads = state?.reads ?? null;
+  const seededAt = resolveSeededAt(state);
 
   const markCardRead = useCallback(
     (cardId: string, readAt = new Date()): void => {
-      const current = getClientCardReads(
+      const current = getClientCardReadState(
         boardId,
         participantId,
         cardIdsFromKey(cardIdsKey),
       );
       writeCardReadState(boardId, participantId, {
         version: CARD_READ_STATE_VERSION,
+        seededAt: current.seededAt ?? resolveSeededAt(current)?.toISOString(),
         reads: {
-          ...current,
+          ...current.reads,
           [cardId]: readAt.toISOString(),
         },
       });
@@ -56,5 +66,5 @@ export function useCardReads(
     [boardId, cardIdsKey, participantId],
   );
 
-  return { reads, markCardRead };
+  return { reads, seededAt, markCardRead };
 }

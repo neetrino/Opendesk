@@ -6,6 +6,8 @@ import {
   getClientCardReads,
   lastReadDate,
   parseCardReadState,
+  resolveLastReadAt,
+  resolveSeededAt,
   seedCardReads,
 } from "@/lib/card-reads";
 
@@ -80,6 +82,29 @@ describe("card reads", () => {
     ).toBe("2026-09-12T10:00:00.000Z");
     expect(lastReadDate({ "card-1": "nope" }, "card-1")).toBeNull();
     expect(lastReadDate({}, "card-1")).toBeNull();
+  });
+
+  it("uses the first-visit seed for cards that are not loaded yet", () => {
+    const seededAt = new Date("2026-09-12T08:00:00.000Z");
+    expect(
+      resolveLastReadAt(
+        { "card-1": "2026-09-12T10:00:00.000Z" },
+        "card-1",
+        seededAt,
+      )?.toISOString(),
+    ).toBe("2026-09-12T10:00:00.000Z");
+    expect(
+      resolveLastReadAt({}, "card-unloaded", seededAt)?.toISOString(),
+    ).toBe(seededAt.toISOString());
+    expect(
+      resolveSeededAt({
+        version: 1,
+        reads: {
+          "card-2": "2026-09-12T12:00:00.000Z",
+          "card-1": "2026-09-12T10:00:00.000Z",
+        },
+      })?.toISOString(),
+    ).toBe("2026-09-12T10:00:00.000Z");
   });
 
   it("returns a stable client snapshot after seeding", () => {

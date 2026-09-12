@@ -67,8 +67,22 @@ export function proxy(request: NextRequest) {
   const isBoardActivityGet =
     request.method === "GET" &&
     /^\/api\/boards\/[^/]+\/activity$/.test(path);
+  const isBoardCardsGet =
+    request.method === "GET" &&
+    /^\/api\/boards\/[^/]+\/cards$/.test(path);
+  const isCardCommentsGet =
+    request.method === "GET" &&
+    /^\/api\/boards\/[^/]+\/cards\/[^/]+\/comments$/.test(path);
   if (isBoardActivityGet) {
     const result = checkRateLimit(`activity:${ip}`, 120, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+  if (isBoardCardsGet || isCardCommentsGet) {
+    const result = checkRateLimit(`board-pages:${ip}`, 120, MUTATION_WINDOW_MS);
     if (!result.allowed) {
       return new NextResponse("Too many requests. Try again in a minute.", {
         status: 429,
