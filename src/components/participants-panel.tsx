@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { InviteButton } from "@/components/invite-button";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { useI18n } from "@/i18n/provider";
@@ -123,49 +124,58 @@ export function ParticipantsPanel({
         <span>{label}</span>
       </button>
 
-      {open ? (
-        <div className="sheet-root" role="presentation">
-          <button
-            type="button"
-            className="sheet-backdrop"
-            aria-label={t.board.closeParticipants}
-            onClick={() => setOpen(false)}
-          />
-          <aside
-            className="card-sheet participants-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="participants-sheet-title"
-          >
-            <div className="sheet-handle" aria-hidden="true" />
-            <header className="sheet-header">
-              <div className="sheet-badges">
-                <h2 id="participants-sheet-title" className="participants-sheet-title">
-                  {t.board.participantsTitle}
-                </h2>
-                <span className="participants-sheet-count">{label}</span>
-              </div>
+      {open
+        ? createPortal(
+            <div className="sheet-root" role="presentation">
               <button
                 type="button"
-                className="sheet-icon-btn"
+                className="sheet-backdrop"
                 aria-label={t.board.closeParticipants}
                 onClick={() => setOpen(false)}
+              />
+              <aside
+                className="card-sheet participants-sheet"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="participants-sheet-title"
               >
-                ×
-              </button>
-            </header>
+                <div className="sheet-handle" aria-hidden="true" />
+                <header className="sheet-header">
+                  <div className="sheet-badges">
+                    <h2
+                      id="participants-sheet-title"
+                      className="participants-sheet-title"
+                    >
+                      {t.board.participantsTitle}
+                    </h2>
+                    <span className="participants-sheet-count">{label}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="sheet-icon-btn"
+                    aria-label={t.board.closeParticipants}
+                    onClick={() => setOpen(false)}
+                  >
+                    ×
+                  </button>
+                </header>
 
-            <div className="sheet-body">
-              <div className="sheet-details">
-                <div className="sheet-block">
-                  <InviteButton slug={slug} joinToken={joinToken} />
+                <div className="sheet-body">
+                  <div className="sheet-details">
+                    <div className="sheet-block">
+                      <InviteButton slug={slug} joinToken={joinToken} />
+                    </div>
+                    <ParticipantsList
+                      participants={participants}
+                      locale={locale}
+                    />
+                  </div>
                 </div>
-                <ParticipantsList participants={participants} locale={locale} />
-              </div>
-            </div>
-          </aside>
-        </div>
-      ) : null}
+              </aside>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
