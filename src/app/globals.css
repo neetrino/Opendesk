@@ -1454,7 +1454,7 @@ textarea {
 }
 
 .sheet-header .sheet-title-bar {
-  width: 100%;
+  flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -1464,19 +1464,22 @@ textarea {
   cursor: text;
 }
 
-.sheet-heading {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 0.4rem;
+.sheet-stage-anchor {
+  position: relative;
+  z-index: 4;
+  display: none;
+  height: 0;
+  flex-shrink: 0;
+  justify-content: center;
 }
 
 .sheet-stage-control {
   --stage-color: var(--col-new);
   position: relative;
-  display: none;
+  display: inline-flex;
   width: fit-content;
   color: var(--stage-color);
+  transform: translateY(-50%);
 }
 
 .sheet-stage-control.stage-in_progress {
@@ -1491,72 +1494,126 @@ textarea {
   --stage-color: var(--col-done);
 }
 
-.sheet-stage-control::before {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 0.65rem;
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 999px;
-  background: currentColor;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.sheet-stage-control::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  top: calc(50% - 0.12rem);
-  right: 0.7rem;
-  width: 0.38rem;
-  height: 0.38rem;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.sheet-stage-select {
-  appearance: none;
+.sheet-stage-trigger {
   width: auto;
-  min-width: 7.8rem;
-  max-width: 11rem;
-  min-height: 1.9rem;
-  padding: 0.3rem 1.7rem 0.3rem 1.45rem;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.72rem;
   border: 1px solid color-mix(in srgb, var(--stage-color) 28%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--stage-color) 10%, var(--paper-raised));
   color: inherit;
+  font: inherit;
   font-size: 0.72rem;
   font-weight: 750;
   line-height: 1;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 24, 20, 0.08);
   transition:
     background var(--duration-ui) var(--ease-ui),
     border-color var(--duration-ui) var(--ease-ui),
+    transform var(--duration-ui) var(--ease-ui),
     opacity var(--duration-ui) var(--ease-ui);
 }
 
-.sheet-stage-select:focus {
+.sheet-stage-trigger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--stage-color) 15%, var(--paper-raised));
+}
+
+.sheet-stage-trigger:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.sheet-stage-trigger:focus-visible {
   border-color: color-mix(in srgb, var(--stage-color) 55%, var(--line-strong));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--stage-color) 14%, transparent);
 }
 
-.sheet-stage-select:disabled {
+.sheet-stage-trigger:disabled {
   cursor: default;
   opacity: 0.58;
 }
 
-.sheet-stage-control.is-pending::before {
+.sheet-stage-control.is-pending .sheet-stage-trigger {
   animation: stage-pulse 900ms ease-in-out infinite alternate;
+}
+
+.sheet-stage-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 50%;
+  width: max-content;
+  min-width: 9.5rem;
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.32rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper-raised) 94%, transparent);
+  box-shadow: 0 16px 34px rgba(16, 24, 20, 0.18);
+  backdrop-filter: blur(12px);
+  transform: translateX(-50%);
+  animation: stage-menu-in 150ms var(--ease-ui);
+}
+
+.sheet-stage-option {
+  --option-color: var(--col-new);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.52rem 0.62rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sheet-stage-option::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--option-color);
+}
+
+.sheet-stage-option.stage-in_progress {
+  --option-color: var(--col-progress);
+}
+
+.sheet-stage-option.stage-answered {
+  --option-color: var(--col-answered);
+}
+
+.sheet-stage-option.stage-done {
+  --option-color: var(--col-done);
+}
+
+.sheet-stage-option:hover,
+.sheet-stage-option:focus-visible {
+  background: color-mix(in srgb, var(--option-color) 9%, transparent);
+}
+
+.sheet-stage-option.is-active {
+  color: var(--option-color);
+  background: color-mix(in srgb, var(--option-color) 12%, transparent);
 }
 
 @keyframes stage-pulse {
   to {
     opacity: 0.35;
+  }
+}
+
+@keyframes stage-menu-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.25rem) scale(0.98);
   }
 }
 
@@ -3098,8 +3155,8 @@ textarea {
     height: 2.55rem;
   }
 
-  .sheet-stage-control {
-    display: inline-flex;
+  .sheet-stage-anchor {
+    display: flex;
   }
 
   .sheet-details {

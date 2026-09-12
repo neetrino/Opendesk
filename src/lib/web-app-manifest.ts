@@ -32,7 +32,6 @@ export const WEB_APP_ICONS = [
 ] as const satisfies NonNullable<MetadataRoute.Manifest["icons"]>;
 
 export type WebAppManifestInput = {
-  startUrl: string;
   name?: string;
 };
 
@@ -56,11 +55,11 @@ export function buildWebAppManifest(
   const name = input.name?.trim() || WEB_APP_NAME;
 
   return {
-    id: input.startUrl,
+    id: "/",
     name,
     short_name: shortAppName(name),
     description: WEB_APP_DESCRIPTION,
-    start_url: input.startUrl,
+    start_url: "/",
     scope: "/",
     display: "standalone",
     background_color: WEB_APP_BACKGROUND_COLOR,

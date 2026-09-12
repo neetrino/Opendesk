@@ -40,7 +40,7 @@
 | 2.8 | SEO | Metadata API (минимум) | ✅ | |
 | 2.9 | Тёмная тема | не нужно | ➖ | |
 | 2.10 | Анимации | CSS transitions | ✅ | |
-| 2.11 | PWA | installable (manifest, без SW) | ✅ | Add to Home Screen; со страницы доски `start_url` = join URL; корневой запуск восстанавливает последнюю доступную доску; без offline/push |
+| 2.11 | PWA | installable (manifest, без SW) | ✅ | Единые `id` и `start_url` = `/`; корневой запуск восстанавливает последнюю доступную доску; приватные данные доски не кэшируются; без offline/push |
 
 ---
 
@@ -93,7 +93,7 @@
 |---|----------|---------|--------|---------|
 | 5.1 | Решение | Owner env login + permanent join link + signed cookies | ✅ | owner: `OWNER_*`; участник: имя + cookie |
 | 5.2 | Провайдеры | — | ➖ | |
-| 5.3 | Сессии | HTTP-only signed cookies | ✅ | `opendesk_owner` + `opendesk_session`; `opendesk_last_board` — только проверяемая навигационная подсказка |
+| 5.3 | Сессии | HTTP-only signed cookies | ✅ | `opendesk_owner` + `opendesk_session`; `opendesk_last_board` записывается после успешного рендера доски и не предоставляет доступ |
 | 5.4 | RBAC | owner vs participant | ✅ | создание досок только owner |
 | 5.5 | Email verify | не нужно | ➖ | |
 | 5.6 | Password reset | не нужно | ➖ | пароль owner только в env |

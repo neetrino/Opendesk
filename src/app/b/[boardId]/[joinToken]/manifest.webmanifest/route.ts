@@ -1,35 +1,20 @@
 import { NextResponse } from "next/server";
-import { buildJoinPath } from "@/lib/join-url";
 import { buildWebAppManifest } from "@/lib/web-app-manifest";
-import { prisma } from "@/lib/prisma";
 
-type BoardManifestRouteProps = {
+type LegacyBoardManifestRouteProps = {
   params: Promise<{ boardId: string; joinToken: string }>;
 };
 
 /**
- * Board-scoped install manifest so Add to Home Screen opens this join URL.
+ * Backward-compatible endpoint for previously installed board-scoped PWAs.
+ * Every installation now shares the same root identity and launch URL.
  */
 export async function GET(
   _request: Request,
-  { params }: BoardManifestRouteProps,
+  { params }: LegacyBoardManifestRouteProps,
 ): Promise<NextResponse> {
-  const { boardId: boardSlug, joinToken } = await params;
-  const board = await prisma.board.findUnique({
-    where: { joinToken },
-    select: { title: true, slug: true },
-  });
-
-  if (!board || board.slug !== boardSlug) {
-    return new NextResponse("Not found", { status: 404 });
-  }
-
-  const manifest = buildWebAppManifest({
-    startUrl: buildJoinPath(board.slug, joinToken),
-    name: board.title,
-  });
-
-  return NextResponse.json(manifest, {
+  await params;
+  return NextResponse.json(buildWebAppManifest({}), {
     headers: {
       "Content-Type": "application/manifest+json",
       "Cache-Control": "public, max-age=3600",
