@@ -4,6 +4,9 @@ import {
   createLocalCardId,
   isLocalCardId,
   mergeLocalCards,
+  mergeVisibleCards,
+  overlayHeldCards,
+  pruneConfirmedHeldCards,
   pruneConfirmedLocalCards,
   toBoardCardFromCreated,
 } from "@/lib/local-cards";
@@ -56,7 +59,8 @@ describe("local cards", () => {
     expect(isLocalCardId(card.id)).toBe(true);
     expect(card.title).toBe("Ship login");
     expect(card.author.displayName).toBe("Anna");
-    expect(card.comments).toEqual([]);
+    expect(card.commentCount).toBe(0);
+    expect(card.attachmentCount).toBe(0);
   });
 
   it("maps a created server card onto the local board shape", () => {
@@ -79,6 +83,37 @@ describe("local cards", () => {
     expect(isLocalCardId(card.id)).toBe(false);
     expect(card.position).toBe(3);
     expect(card.author.id).toBe(author.participantId);
-    expect(card.comments).toEqual([]);
+    expect(card.commentCount).toBe(0);
+    expect(card.attachmentCount).toBe(0);
+  });
+
+  it("keeps first-page cards ahead of extras and held cards", () => {
+    expect(
+      mergeVisibleCards(
+        [{ id: "page-1" }],
+        [{ id: "extra-1" }, { id: "page-1" }],
+        [{ id: "held-1" }, { id: "extra-1" }],
+        [{ id: "local-1" }],
+      ),
+    ).toEqual([
+      { id: "page-1" },
+      { id: "extra-1" },
+      { id: "held-1" },
+      { id: "local-1" },
+    ]);
+  });
+
+  it("lets a held move replace the stale server copy of the same card", () => {
+    const server = [{ id: "card-1", status: "new" as const, position: 3 }];
+    const held = [{ id: "card-1", status: "done" as const, position: 0 }];
+
+    expect(overlayHeldCards(server, held)).toEqual(held);
+    expect(pruneConfirmedHeldCards(server, held)).toEqual(held);
+    expect(
+      pruneConfirmedHeldCards(
+        [{ id: "card-1", status: "done" as const, position: 0 }],
+        held,
+      ),
+    ).toEqual([]);
   });
 });

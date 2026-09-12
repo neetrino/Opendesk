@@ -52,9 +52,9 @@ export function CreateBoardForm() {
   if (created) {
     const url = joinUrl(created.slug, created.joinToken);
     return (
-      <div className="create-form">
+      <div className="create-board-fields">
         <p className="eyebrow">{t.boardForm.createdEyebrow}</p>
-        <h2 className="save-link-title">{t.boardForm.createdTitle}</h2>
+        <h3 className="create-form-title">{t.boardForm.createdTitle}</h3>
         <p className="muted save-link-lede">{t.boardForm.createdLede}</p>
         <label className="field">
           <span>{t.boardForm.linkLabel}</span>
@@ -84,11 +84,7 @@ export function CreateBoardForm() {
   }
 
   return (
-    <form action={onSubmit} className="create-form">
-      <header className="create-form-head">
-        <p className="eyebrow">{t.boardsPage.eyebrow}</p>
-        <h2 className="create-form-title">{t.boardForm.create}</h2>
-      </header>
+    <form action={onSubmit} className="create-board-fields">
       <label className="field">
         <span>{t.boardForm.title}</span>
         <input
@@ -98,6 +94,7 @@ export function CreateBoardForm() {
           maxLength={80}
           placeholder={t.boardForm.titlePlaceholder}
           defaultValue={t.boardForm.titleDefault}
+          autoFocus
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}

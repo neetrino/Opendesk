@@ -19,8 +19,11 @@ import { VoiceNotePlayer } from "@/components/voice-note-player";
 import { addCommentAction } from "@/lib/actions";
 import { applyAttachmentLimitCopy, attachmentKindFor } from "@/lib/attachments";
 import { MAX_COMMENT_ATTACHMENTS, MAX_COMMENT_LENGTH } from "@/lib/constants";
-import { isLocalCardId } from "@/lib/local-cards";
-import type { BoardAttachment } from "@/lib/local-cards";
+import {
+  isLocalCardId,
+  type BoardAttachment,
+  type OptimisticCommentAttachment,
+} from "@/lib/local-cards";
 import {
   requestAndUploadFile,
   validateLocalFile,
@@ -31,12 +34,7 @@ import { useVoiceRecorder } from "@/lib/use-voice-recorder";
 import { formatVoiceElapsed } from "@/lib/voice-recorder";
 import { useI18n } from "@/i18n/provider";
 
-export type OptimisticCommentAttachment = Pick<
-  BoardAttachment,
-  "id" | "filename" | "contentType" | "kind" | "byteSize"
-> & {
-  previewUrl?: string;
-};
+export type { OptimisticCommentAttachment };
 
 const COMPOSER_MAX_HEIGHT_PX = 168;
 const COMPOSER_EXPAND_AFTER_PX = 52;

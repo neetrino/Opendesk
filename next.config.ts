@@ -11,6 +11,15 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Next.js 15+ defaults dynamic client cache to 0s, so every /boards ↔
+    // board navigation refetches RSC. A short session cache keeps empty
+    // board switches instant; mutations still refresh the open board via
+    // Server Actions and activity polling.
+    staleTimes: {
+      dynamic: 30,
+    },
+  },
   async headers() {
     return [
       {

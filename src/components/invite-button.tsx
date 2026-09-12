@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LinkIcon } from "@/components/link-icon";
 import { useI18n } from "@/i18n/provider";
 import { buildJoinPath } from "@/lib/join-url";
 
@@ -8,12 +9,14 @@ type InviteButtonProps = {
   slug: string;
   joinToken: string;
   compact?: boolean;
+  iconOnly?: boolean;
 };
 
 export function InviteButton({
   slug,
   joinToken,
   compact = false,
+  iconOnly = false,
 }: InviteButtonProps) {
   const { t } = useI18n();
   const [message, setMessage] = useState<string | null>(null);
@@ -30,19 +33,28 @@ export function InviteButton({
     }
   }
 
+  const inviteLabel = message ?? t.board.invite;
+
   return (
-    <div className={compact ? "invite-actions compact" : "invite-actions"}>
+    <div
+      className={
+        compact || iconOnly ? "invite-actions compact" : "invite-actions"
+      }
+    >
       <button
         type="button"
-        className="button button-invite"
-        title={t.board.inviteHint}
+        className={iconOnly ? "button button-invite is-icon" : "button button-invite"}
+        aria-label={iconOnly ? inviteLabel : undefined}
+        title={message ?? t.board.inviteHint}
         onClick={() => {
           void onInvite();
         }}
       >
-        {message ?? t.board.invite}
+        {iconOnly ? <LinkIcon /> : inviteLabel}
       </button>
-      {compact ? null : <p className="muted invite-hint">{t.board.inviteHint}</p>}
+      {compact || iconOnly ? null : (
+        <p className="muted invite-hint">{t.board.inviteHint}</p>
+      )}
     </div>
   );
 }

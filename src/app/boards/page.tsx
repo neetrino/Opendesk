@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { BoardListItem } from "@/components/board-list-item";
-import { CreateBoardForm } from "@/components/create-board-form";
+import { BoardsList } from "@/components/boards-list";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
@@ -37,36 +36,27 @@ export default async function BoardsPage() {
   return (
     <section className="boards-page">
       <div className="boards-page-top">
-        <div>
-          <p className="eyebrow">{t.boardsPage.eyebrow}</p>
+        <div className="boards-page-heading">
           <h1>{t.boardsPage.title}</h1>
-          <p className="lede">{t.boardsPage.lede}</p>
+          <p className="boards-page-role">{t.boardsPage.eyebrow}</p>
         </div>
         <OwnerLogoutButton />
+        <p className="lede boards-page-lede">{t.boardsPage.lede}</p>
       </div>
 
       <div className="boards-page-grid">
-        <div className="boards-list-panel">
-          {boards.length === 0 ? (
-            <p className="boards-list-empty">{t.boardsPage.empty}</p>
-          ) : (
-            <ul className="boards-list">
-              {boards.map((board) => (
-                <BoardListItem
-                  key={board.id}
-                  title={board.title}
-                  slug={board.slug}
-                  joinToken={board.joinToken}
-                  createdAtLabel={board.createdAt.toLocaleString(dateLocale, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                />
-              ))}
-            </ul>
-          )}
-        </div>
-        <CreateBoardForm />
+        <BoardsList
+          boards={boards.map((board) => ({
+            id: board.id,
+            title: board.title,
+            slug: board.slug,
+            joinToken: board.joinToken,
+            createdAtLabel: board.createdAt.toLocaleString(dateLocale, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }),
+          }))}
+        />
       </div>
     </section>
   );

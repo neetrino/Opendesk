@@ -1,4 +1,4 @@
-import type { Card, CardStatus, Comment, Participant } from "@prisma/client";
+import type { Card, CardStatus, Participant } from "@prisma/client";
 
 export const LOCAL_CARD_ID_PREFIX = "local-";
 
@@ -16,8 +16,15 @@ export type BoardAttachment = {
 
 export type LocalBoardCard = Card & {
   author: Participant;
-  attachments: BoardAttachment[];
-  comments: Array<Comment & { author: Participant; attachments: BoardAttachment[] }>;
+  commentCount: number;
+  attachmentCount: number;
+};
+
+export type OptimisticCommentAttachment = Pick<
+  BoardAttachment,
+  "id" | "filename" | "contentType" | "kind" | "byteSize"
+> & {
+  previewUrl?: string;
 };
 
 export type LocalCardAuthor = {
@@ -61,6 +68,55 @@ export function pruneConfirmedLocalCards<T extends { id: string }>(
   return next.length === localCards.length ? localCards : next;
 }
 
+export function pruneConfirmedHeldCards<
+  T extends { id: string; status: unknown; position: number },
+>(serverCards: T[], heldCards: T[]): T[] {
+  if (heldCards.length === 0) {
+    return heldCards;
+  }
+
+  const serverById = new Map(serverCards.map((card) => [card.id, card]));
+  const next = heldCards.filter((held) => {
+    const server = serverById.get(held.id);
+    if (!server) {
+      return true;
+    }
+    return server.status !== held.status || server.position !== held.position;
+  });
+  return next.length === heldCards.length ? heldCards : next;
+}
+
+export function overlayHeldCards<T extends { id: string }>(
+  cards: T[],
+  heldCards: T[],
+): T[] {
+  if (heldCards.length === 0) {
+    return cards;
+  }
+
+  const heldById = new Map(heldCards.map((card) => [card.id, card]));
+  const seen = new Set<string>();
+  const next: T[] = [];
+
+  for (const card of cards) {
+    const held = heldById.get(card.id);
+    if (held) {
+      next.push(held);
+      seen.add(card.id);
+    } else {
+      next.push(card);
+    }
+  }
+
+  for (const card of heldCards) {
+    if (!seen.has(card.id)) {
+      next.push(card);
+    }
+  }
+
+  return next;
+}
+
 export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard {
   const now = new Date();
   return {
@@ -79,8 +135,8 @@ export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard 
       displayName: input.author.displayName,
       createdAt: now,
     },
-    comments: [],
-    attachments: [],
+    commentCount: 0,
+    attachmentCount: 0,
   };
 }
 
@@ -101,7 +157,19 @@ export function toBoardCardFromCreated(
       displayName: author.displayName,
       createdAt,
     },
-    comments: [],
-    attachments: [],
+    commentCount: 0,
+    attachmentCount: 0,
   };
+}
+
+export function mergeVisibleCards<T extends { id: string }>(
+  serverCards: T[],
+  extraCards: T[],
+  heldCards: T[],
+  localCards: T[],
+): T[] {
+  return mergeLocalCards(
+    overlayHeldCards(mergeLocalCards(serverCards, extraCards), heldCards),
+    localCards,
+  );
 }

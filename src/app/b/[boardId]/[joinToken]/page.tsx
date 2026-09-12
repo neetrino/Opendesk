@@ -6,7 +6,7 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
 import { ensureOwnerParticipant } from "@/lib/board-access";
 import { getParticipantBoardDestination } from "@/lib/board-navigation";
-import { ATTACHMENT_PUBLIC_SELECT } from "@/lib/attachments";
+import { loadBoardCardPages } from "@/lib/board-cards";
 import { OWNER_PARTICIPANT_NAME } from "@/lib/constants";
 import { buildJoinPath } from "@/lib/join-url";
 import { getOwnerSession } from "@/lib/owner-session";
@@ -78,31 +78,6 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
             createdAt: true,
           },
         },
-        cards: {
-          include: {
-            author: true,
-            attachments: {
-              where: { commentId: null },
-              orderBy: { createdAt: "asc" },
-              select: ATTACHMENT_PUBLIC_SELECT,
-            },
-            comments: {
-              include: {
-                author: true,
-                attachments: {
-                  orderBy: { createdAt: "asc" },
-                  select: ATTACHMENT_PUBLIC_SELECT,
-                },
-              },
-              orderBy: { createdAt: "asc" },
-            },
-          },
-          orderBy: [
-            { status: "asc" },
-            { position: "asc" },
-            { createdAt: "asc" },
-          ],
-        },
       },
     }),
   ]);
@@ -110,6 +85,8 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
   if (!board) {
     notFound();
   }
+
+  const cardPages = await loadBoardCardPages(board.id);
 
   const canonicalPath = buildJoinPath(board.slug, board.joinToken);
   if (canonicalPath !== requestedPath) {
@@ -143,7 +120,11 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
     <>
       {owner ? <RememberBoardVisit path={canonicalPath} /> : null}
       <BoardWorkspace
-        board={board}
+        board={{
+          ...board,
+          cards: cardPages.cards,
+          columnPages: cardPages.columns,
+        }}
         locale={locale}
         t={t}
         currentUser={currentUser}
