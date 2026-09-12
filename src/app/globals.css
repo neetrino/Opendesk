@@ -892,21 +892,20 @@ textarea {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  padding: 0.85rem 0 1.25rem;
+  padding: 0.4rem 0 1.25rem;
   overflow: hidden;
 }
 
 .board-top {
   position: sticky;
-  top: 0.55rem;
+  top: 0.35rem;
   z-index: 24;
-  display: grid;
-  grid-template-columns: minmax(0, max-content) minmax(10rem, 1fr) auto;
+  display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: 0.85rem;
-  margin-bottom: 0.9rem;
-  padding: 0.55rem 0.85rem 0.55rem 1.05rem;
+  margin-bottom: 1.75rem;
+  padding: 0.85rem 1rem;
   border: 1px solid var(--line-strong);
   border-radius: 18px;
   background: color-mix(in srgb, var(--paper) 90%, transparent);
@@ -927,11 +926,24 @@ textarea {
   justify-content: flex-end;
   gap: 0.5rem;
   min-width: 0;
+  margin-left: auto;
 }
 
 .board-search {
-  min-width: 0;
+  position: relative;
+  flex: 0 1 16rem;
+  min-width: 9rem;
   width: 100%;
+  max-width: 16rem;
+}
+
+.board-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.7rem;
+  color: var(--ink-soft);
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .board-search input[type="search"],
@@ -941,6 +953,10 @@ textarea {
   padding: 0.35rem 0.85rem;
   border-radius: 999px;
   font-size: 0.85rem;
+}
+
+.board-search input[type="search"] {
+  padding-left: 2.05rem;
 }
 
 .board-search input[type="search"]::-webkit-search-decoration,
@@ -986,6 +1002,12 @@ textarea {
 .board-logout-btn:hover {
   opacity: 1;
   color: var(--ink);
+}
+
+.board-logout-btn.is-icon {
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
 }
 
 .participants-count {
@@ -1426,6 +1448,12 @@ textarea {
   padding: 0.45rem 0.85rem;
   font-size: 0.85rem;
   border-radius: 999px;
+}
+
+.invite-actions.compact .button-invite.is-icon {
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
 }
 
 .column-stack {
@@ -3087,9 +3115,14 @@ textarea {
 
 @media (max-width: 960px) {
   .board-top {
-    grid-template-columns: minmax(0, max-content) minmax(8rem, 1fr) auto;
     gap: 0.55rem;
-    padding-inline: 0.75rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .board-search {
+    flex-basis: 12rem;
+    min-width: 8rem;
+    max-width: 14rem;
   }
 
   .board-top .board-identity {

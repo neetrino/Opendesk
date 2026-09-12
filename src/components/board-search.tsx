@@ -68,6 +68,7 @@ export function BoardSearchField() {
 
   return (
     <div className="board-search" role="search">
+      <SearchIcon className="board-search-icon" size={15} />
       <label className="visually-hidden" htmlFor="board-card-search">
         {t.board.searchLabel}
       </label>

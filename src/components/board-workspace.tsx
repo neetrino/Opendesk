@@ -66,8 +66,13 @@ export function BoardWorkspace({
               participants={board.participants}
               locale={locale}
             />
-            <InviteButton slug={board.slug} joinToken={board.joinToken} compact />
-            {isOwner ? <OwnerLogoutButton /> : <LogoutButton />}
+            <InviteButton
+              slug={board.slug}
+              joinToken={board.joinToken}
+              compact
+              iconOnly
+            />
+            {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
           </div>
         </header>
         <KanbanBoard
