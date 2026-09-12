@@ -1063,17 +1063,20 @@ textarea {
   letter-spacing: -0.03em;
 }
 
-.settings-sheet .invite-actions {
+.settings-sheet .invite-actions,
+.participants-sheet .invite-actions {
   display: grid;
   width: 100%;
   gap: 0.4rem;
 }
 
-.settings-sheet .button-invite {
+.settings-sheet .button-invite,
+.participants-sheet .button-invite {
   width: 100%;
 }
 
-.settings-sheet .invite-hint {
+.settings-sheet .invite-hint,
+.participants-sheet .invite-hint {
   margin: 0;
   max-width: none;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { InviteButton } from "@/components/invite-button";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
 import { useI18n } from "@/i18n/provider";
 import { displayInitials } from "@/lib/initials";
@@ -14,6 +15,8 @@ export type BoardParticipant = {
 type ParticipantsPanelProps = {
   participants: BoardParticipant[];
   locale: string;
+  slug: string;
+  joinToken: string;
 };
 
 type ParticipantsListProps = {
@@ -80,6 +83,8 @@ function PersonIcon() {
 export function ParticipantsPanel({
   participants,
   locale,
+  slug,
+  joinToken,
 }: ParticipantsPanelProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -152,6 +157,9 @@ export function ParticipantsPanel({
 
             <div className="sheet-body">
               <div className="sheet-details">
+                <div className="sheet-block">
+                  <InviteButton slug={slug} joinToken={joinToken} />
+                </div>
                 <ParticipantsList participants={participants} locale={locale} />
               </div>
             </div>

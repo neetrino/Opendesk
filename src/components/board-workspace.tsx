@@ -2,7 +2,6 @@ import {
   BoardSearchField,
   BoardSearchProvider,
 } from "@/components/board-search";
-import { InviteButton } from "@/components/invite-button";
 import { KanbanBoard, type BoardCard } from "@/components/kanban-board";
 import type { BoardColumnPages } from "@/lib/board-card-view";
 import { LogoutButton } from "@/components/logout-button";
@@ -65,12 +64,8 @@ export function BoardWorkspace({
             <ParticipantsPanel
               participants={board.participants}
               locale={locale}
-            />
-            <InviteButton
               slug={board.slug}
               joinToken={board.joinToken}
-              compact
-              iconOnly
             />
             {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
           </div>
