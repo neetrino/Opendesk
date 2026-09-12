@@ -35,6 +35,8 @@ export const ru: Dictionary = {
     createdAt: "Создана",
     logout: "Выйти",
     logoutConfirm: "Выйти из аккаунта владельца?",
+    logoutConfirmHint: "Чтобы снова управлять досками, войдите ещё раз.",
+    logoutCancel: "Остаться",
   },
   boardForm: {
     title: "Название доски",
@@ -60,6 +62,9 @@ export const ru: Dictionary = {
     stagesNav: "Этапы доски",
     logout: "Выйти",
     logoutConfirm: "Выйти с этой доски?",
+    logoutConfirmHint:
+      "Задачи останутся на доске. Вернуться можно по той же ссылке.",
+    logoutCancel: "Остаться",
     participantsAria: "Участники доски",
     participantsTitle: "Участники доски",
     participantsEmpty: "Пока никто не подключился.",

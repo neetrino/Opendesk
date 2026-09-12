@@ -35,6 +35,8 @@ export const hy: Dictionary = {
     createdAt: "Ստեղծված",
     logout: "Դուրս գալ",
     logoutConfirm: "Դուրս գա՞լ սեփականատիրոջ հաշվից։",
+    logoutConfirmHint: "Տախտակները կառավարելու համար նորից մուտք գործեք։",
+    logoutCancel: "Մնալ",
   },
   boardForm: {
     title: "Տախտակի անուն",
@@ -60,6 +62,9 @@ export const hy: Dictionary = {
     stagesNav: "Տախտակի փուլեր",
     logout: "Դուրս գալ",
     logoutConfirm: "Դուրս գա՞լ այս տախտակից։",
+    logoutConfirmHint:
+      "Խնդիրները կմնան տախտակին։ Կարող եք վերադառնալ նույն հղումով։",
+    logoutCancel: "Մնալ",
     participantsAria: "Տախտակի մասնակիցներ",
     participantsTitle: "Տախտակի մասնակիցներ",
     participantsEmpty: "Դեռ ոչ ոք չի միացել։",

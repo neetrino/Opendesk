@@ -33,6 +33,8 @@ export type Dictionary = {
     createdAt: string;
     logout: string;
     logoutConfirm: string;
+    logoutConfirmHint: string;
+    logoutCancel: string;
   };
   boardForm: {
     title: string;
@@ -57,6 +59,8 @@ export type Dictionary = {
     stagesNav: string;
     logout: string;
     logoutConfirm: string;
+    logoutConfirmHint: string;
+    logoutCancel: string;
     participantsAria: string;
     participantsTitle: string;
     participantsEmpty: string;
@@ -252,6 +256,8 @@ export const en: Dictionary = {
     createdAt: "Created",
     logout: "Log out",
     logoutConfirm: "Log out of the owner account?",
+    logoutConfirmHint: "You will need to sign in again to manage boards.",
+    logoutCancel: "Stay",
   },
   boardForm: {
     title: "Board name",
@@ -277,6 +283,9 @@ export const en: Dictionary = {
     stagesNav: "Board stages",
     logout: "Log out",
     logoutConfirm: "Log out of this board?",
+    logoutConfirmHint:
+      "Your cards stay on the board. Open the same link to come back.",
+    logoutCancel: "Stay",
     participantsAria: "People on this board",
     participantsTitle: "People on the board",
     participantsEmpty: "No one has joined yet.",
