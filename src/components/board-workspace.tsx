@@ -2,6 +2,10 @@ import {
   BoardSearchField,
   BoardSearchProvider,
 } from "@/components/board-search";
+import {
+  BoardInboxControlProvider,
+  BoardMarkAllHeaderButton,
+} from "@/components/board-inbox-control";
 import { KanbanBoard, type BoardCard } from "@/components/kanban-board";
 import type { BoardColumnPages } from "@/lib/board-card-view";
 import { LogoutButton } from "@/components/logout-button";
@@ -47,43 +51,46 @@ export function BoardWorkspace({
 }: BoardWorkspaceProps) {
   return (
     <BoardSearchProvider>
-      <section className="board-page">
-        <header className="board-top">
-          <h1 className="board-top-title">{board.title}</h1>
-          <BoardSearchField />
-          <div className="board-top-actions">
-            <p className="board-identity">
-              <span className="board-avatar" aria-hidden="true">
-                {displayInitials(currentUser.displayName)}
-              </span>
-              <span>
-                <span className="visually-hidden">{t.board.youAre} </span>
-                <strong>{currentUser.displayName}</strong>
-              </span>
-            </p>
-            <ParticipantsPanel
-              participants={board.participants}
-              locale={locale}
-              slug={board.slug}
-              joinToken={board.joinToken}
-            />
-            {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
-          </div>
-        </header>
-        <KanbanBoard
-          boardId={board.id}
-          boardTitle={board.title}
-          cards={board.cards}
-          columnPages={board.columnPages}
-          locale={locale}
-          currentUser={currentUser}
-          isOwner={isOwner}
-          attachmentsEnabled={attachmentsEnabled}
-          slug={board.slug}
-          joinToken={board.joinToken}
-          participants={board.participants}
-        />
-      </section>
+      <BoardInboxControlProvider>
+        <section className="board-page">
+          <header className="board-top">
+            <h1 className="board-top-title">{board.title}</h1>
+            <BoardSearchField />
+            <BoardMarkAllHeaderButton />
+            <div className="board-top-actions">
+              <p className="board-identity">
+                <span className="board-avatar" aria-hidden="true">
+                  {displayInitials(currentUser.displayName)}
+                </span>
+                <span>
+                  <span className="visually-hidden">{t.board.youAre} </span>
+                  <strong>{currentUser.displayName}</strong>
+                </span>
+              </p>
+              <ParticipantsPanel
+                participants={board.participants}
+                locale={locale}
+                slug={board.slug}
+                joinToken={board.joinToken}
+              />
+              {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
+            </div>
+          </header>
+          <KanbanBoard
+            boardId={board.id}
+            boardTitle={board.title}
+            cards={board.cards}
+            columnPages={board.columnPages}
+            locale={locale}
+            currentUser={currentUser}
+            isOwner={isOwner}
+            attachmentsEnabled={attachmentsEnabled}
+            slug={board.slug}
+            joinToken={board.joinToken}
+            participants={board.participants}
+          />
+        </section>
+      </BoardInboxControlProvider>
     </BoardSearchProvider>
   );
 }

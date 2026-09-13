@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { LogoutIcon } from "@/components/logout-icon";
 
@@ -11,6 +11,7 @@ type ConfirmDialogProps = {
   cancelLabel: string;
   confirmLabel: string;
   confirmFormId?: string;
+  icon?: ReactNode;
   onCancel: () => void;
   onConfirm?: () => void;
 };
@@ -22,6 +23,7 @@ export function ConfirmDialog({
   cancelLabel,
   confirmLabel,
   confirmFormId,
+  icon,
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
@@ -77,7 +79,7 @@ export function ConfirmDialog({
         aria-describedby={description ? descriptionId : undefined}
       >
         <span className="confirm-dialog-icon" aria-hidden="true">
-          <LogoutIcon size={20} />
+          {icon ?? <LogoutIcon size={20} />}
         </span>
         <h2 id={titleId} className="confirm-dialog-title">
           {title}

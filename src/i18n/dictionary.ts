@@ -35,6 +35,8 @@ export type Dictionary = {
     logoutConfirm: string;
     logoutConfirmHint: string;
     logoutCancel: string;
+    newTasksAria: string;
+    newMessagesAria: string;
   };
   boardForm: {
     title: string;
@@ -77,6 +79,13 @@ export type Dictionary = {
     settings: string;
     settingsAria: string;
     closeSettings: string;
+    newTaskLabel: string;
+    newTaskAria: string;
+    markAllRead: string;
+    markAllReadConfirm: string;
+    markAllReadConfirmHint: string;
+    markAllReadCancel: string;
+    markAllReadYes: string;
   };
   columns: {
     new: string;
@@ -258,6 +267,8 @@ export const en: Dictionary = {
     logoutConfirm: "Log out of the owner account?",
     logoutConfirmHint: "You will need to sign in again to manage boards.",
     logoutCancel: "Stay",
+    newTasksAria: "{n} new tasks",
+    newMessagesAria: "{n} with new messages",
   },
   boardForm: {
     title: "Board name",
@@ -302,6 +313,14 @@ export const en: Dictionary = {
     settings: "Settings",
     settingsAria: "Board settings",
     closeSettings: "Close settings",
+    newTaskLabel: "New",
+    newTaskAria: "New task",
+    markAllRead: "Mark all",
+    markAllReadConfirm: "Mark all as viewed?",
+    markAllReadConfirmHint:
+      "New labels and unread message badges on this board will be cleared.",
+    markAllReadCancel: "Cancel",
+    markAllReadYes: "Yes",
   },
   columns: {
     new: "New",

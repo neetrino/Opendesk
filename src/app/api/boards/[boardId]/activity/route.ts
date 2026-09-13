@@ -13,7 +13,7 @@ type BoardActivityRouteContext = {
 export const runtime = "nodejs";
 
 /**
- * Lightweight comment cursors for unread badges while the board is open.
+ * Lightweight card cursors for new-task and unread badges while the board is open.
  * Chat bodies load only when a card is opened.
  */
 export async function GET(
@@ -39,6 +39,9 @@ export async function GET(
       where: { boardId: parsedId.data },
       select: {
         id: true,
+        authorId: true,
+        createdAt: true,
+        status: true,
         comments: {
           where: { authorId: { not: participantId } },
           orderBy: { createdAt: "desc" },
@@ -50,17 +53,17 @@ export async function GET(
 
     return NextResponse.json(
       {
-        cards: cards.flatMap((card) => {
+        cards: cards.map((card) => {
           const latest = card.comments[0];
-          if (!latest) {
-            return [];
-          }
-          return [
-            {
-              id: card.id,
-              lastForeignCommentAt: latest.createdAt.toISOString(),
-            },
-          ];
+          return {
+            id: card.id,
+            authorId: card.authorId,
+            createdAt: card.createdAt.toISOString(),
+            status: card.status,
+            ...(latest
+              ? { lastForeignCommentAt: latest.createdAt.toISOString() }
+              : {}),
+          };
         }),
       },
       {

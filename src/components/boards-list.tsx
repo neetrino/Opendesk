@@ -5,6 +5,7 @@ import { BoardListItem } from "@/components/board-list-item";
 import { CreateBoardSheet } from "@/components/create-board-sheet";
 import { useI18n } from "@/i18n/provider";
 import { filterBoardsByQuery } from "@/lib/filter-boards";
+import { inboxCountsFor, useBoardsInbox } from "@/lib/use-boards-inbox";
 
 export type BoardsListBoard = {
   id: string;
@@ -41,6 +42,7 @@ export function BoardsList({ boards }: BoardsListProps) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const { countsByBoardId } = useBoardsInbox();
   const closeCreate = useCallback(() => {
     setCreateOpen(false);
   }, []);
@@ -95,6 +97,7 @@ export function BoardsList({ boards }: BoardsListProps) {
               slug={board.slug}
               joinToken={board.joinToken}
               createdAtLabel={board.createdAtLabel}
+              inbox={inboxCountsFor(countsByBoardId, board.id)}
             />
           ))}
         </ul>

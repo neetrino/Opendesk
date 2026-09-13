@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { InboxCounts } from "@/components/inbox-counts";
 import { useI18n } from "@/i18n/provider";
+import type { BoardInboxCounts } from "@/lib/card-reads";
 import { displayInitials } from "@/lib/initials";
 import { buildJoinPath } from "@/lib/join-url";
 
@@ -11,6 +13,7 @@ type BoardListItemProps = {
   slug: string;
   joinToken: string;
   createdAtLabel: string;
+  inbox: BoardInboxCounts;
 };
 
 export function BoardListItem({
@@ -18,10 +21,12 @@ export function BoardListItem({
   slug,
   joinToken,
   createdAtLabel,
+  inbox,
 }: BoardListItemProps) {
   const { t } = useI18n();
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const path = buildJoinPath(slug, joinToken);
+  const hasInbox = inbox.newTasks > 0 || inbox.newMessages > 0;
 
   async function copyLink(): Promise<void> {
     const url = `${window.location.origin}${path}`;
@@ -35,7 +40,7 @@ export function BoardListItem({
   }
 
   return (
-    <li className="boards-list-item">
+    <li className={hasInbox ? "boards-list-item has-inbox" : "boards-list-item"}>
       <span className="boards-list-mark" aria-hidden="true">
         {displayInitials(title)}
       </span>
@@ -49,6 +54,7 @@ export function BoardListItem({
           {t.boardsPage.createdAt} {createdAtLabel}
         </p>
       </div>
+      <InboxCounts counts={inbox} />
       <div className="boards-list-actions">
         <Link className="button" href={path} prefetch>
           {t.boardsPage.openBoard}

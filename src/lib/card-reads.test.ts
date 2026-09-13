@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   applyForeignActivity,
-  cardReadStorageKey,
-  countUnreadComments,
-  getClientCardReads,
+  countBoardInbox,
+  isUnseenCard,
   lastReadDate,
+  markCardsRead,
   parseCardReadState,
   resolveLastReadAt,
   resolveSeededAt,
   seedCardReads,
+  getClientCardReads,
+  cardReadStorageKey,
+  countUnreadComments,
 } from "@/lib/card-reads";
 
 const me = "cluserxxxxxxxxxxxxxxxxxxxxxx";
@@ -128,5 +131,101 @@ describe("card reads", () => {
     ).toBe(0);
     expect(applyForeignActivity(0, null, "2026-09-12T11:00:00.000Z")).toBe(1);
     expect(applyForeignActivity(0, lastReadAt, "nope")).toBe(0);
+  });
+
+  it("treats later foreign cards as unseen until opened", () => {
+    const seededAt = new Date("2026-09-12T08:00:00.000Z");
+    const reads = { "card-old": "2026-09-12T08:00:00.000Z" };
+
+    expect(
+      isUnseenCard(
+        {
+          id: "card-new",
+          authorId: other,
+          createdAt: "2026-09-12T09:00:00.000Z",
+        },
+        reads,
+        seededAt,
+        me,
+      ),
+    ).toBe(true);
+    expect(
+      isUnseenCard(
+        {
+          id: "card-new",
+          authorId: me,
+          createdAt: "2026-09-12T09:00:00.000Z",
+        },
+        reads,
+        seededAt,
+        me,
+      ),
+    ).toBe(false);
+    expect(
+      isUnseenCard(
+        {
+          id: "card-old",
+          authorId: other,
+          createdAt: "2026-09-12T07:00:00.000Z",
+        },
+        reads,
+        seededAt,
+        me,
+      ),
+    ).toBe(false);
+    expect(
+      isUnseenCard(
+        {
+          id: "local-abc",
+          authorId: other,
+          createdAt: "2026-09-12T09:00:00.000Z",
+        },
+        reads,
+        seededAt,
+        me,
+      ),
+    ).toBe(false);
+  });
+
+  it("counts new tasks and unread message cards separately", () => {
+    const seededAt = new Date("2026-09-12T08:00:00.000Z");
+    const reads = { "card-old": "2026-09-12T08:00:00.000Z" };
+
+    expect(
+      countBoardInbox(
+        [
+          {
+            id: "card-new",
+            authorId: other,
+            createdAt: "2026-09-12T09:00:00.000Z",
+          },
+          {
+            id: "card-chat",
+            authorId: other,
+            createdAt: "2026-09-12T07:00:00.000Z",
+            lastForeignCommentAt: "2026-09-12T11:00:00.000Z",
+          },
+        ],
+        reads,
+        seededAt,
+        me,
+      ),
+    ).toEqual({ newTasks: 1, newMessages: 1 });
+  });
+
+  it("marks every server card read and refreshes the seed", () => {
+    const boardId = "board-mark-all";
+    const userId = "user-mark-all";
+    markCardsRead(
+      boardId,
+      userId,
+      ["card-1", "local-skip", "card-2"],
+      new Date("2026-09-13T12:00:00.000Z"),
+    );
+
+    const reads = getClientCardReads(boardId, userId, ["card-1", "card-2"]);
+    expect(reads["card-1"]).toBe("2026-09-13T12:00:00.000Z");
+    expect(reads["card-2"]).toBe("2026-09-13T12:00:00.000Z");
+    expect(reads["local-skip"]).toBeUndefined();
   });
 });
