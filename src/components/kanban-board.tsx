@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  useCallback,
+  useEffect,
   useMemo,
   useOptimistic,
   useRef,
@@ -10,6 +12,7 @@ import {
 } from "react";
 import type { CardStatus } from "@prisma/client";
 import { BoardDock } from "@/components/board-dock";
+import { useRegisterBoardInboxControl } from "@/components/board-inbox-control";
 import { BoardSearchMobileBar, useBoardSearch } from "@/components/board-search";
 import { CardSheet } from "@/components/card-sheet";
 import { FireIcon } from "@/components/fire-icon";
@@ -27,7 +30,7 @@ import {
   writeMovePlacement,
   type MovePlacement,
 } from "@/lib/card-position";
-import { applyForeignActivity, resolveLastReadAt } from "@/lib/card-reads";
+import { applyForeignActivity, isUnseenCard, resolveLastReadAt } from "@/lib/card-reads";
 import { CARD_STATUSES } from "@/lib/constants";
 import { displayInitials } from "@/lib/initials";
 import {
@@ -168,12 +171,19 @@ export function KanbanBoard({
     knownServerCards,
     heldCards,
   );
-  const { reads, seededAt, markCardRead } = useCardReads(
+  const { reads, seededAt, markCardRead, markAllRead } = useCardReads(
     boardId,
     currentUser.participantId,
     knownServerCards.map((card) => card.id),
   );
   const activity = useBoardActivity(boardId);
+  const inboxCardIdsRef = useRef<string[]>([]);
+  useEffect(() => {
+    inboxCardIdsRef.current = [
+      ...knownServerCards.map((card) => card.id),
+      ...Object.keys(activity),
+    ];
+  }, [activity, knownServerCards]);
   const sourceById = new Map(
     knownServerCards.map((card) => [card.id, card.status]),
   );
@@ -265,6 +275,36 @@ export function KanbanBoard({
       activity[card.id]?.lastForeignCommentAt,
     );
   }
+
+  function isNewTask(card: BoardCard): boolean {
+    if (isLocalCardId(card.id) || selectedCardId === card.id || reads === null) {
+      return false;
+    }
+    return isUnseenCard(card, reads, seededAt, currentUser.participantId);
+  }
+
+  function columnHasNew(
+    status: CardStatus,
+    columnCards: BoardCard[],
+  ): boolean {
+    if (columnCards.some((card) => isNewTask(card))) {
+      return true;
+    }
+    if (reads === null) {
+      return false;
+    }
+    const visibleIds = new Set(columnCards.map((card) => card.id));
+    return Object.values(activity).some(
+      (item) =>
+        item.status === status &&
+        !visibleIds.has(item.id) &&
+        isUnseenCard(item, reads, seededAt, currentUser.participantId),
+    );
+  }
+
+  const markBoardInboxRead = useCallback((): void => {
+    markAllRead([...new Set(inboxCardIdsRef.current)]);
+  }, [markAllRead]);
 
   function closeSheet(): void {
     if (selectedCardId !== null && !isLocalCardId(selectedCardId)) {
@@ -446,7 +486,30 @@ export function KanbanBoard({
       return;
     }
     setSelectedCardId(cardId);
+    if (!isLocalCardId(cardId)) {
+      markCardRead(cardId);
+    }
   }
+
+  const hasInbox =
+    visibleCards.some(
+      (card) => isNewTask(card) || unreadCountFor(card) > 0,
+    ) ||
+    Object.values(activity).some((item) => {
+      if (reads === null) {
+        return false;
+      }
+      return (
+        isUnseenCard(item, reads, seededAt, currentUser.participantId) ||
+        applyForeignActivity(
+          0,
+          resolveLastReadAt(reads, item.id, seededAt),
+          item.lastForeignCommentAt,
+        ) > 0
+      );
+    });
+
+  useRegisterBoardInboxControl(hasInbox, markBoardInboxRead);
 
   return (
     <>
@@ -470,6 +533,8 @@ export function KanbanBoard({
           const unreadInColumn = columnCards.some(
             (card) => unreadCountFor(card) > 0,
           );
+          const newInColumn = columnHasNew(status, columnCards);
+          const inboxClass = `${unreadInColumn ? " has-unread" : ""}${newInColumn ? " has-new" : ""}`;
 
           return (
             <button
@@ -478,8 +543,8 @@ export function KanbanBoard({
               aria-pressed={activeStatus === status}
               className={
                 activeStatus === status
-                  ? `board-stage-tab stage-${status} is-active${unreadInColumn ? " has-unread" : ""}`
-                  : `board-stage-tab stage-${status}${unreadInColumn ? " has-unread" : ""}`
+                  ? `board-stage-tab stage-${status} is-active${inboxClass}`
+                  : `board-stage-tab stage-${status}${inboxClass}`
               }
               onClick={() => setActiveStatus(status)}
             >
@@ -509,6 +574,7 @@ export function KanbanBoard({
           const unreadInColumn = columnCards.some(
             (card) => unreadCountFor(card) > 0,
           );
+          const newInColumn = columnHasNew(status, columnCards);
 
           return (
             <section
@@ -525,7 +591,7 @@ export function KanbanBoard({
             >
               <header className="column-header">
                 <div
-                  className={`board-stage-tab stage-${status} is-active${unreadInColumn ? " has-unread" : ""}`}
+                  className={`board-stage-tab stage-${status} is-active${unreadInColumn ? " has-unread" : ""}${newInColumn ? " has-new" : ""}`}
                 >
                   <h2 className="board-stage-label">{t.columns[status]}</h2>
                   <span className="board-stage-count">
@@ -555,11 +621,12 @@ export function KanbanBoard({
                 {columnCards.map((card) => {
                   const isLocal = isLocalCardId(card.id);
                   const unreadCount = unreadCountFor(card);
+                  const isNew = isNewTask(card);
 
                   return (
                     <article
                       key={card.id}
-                      className={`card-tile${card.urgent ? " is-urgent" : ""}${isLocal ? " is-syncing" : ""}${unreadCount > 0 ? " is-unread" : ""}`}
+                      className={`card-tile${card.urgent ? " is-urgent" : ""}${isLocal ? " is-syncing" : ""}${unreadCount > 0 ? " is-unread" : ""}${isNew ? " is-new" : ""}`}
                       draggable={!isLocal}
                       onDragStart={(event) =>
                         onDragStart(event, card.id, card.status)
@@ -588,6 +655,14 @@ export function KanbanBoard({
                           {card.author.displayName}
                         </span>
                         <span className="card-meta-right">
+                          {isNew ? (
+                            <span
+                              className="new-badge"
+                              aria-label={t.board.newTaskAria}
+                            >
+                              {t.board.newTaskLabel}
+                            </span>
+                          ) : null}
                           {unreadCount > 0 ? (
                             <span
                               className="unread-badge"
@@ -656,6 +731,7 @@ export function KanbanBoard({
         displayName={currentUser.displayName}
         isOwner={isOwner}
         onStartCreate={() => startCreate(activeStatus)}
+        onMarkAllRead={hasInbox ? markBoardInboxRead : undefined}
       />
 
       {selectedCard ? (

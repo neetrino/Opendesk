@@ -37,6 +37,8 @@ export const ru: Dictionary = {
     logoutConfirm: "Выйти из аккаунта владельца?",
     logoutConfirmHint: "Чтобы снова управлять досками, войдите ещё раз.",
     logoutCancel: "Остаться",
+    newTasksAria: "{n} новых задач",
+    newMessagesAria: "{n} с новыми сообщениями",
   },
   boardForm: {
     title: "Название доски",
@@ -81,6 +83,14 @@ export const ru: Dictionary = {
     settings: "Настройки",
     settingsAria: "Настройки доски",
     closeSettings: "Закрыть настройки",
+    newTaskLabel: "Новая",
+    newTaskAria: "Новая задача",
+    markAllRead: "Пометить все",
+    markAllReadConfirm: "Пометить все просмотренными?",
+    markAllReadConfirmHint:
+      "Метки «Новая» и значки непрочитанных сообщений на этой доске исчезнут.",
+    markAllReadCancel: "Отменить",
+    markAllReadYes: "Да",
   },
   columns: {
     new: "Новое",

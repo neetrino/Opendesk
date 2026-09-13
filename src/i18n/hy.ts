@@ -37,6 +37,8 @@ export const hy: Dictionary = {
     logoutConfirm: "Դուրս գա՞լ սեփականատիրոջ հաշվից։",
     logoutConfirmHint: "Տախտակները կառավարելու համար նորից մուտք գործեք։",
     logoutCancel: "Մնալ",
+    newTasksAria: "{n} նոր խնդիր",
+    newMessagesAria: "{n} նոր հաղորդագրությամբ",
   },
   boardForm: {
     title: "Տախտակի անուն",
@@ -81,6 +83,14 @@ export const hy: Dictionary = {
     settings: "Կարգավորումներ",
     settingsAria: "Տախտակի կարգավորումներ",
     closeSettings: "Փակել կարգավորումները",
+    newTaskLabel: "Նոր",
+    newTaskAria: "Նոր խնդիր",
+    markAllRead: "Նշել բոլորը",
+    markAllReadConfirm: "Նշե՞լ բոլորը դիտված։",
+    markAllReadConfirmHint:
+      "Այս տախտակի «Նոր» նշումները և չկարդացված հաղորդագրությունների նշանները կանհետանան։",
+    markAllReadCancel: "Չեղարկել",
+    markAllReadYes: "Այո",
   },
   columns: {
     new: "Նոր",

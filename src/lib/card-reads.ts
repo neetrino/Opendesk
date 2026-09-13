@@ -196,6 +196,114 @@ export function applyForeignActivity(
   return unreadFromComments;
 }
 
+export type UnseenCardCursor = {
+  id: string;
+  authorId: string;
+  createdAt: Date | string;
+};
+
+/**
+ * Cards the viewer has not opened since they first saw this board.
+ * Own cards never count as new.
+ */
+export function isUnseenCard(
+  card: UnseenCardCursor,
+  reads: Record<string, string> | null,
+  seededAt: Date | null,
+  currentUserId: string,
+): boolean {
+  if (isLocalCardId(card.id) || card.authorId === currentUserId) {
+    return false;
+  }
+  if (lastReadDate(reads, card.id) !== null) {
+    return false;
+  }
+  if (seededAt === null) {
+    return false;
+  }
+
+  const created = commentTimestamp(card.createdAt);
+  if (!Number.isFinite(created)) {
+    return false;
+  }
+
+  return created > seededAt.getTime();
+}
+
+export function hasUnreadForeignComment(
+  lastForeignCommentAt: string | null | undefined,
+  lastReadAt: Date | null,
+): boolean {
+  return applyForeignActivity(0, lastReadAt, lastForeignCommentAt) > 0;
+}
+
+export type BoardInboxCounts = {
+  newTasks: number;
+  newMessages: number;
+};
+
+export type InboxCardCursor = UnseenCardCursor & {
+  lastForeignCommentAt?: string;
+};
+
+export function emptyInboxCounts(): BoardInboxCounts {
+  return { newTasks: 0, newMessages: 0 };
+}
+
+export function countBoardInbox(
+  cards: InboxCardCursor[],
+  reads: Record<string, string> | null,
+  seededAt: Date | null,
+  currentUserId: string,
+): BoardInboxCounts {
+  if (reads === null) {
+    return emptyInboxCounts();
+  }
+
+  let newTasks = 0;
+  let newMessages = 0;
+
+  for (const card of cards) {
+    if (isUnseenCard(card, reads, seededAt, currentUserId)) {
+      newTasks += 1;
+    }
+    if (
+      hasUnreadForeignComment(
+        card.lastForeignCommentAt,
+        resolveLastReadAt(reads, card.id, seededAt),
+      )
+    ) {
+      newMessages += 1;
+    }
+  }
+
+  return { newTasks, newMessages };
+}
+
+export function markCardsRead(
+  boardId: string,
+  participantId: string,
+  cardIds: string[],
+  readAt = new Date(),
+): void {
+  const current = getClientCardReadState(boardId, participantId, cardIds);
+  const iso = readAt.toISOString();
+  const reads = { ...current.reads };
+
+  for (const cardId of cardIds) {
+    if (!isLocalCardId(cardId)) {
+      reads[cardId] = iso;
+    }
+  }
+
+  writeCardReadState(boardId, participantId, {
+    version: CARD_READ_STATE_VERSION,
+    reads,
+    seededAt: iso,
+  });
+  emitCardReadsChanged();
+}
+
 export function readCardReadState(
   boardId: string,
   participantId: string,
@@ -304,6 +412,19 @@ export function subscribeClientCardReads(
   window.addEventListener(CARD_READS_CHANGED_EVENT, onChange);
   return () => {
     window.removeEventListener("storage", onStorage);
+    window.removeEventListener(CARD_READS_CHANGED_EVENT, onChange);
+  };
+}
+
+export function subscribeAllCardReads(onChange: () => void): () => void {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  window.addEventListener("storage", onChange);
+  window.addEventListener(CARD_READS_CHANGED_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
     window.removeEventListener(CARD_READS_CHANGED_EVENT, onChange);
   };
 }

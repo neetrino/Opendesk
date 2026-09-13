@@ -2,6 +2,7 @@
 
 import { BoardSearchDockButton } from "@/components/board-search";
 import { BoardSettingsSheet } from "@/components/board-settings-sheet";
+import { MarkAllReadControl } from "@/components/mark-all-read-control";
 import type { BoardParticipant } from "@/components/participants-panel";
 import { useI18n } from "@/i18n/provider";
 
@@ -14,6 +15,7 @@ type BoardDockProps = {
   displayName: string;
   isOwner: boolean;
   onStartCreate: () => void;
+  onMarkAllRead?: () => void;
 };
 
 function PlusIcon() {
@@ -44,6 +46,7 @@ export function BoardDock({
   displayName,
   isOwner,
   onStartCreate,
+  onMarkAllRead,
 }: BoardDockProps) {
   const { t } = useI18n();
 
@@ -60,6 +63,11 @@ export function BoardDock({
           isOwner={isOwner}
         />
         <BoardSearchDockButton />
+        <MarkAllReadControl
+          visible={Boolean(onMarkAllRead)}
+          onMarkAll={onMarkAllRead ?? noop}
+          className="board-dock-search"
+        />
         <button
           type="button"
           className="board-dock-primary"
@@ -71,4 +79,8 @@ export function BoardDock({
       </div>
     </div>
   );
+}
+
+function noop(): void {
+  return undefined;
 }

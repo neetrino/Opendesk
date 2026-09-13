@@ -36,6 +36,66 @@ export async function ensureOwnerParticipant(
   });
 }
 
+/** Stable Owner participant ids for every board, creating missing rows. */
+export async function ensureOwnerParticipantsForBoards(
+  boardIds: string[],
+): Promise<Map<string, string>> {
+  const byBoard = new Map<string, string>();
+  if (boardIds.length === 0) {
+    return byBoard;
+  }
+
+  const existing = await prisma.participant.findMany({
+    where: {
+      boardId: { in: boardIds },
+      displayName: {
+        equals: OWNER_PARTICIPANT_NAME,
+        mode: "insensitive",
+      },
+    },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, boardId: true },
+  });
+
+  for (const row of existing) {
+    if (!byBoard.has(row.boardId)) {
+      byBoard.set(row.boardId, row.id);
+    }
+  }
+
+  const missing = boardIds.filter((boardId) => !byBoard.has(boardId));
+  if (missing.length === 0) {
+    return byBoard;
+  }
+
+  await prisma.participant.createMany({
+    data: missing.map((boardId) => ({
+      boardId,
+      displayName: OWNER_PARTICIPANT_NAME,
+    })),
+  });
+
+  const created = await prisma.participant.findMany({
+    where: {
+      boardId: { in: missing },
+      displayName: {
+        equals: OWNER_PARTICIPANT_NAME,
+        mode: "insensitive",
+      },
+    },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, boardId: true },
+  });
+
+  for (const row of created) {
+    if (!byBoard.has(row.boardId)) {
+      byBoard.set(row.boardId, row.id);
+    }
+  }
+
+  return byBoard;
+}
+
 /**
  * Participant session for this board, or env owner (get-or-create Owner participant).
  */

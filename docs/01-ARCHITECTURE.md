@@ -139,10 +139,13 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 4. Открытие карточки: GET `/api/boards/{boardId}/cards/{cardId}/comments` —
    последние 20; скролл вверх — более старые
 5. Actions: createCard, moveCard, addComment, attachment upload (requireBoardAccess)
-6. Пока workspace открыт: GET `/api/boards/{boardId}/activity` (курсоры чужих комментариев) → при изменении `router.refresh()`
+6. Пока workspace открыт: GET `/api/boards/{boardId}/activity` (карточки + курсоры чужих комментариев) → при изменении `router.refresh()`
 7. Last-read карточки хранится в `localStorage` на устройстве участника
    (`opendesk.cardReads.v1.{boardId}.{participantId}`); `seededAt` покрывает
-   ещё не подгруженные карточки
+   ещё не подгруженные карточки. Неоткрытые чужие карточки после seed помечаются
+   как новые до открытия или «прочитать всё».
+8. Список досок владельца: GET `/api/owner/boards-activity` → компактные
+   счётчики новых задач и сообщений на каждом борде
 ```
 
 ---

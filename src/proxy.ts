@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { OWNER_LAST_BOARD_API_PATH } from "@/lib/constants";
+import {
+  OWNER_BOARDS_ACTIVITY_API_PATH,
+  OWNER_LAST_BOARD_API_PATH,
+} from "@/lib/constants";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const JOIN_WINDOW_MS = 60_000;
@@ -101,6 +104,17 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  const isOwnerBoardsActivityGet =
+    request.method === "GET" && path === OWNER_BOARDS_ACTIVITY_API_PATH;
+  if (isOwnerBoardsActivityGet) {
+    const result = checkRateLimit(`boards-inbox:${ip}`, 60, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -113,5 +127,6 @@ export const config = {
     "/api/attachments/:path*",
     "/api/boards/:path*",
     "/api/owner/last-board",
+    "/api/owner/boards-activity",
   ],
 };

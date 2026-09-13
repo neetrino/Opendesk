@@ -5,6 +5,7 @@ import {
   CARD_READ_STATE_VERSION,
   emitCardReadsChanged,
   getClientCardReadState,
+  markCardsRead,
   resolveSeededAt,
   subscribeClientCardReads,
   writeCardReadState,
@@ -23,6 +24,7 @@ export function useCardReads(
   reads: Record<string, string> | null;
   seededAt: Date | null;
   markCardRead: (cardId: string, readAt?: Date) => void;
+  markAllRead: (cardIds: string[], readAt?: Date) => void;
 } {
   const cardIdsKey = cardIds.join(",");
 
@@ -66,5 +68,12 @@ export function useCardReads(
     [boardId, cardIdsKey, participantId],
   );
 
-  return { reads, seededAt, markCardRead };
+  const markAllRead = useCallback(
+    (cardIds: string[], readAt = new Date()): void => {
+      markCardsRead(boardId, participantId, cardIds, readAt);
+    },
+    [boardId, participantId],
+  );
+
+  return { reads, seededAt, markCardRead, markAllRead };
 }
