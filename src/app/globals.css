@@ -2641,7 +2641,7 @@ textarea {
   display: none;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (min-width: 961px) {
   .media-capture .media-capture-camera {
     display: none;
   }

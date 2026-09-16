@@ -154,8 +154,8 @@ function onHiddenFileChange(
 }
 
 /**
- * Phone: in-app camera. Desktop: OS file picker. Photo/video accept
- * types stay the same as the camera gallery.
+ * Mobile layout: in-app camera. Desktop layout: OS file picker.
+ * Photo/video accept types stay the same as the camera gallery.
  */
 export function MediaCaptureControls({
   disabled,
