@@ -1,8 +1,14 @@
 "use client";
 
+import { useRef, type ChangeEvent } from "react";
+import { PaperclipIcon } from "@/components/paperclip-icon";
+import { ATTACHMENT_FILE_ACCEPT } from "@/lib/attachments";
+
 type CaptureLabels = {
   camera: string;
   cameraAria: string;
+  file: string;
+  fileAria: string;
 };
 
 type MediaCaptureAppearance = "ghost" | "action";
@@ -14,6 +20,7 @@ type MediaCaptureControlsProps = {
   appearance?: MediaCaptureAppearance;
   className?: string;
   onOpenCamera?: () => void;
+  onPickFiles?: (files: File[]) => void;
 };
 
 function CameraIcon({ size = 20 }: { size?: number }) {
@@ -135,8 +142,20 @@ function MicIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+function onHiddenFileChange(
+  event: ChangeEvent<HTMLInputElement>,
+  onPickFiles: ((files: File[]) => void) | undefined,
+): void {
+  const files = event.target.files ? Array.from(event.target.files) : [];
+  event.target.value = "";
+  if (files.length > 0) {
+    onPickFiles?.(files);
+  }
+}
+
 /**
- * Opens the in-app camera overlay. Photo, video, and gallery live there.
+ * Mobile layout: in-app camera. Desktop layout: OS file picker.
+ * Photo/video accept types stay the same as the camera gallery.
  */
 export function MediaCaptureControls({
   disabled,
@@ -145,15 +164,25 @@ export function MediaCaptureControls({
   appearance = "ghost",
   className,
   onOpenCamera,
+  onPickFiles,
 }: MediaCaptureControlsProps) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const buttonClass =
     appearance === "action" ? "comment-action" : "comment-attach";
 
   return (
     <div className={className ? `media-capture ${className}` : "media-capture"}>
+      <input
+        ref={fileRef}
+        type="file"
+        accept={ATTACHMENT_FILE_ACCEPT}
+        multiple
+        hidden
+        onChange={(event) => onHiddenFileChange(event, onPickFiles)}
+      />
       <button
         type="button"
-        className={buttonClass}
+        className={`${buttonClass} media-capture-camera`}
         disabled={disabled}
         aria-label={labels.cameraAria}
         title={unavailableReason ?? labels.camera}
@@ -164,6 +193,20 @@ export function MediaCaptureControls({
         }}
       >
         <CameraIcon size={20} />
+      </button>
+      <button
+        type="button"
+        className={`${buttonClass} media-capture-file`}
+        disabled={disabled}
+        aria-label={labels.fileAria}
+        title={unavailableReason ?? labels.file}
+        onClick={() => {
+          if (!disabled) {
+            fileRef.current?.click();
+          }
+        }}
+      >
+        <PaperclipIcon size={20} />
       </button>
     </div>
   );

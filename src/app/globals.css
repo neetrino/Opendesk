@@ -2637,6 +2637,20 @@ textarea {
   flex-shrink: 0;
 }
 
+.media-capture .media-capture-file {
+  display: none;
+}
+
+@media (min-width: 961px) {
+  .media-capture .media-capture-camera {
+    display: none;
+  }
+
+  .media-capture .media-capture-file {
+    display: inline-flex;
+  }
+}
+
 .comment-compose-field .comment-compose-secondary {
   position: absolute;
   right: 0.05rem;
