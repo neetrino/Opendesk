@@ -146,6 +146,13 @@ export type Dictionary = {
     attachmentsUnavailable: string;
     attachmentsLocalCard: string;
     attachmentClosePreview: string;
+    openCommentLink: string;
+    figmaLabel: string;
+    figmaOpenAria: string;
+    figmaDesign: string;
+    figmaPrototype: string;
+    figmaBoard: string;
+    figmaFile: string;
   };
   comment: {
     placeholder: string;
@@ -382,6 +389,13 @@ export const en: Dictionary = {
     attachmentsUnavailable: "File storage is not configured",
     attachmentsLocalCard: "Wait until the card is saved, then attach files",
     attachmentClosePreview: "Close preview",
+    openCommentLink: "Open link",
+    figmaLabel: "Figma",
+    figmaOpenAria: "Open Figma file {title}",
+    figmaDesign: "Design",
+    figmaPrototype: "Prototype",
+    figmaBoard: "FigJam",
+    figmaFile: "File",
   },
   comment: {
     placeholder: "Message",

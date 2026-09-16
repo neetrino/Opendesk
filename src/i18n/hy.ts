@@ -153,6 +153,13 @@ export const hy: Dictionary = {
     attachmentsUnavailable: "Ֆայլերի պահեստը կարգավորված չէ",
     attachmentsLocalCard: "Սպասեք, որ քարտը պահպանվի, ապա կցեք ֆայլեր",
     attachmentClosePreview: "Փակել նախադիտումը",
+    openCommentLink: "Բացել հղումը",
+    figmaLabel: "Figma",
+    figmaOpenAria: "Բացել Figma ֆայլը {title}",
+    figmaDesign: "Դիզայն",
+    figmaPrototype: "Նախատիպ",
+    figmaBoard: "FigJam",
+    figmaFile: "Ֆայլ",
   },
   comment: {
     placeholder: "Հաղորդագրություն",
