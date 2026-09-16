@@ -1,6 +1,26 @@
 import { z } from "zod";
+import {
+  type CommentReactionEmoji,
+  type ThreadReactionCount,
+} from "@/lib/comment-reactions";
+import { COMMENT_REACTION_EMOJIS } from "@/lib/constants";
 import type { BoardAttachment } from "@/lib/local-cards";
 import { toIsoDate } from "@/lib/pagination";
+
+export type { CommentReactionEmoji, ThreadReactionCount };
+
+export type ThreadReplyTo = {
+  id: string;
+  authorName: string;
+  excerpt: string;
+  deleted: boolean;
+};
+
+export type ThreadCommentPreview = {
+  id: string;
+  authorName: string;
+  excerpt: string;
+};
 
 export type CardThreadComment = {
   id: string;
@@ -8,6 +28,8 @@ export type CardThreadComment = {
   authorId: string;
   body: string;
   createdAt: Date;
+  editedAt: Date | null;
+  deleted: boolean;
   author: {
     id: string;
     boardId: string;
@@ -15,6 +37,8 @@ export type CardThreadComment = {
     createdAt: Date;
   };
   attachments: BoardAttachment[];
+  replyTo: ThreadReplyTo | null;
+  reactions: ThreadReactionCount[];
 };
 
 const commentAttachmentJsonSchema = z.object({
@@ -28,12 +52,33 @@ const commentAttachmentJsonSchema = z.object({
   authorId: z.string().cuid(),
 });
 
+const reactionJsonSchema = z.object({
+  emoji: z.enum(COMMENT_REACTION_EMOJIS),
+  count: z.number().int().positive(),
+  reactedByMe: z.boolean(),
+});
+
+const replyToJsonSchema = z.object({
+  id: z.string().cuid(),
+  authorName: z.string(),
+  excerpt: z.string(),
+  deleted: z.boolean(),
+});
+
+const previewJsonSchema = z.object({
+  id: z.string().cuid(),
+  authorName: z.string(),
+  excerpt: z.string(),
+});
+
 export const cardThreadCommentJsonSchema = z.object({
   id: z.string().cuid(),
   cardId: z.string().cuid(),
   authorId: z.string().cuid(),
   body: z.string(),
   createdAt: z.string(),
+  editedAt: z.string().nullable(),
+  deleted: z.boolean(),
   author: z.object({
     id: z.string().cuid(),
     boardId: z.string().cuid(),
@@ -41,11 +86,15 @@ export const cardThreadCommentJsonSchema = z.object({
     createdAt: z.string(),
   }),
   attachments: z.array(commentAttachmentJsonSchema),
+  replyTo: replyToJsonSchema.nullable(),
+  reactions: z.array(reactionJsonSchema),
 });
 
 export const cardCommentsResponseSchema = z.object({
   comments: z.array(cardThreadCommentJsonSchema),
   nextCursor: z.string().cuid().nullable(),
+  pinned: previewJsonSchema.nullable(),
+  openQuestions: z.array(previewJsonSchema),
 });
 
 export function beforeCommentCursor(cursor: { createdAt: Date; id: string }): {
@@ -71,6 +120,8 @@ export function serializeThreadComment(comment: CardThreadComment): z.infer<
     authorId: comment.authorId,
     body: comment.body,
     createdAt: toIsoDate(comment.createdAt),
+    editedAt: comment.editedAt ? toIsoDate(comment.editedAt) : null,
+    deleted: comment.deleted,
     author: {
       id: comment.author.id,
       boardId: comment.author.boardId,
@@ -87,6 +138,8 @@ export function serializeThreadComment(comment: CardThreadComment): z.infer<
       commentId: attachment.commentId,
       authorId: attachment.authorId,
     })),
+    replyTo: comment.replyTo,
+    reactions: comment.reactions,
   };
 }
 
@@ -100,6 +153,7 @@ export function parseThreadComment(raw: unknown): CardThreadComment | null {
   return {
     ...comment,
     createdAt: new Date(comment.createdAt),
+    editedAt: comment.editedAt ? new Date(comment.editedAt) : null,
     author: {
       ...comment.author,
       createdAt: new Date(comment.author.createdAt),
@@ -109,4 +163,11 @@ export function parseThreadComment(raw: unknown): CardThreadComment | null {
       createdAt: new Date(attachment.createdAt),
     })),
   };
+}
+
+export function parseThreadPreview(
+  raw: unknown,
+): ThreadCommentPreview | null {
+  const parsed = previewJsonSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }

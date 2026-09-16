@@ -151,6 +151,9 @@ export function KanbanBoard({
   const [isPending, startTransition] = useTransition();
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [threadOpenedReadAt, setThreadOpenedReadAt] = useState<Date | null>(
+    null,
+  );
   const [draftCard, setDraftCard] = useState<BoardCard | null>(null);
   const [activeStatus, setActiveStatus] = useState<CardStatus>("new");
   const [boardError, setBoardError] = useState<string | null>(null);
@@ -485,6 +488,7 @@ export function KanbanBoard({
       suppressClick.current = false;
       return;
     }
+    setThreadOpenedReadAt(resolveLastReadAt(reads, cardId, seededAt));
     setSelectedCardId(cardId);
     if (!isLocalCardId(cardId)) {
       markCardRead(cardId);
@@ -740,11 +744,26 @@ export function KanbanBoard({
           card={selectedCard}
           locale={locale}
           currentUserId={currentUser.participantId}
+          currentUserName={currentUser.displayName}
+          participants={participants}
+          lastReadAt={threadOpenedReadAt}
           attachmentsEnabled={attachmentsEnabled}
           isDraft={selectedIsDraft}
           onClose={closeSheet}
           onDraftCommit={commitDraft}
-          currentUserName={currentUser.displayName}
+          onCreatedCard={(created) => {
+            const nextCard = {
+              ...toBoardCardFromCreated(created, currentUser),
+              commentCount: 1,
+            };
+            setLocalCards((current) => [
+              ...current.filter((item) => item.id !== nextCard.id),
+              nextCard,
+            ]);
+            setThreadOpenedReadAt(new Date());
+            setSelectedCardId(nextCard.id);
+            markCardRead(nextCard.id);
+          }}
           onStatusChange={(cardId, status, position) => {
             if (position === undefined) {
               setOptimisticCards({

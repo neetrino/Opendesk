@@ -127,6 +127,7 @@ export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard 
     title: input.title,
     urgent: input.urgent,
     position: Number.MAX_SAFE_INTEGER,
+    pinnedCommentId: null,
     createdAt: now,
     updatedAt: now,
     author: {

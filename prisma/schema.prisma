@@ -13,6 +13,14 @@ enum CardStatus {
   done
 }
 
+enum CommentReactionEmoji {
+  agree
+  done
+  watching
+  question
+  blocker
+}
+
 model Board {
   id        String   @id @default(cuid())
   title     String
@@ -47,47 +55,92 @@ model Participant {
   displayName String
   createdAt   DateTime @default(now())
 
-  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  invite      Invite?
-  cards       Card[]
-  comments    Comment[]
-  attachments Attachment[]
+  board            Board              @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  invite           Invite?
+  cards            Card[]
+  comments         Comment[]
+  attachments      Attachment[]
+  commentReactions CommentReaction[]
+  commentMentions  CommentMention[]
 
   @@index([boardId])
 }
 
 model Card {
-  id        String     @id @default(cuid())
-  boardId   String
-  authorId  String
-  status    CardStatus @default(new)
-  title     String
-  urgent    Boolean    @default(false)
-  position  Int        @default(0)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id              String     @id @default(cuid())
+  boardId         String
+  authorId        String
+  status          CardStatus @default(new)
+  title           String
+  urgent          Boolean    @default(false)
+  position        Int        @default(0)
+  pinnedCommentId String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  author      Participant  @relation(fields: [authorId], references: [id], onDelete: Restrict)
-  comments    Comment[]
-  attachments Attachment[]
+  board         Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  author        Participant  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  comments      Comment[]    @relation("CardComments")
+  pinnedComment Comment?     @relation("CardPinnedComment", fields: [pinnedCommentId], references: [id], onDelete: SetNull)
+  attachments   Attachment[]
 
   @@index([boardId, status])
   @@index([boardId, status, position])
+  @@index([pinnedCommentId])
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  cardId    String
-  authorId  String
-  body      String
-  createdAt DateTime @default(now())
+  id               String    @id @default(cuid())
+  cardId           String
+  authorId         String
+  body             String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  editedAt         DateTime?
+  deletedAt        DateTime?
+  parentId         String?
+  parentAuthorName String?
+  parentExcerpt    String?
 
-  card        Card         @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  author      Participant  @relation(fields: [authorId], references: [id], onDelete: Restrict)
-  attachments Attachment[]
+  card          Card               @relation("CardComments", fields: [cardId], references: [id], onDelete: Cascade)
+  author        Participant        @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  attachments   Attachment[]
+  parent        Comment?           @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies       Comment[]          @relation("CommentReplies")
+  pinnedOnCards Card[]             @relation("CardPinnedComment")
+  reactions     CommentReaction[]
+  mentions      CommentMention[]
 
   @@index([cardId, createdAt])
+  @@index([cardId, deletedAt])
+  @@index([parentId])
+}
+
+model CommentReaction {
+  id            String               @id @default(cuid())
+  commentId     String
+  participantId String
+  emoji         CommentReactionEmoji
+  createdAt     DateTime             @default(now())
+
+  comment     Comment     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, participantId, emoji])
+  @@index([commentId])
+}
+
+model CommentMention {
+  id            String   @id @default(cuid())
+  commentId     String
+  participantId String
+  createdAt     DateTime @default(now())
+
+  comment     Comment     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, participantId])
+  @@index([participantId])
 }
 
 enum AttachmentKind {

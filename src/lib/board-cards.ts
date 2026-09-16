@@ -22,6 +22,7 @@ const boardCardListSelect = {
   position: true,
   createdAt: true,
   updatedAt: true,
+  pinnedCommentId: true,
   author: {
     select: {
       id: true,
@@ -50,6 +51,7 @@ type BoardCardRow = {
   position: number;
   createdAt: Date;
   updatedAt: Date;
+  pinnedCommentId: string | null;
   author: {
     id: string;
     boardId: string;
@@ -73,6 +75,7 @@ export function mapBoardCardRow(row: BoardCardRow): LocalBoardCard {
     position: row.position,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    pinnedCommentId: row.pinnedCommentId,
     author: row.author,
     commentCount: row._count.comments,
     attachmentCount: row._count.attachments,

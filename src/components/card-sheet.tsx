@@ -9,11 +9,13 @@ import {
   type FocusEvent,
   type PointerEvent,
 } from "react";
-import type { CardStatus } from "@prisma/client";
+import type { Card, CardStatus } from "@prisma/client";
+import { CardThreadPane } from "@/components/card-thread-pane";
 import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
 import { PencilIcon } from "@/components/pencil-icon";
-import { ThreadList } from "@/components/thread-list";
+import type { ThreadReplyTo } from "@/lib/card-comment-view";
+import type { MentionParticipant } from "@/lib/comment-mentions";
 import {
   moveCardAction,
   setCardUrgentAction,
@@ -35,6 +37,8 @@ type CardSheetProps = {
   locale: string;
   currentUserId: string;
   currentUserName: string;
+  participants: MentionParticipant[];
+  lastReadAt: Date | null;
   attachmentsEnabled: boolean;
   isDraft?: boolean;
   onClose: () => void;
@@ -47,6 +51,7 @@ type CardSheetProps = {
   onUrgentChange: (cardId: string, urgent: boolean) => void;
   onCommentSend: () => void;
   onCommentRollback: () => void;
+  onCreatedCard: (card: Card) => void;
 };
 
 export function CardSheet({
@@ -55,6 +60,8 @@ export function CardSheet({
   locale,
   currentUserId,
   currentUserName,
+  participants,
+  lastReadAt,
   attachmentsEnabled,
   isDraft = false,
   onClose,
@@ -63,6 +70,7 @@ export function CardSheet({
   onUrgentChange,
   onCommentSend,
   onCommentRollback,
+  onCreatedCard,
 }: CardSheetProps) {
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
@@ -72,6 +80,7 @@ export function CardSheet({
   const [stageMenuOpen, setStageMenuOpen] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ThreadReplyTo | null>(null);
   const threadEnabled = !isDraft && !isLocalCardId(card.id);
   const thread = useCardThread(boardId, card.id, threadEnabled);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -111,6 +120,7 @@ export function CardSheet({
     setStageMenuOpen(false);
     setLeaveConfirm(false);
     setError(null);
+    setReplyTo(null);
   }
 
   useEffect(() => {
@@ -174,17 +184,6 @@ export function CardSheet({
     }
     node.scrollTop = node.scrollHeight;
   }, [card.id, newestCommentId, thread.loading, thread.loadingOlder]);
-
-  async function loadOlderMessages(): Promise<void> {
-    const node = threadRef.current;
-    const previousHeight = node?.scrollHeight ?? 0;
-    const previousTop = node?.scrollTop ?? 0;
-    const added = await thread.loadOlder();
-    if (!added || !node) {
-      return;
-    }
-    node.scrollTop = node.scrollHeight - previousHeight + previousTop;
-  }
 
   async function commitDraft(nextUrgent = draftUrgent): Promise<boolean> {
     if (!isDraft || !onDraftCommit) {
@@ -469,41 +468,25 @@ export function CardSheet({
         {error ? <p className="form-error sheet-title-error">{error}</p> : null}
 
         <div className="sheet-discussion">
-          <div
-            className="thread"
-            ref={threadRef}
-            onScroll={() => {
-              const node = threadRef.current;
-              if (
-                !node ||
-                !thread.hasMore ||
-                thread.loading ||
-                thread.loadingOlder
-              ) {
-                return;
-              }
-              if (node.scrollTop < 48) {
-                void loadOlderMessages();
-              }
-            }}
-          >
-            {thread.loadingOlder ? (
-              <p className="muted thread-loading-older">
-                {t.cardPage.loadingThread}
-              </p>
-            ) : null}
-            {thread.loading ? (
-              <p className="muted thread-empty">{t.cardPage.loadingThread}</p>
-            ) : thread.error ? (
-              <p className="form-error thread-empty">{t.errors.loadComments}</p>
-            ) : (
-              <ThreadList
-                comments={thread.comments}
-                locale={locale}
-                currentUserId={currentUserId}
-              />
-            )}
-          </div>
+          {threadEnabled ? (
+            <CardThreadPane
+              key={card.id}
+              boardId={boardId}
+              cardId={card.id}
+              locale={locale}
+              currentUserId={currentUserId}
+              participants={participants}
+              lastReadAt={lastReadAt}
+              thread={thread}
+              threadRef={threadRef}
+              onReply={setReplyTo}
+              onCreatedCard={onCreatedCard}
+            />
+          ) : (
+            <div className="thread">
+              <p className="muted thread-empty">{t.cardPage.emptyThread}</p>
+            </div>
+          )}
           <div className="sheet-composer">
             {leaveConfirm ? (
               <div
@@ -540,13 +523,17 @@ export function CardSheet({
                   boardId={boardId}
                   cardId={card.id}
                   enabled={attachmentsEnabled}
-                  onOptimisticSend={(body, tempId, attachments) => {
+                  participants={participants}
+                  replyTo={replyTo}
+                  onCancelReply={() => setReplyTo(null)}
+                  onOptimisticSend={(body, tempId, attachments, reply) => {
                     thread.addOptimistic(
                       body,
                       tempId,
                       currentUserId,
                       currentUserName,
                       attachments,
+                      reply,
                     );
                     onCommentSend();
                   }}

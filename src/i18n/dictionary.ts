@@ -153,6 +153,35 @@ export type Dictionary = {
     figmaPrototype: string;
     figmaBoard: string;
     figmaFile: string;
+    threadToday: string;
+    threadYesterday: string;
+    newMessages: string;
+    searchThread: string;
+    searchEmpty: string;
+    pinned: string;
+    openQuestions: string;
+    messageDeleted: string;
+    edited: string;
+    reply: string;
+    replyTo: string;
+    cancelReply: string;
+    copyMessage: string;
+    pinMessage: string;
+    unpinMessage: string;
+    editMessage: string;
+    deleteMessage: string;
+    saveEdit: string;
+    cancelEdit: string;
+    createCardFromMessage: string;
+    mediaTitlePhoto: string;
+    mediaTitleVideo: string;
+    mediaTitleVoice: string;
+    messageActions: string;
+    reactionAgree: string;
+    reactionDone: string;
+    reactionWatching: string;
+    reactionQuestion: string;
+    reactionBlocker: string;
   };
   comment: {
     placeholder: string;
@@ -182,6 +211,7 @@ export type Dictionary = {
     playVoice: string;
     pauseVoice: string;
     voiceSeek: string;
+    mentionSomeone: string;
   };
   notFound: {
     title: string;
@@ -215,6 +245,8 @@ export type Dictionary = {
     moveCard: string;
     updateCard: string;
     addComment: string;
+    updateComment: string;
+    deleteComment: string;
     loadCards: string;
     loadComments: string;
     joinFailed: string;
@@ -398,6 +430,35 @@ export const en: Dictionary = {
     figmaPrototype: "Prototype",
     figmaBoard: "FigJam",
     figmaFile: "File",
+    threadToday: "Today",
+    threadYesterday: "Yesterday",
+    newMessages: "New",
+    searchThread: "Search messages",
+    searchEmpty: "No messages found",
+    pinned: "Pinned",
+    openQuestions: "Open questions",
+    messageDeleted: "Message deleted",
+    edited: "edited",
+    reply: "Reply",
+    replyTo: "Reply to {name}",
+    cancelReply: "Cancel reply",
+    copyMessage: "Copy text",
+    pinMessage: "Pin",
+    unpinMessage: "Unpin",
+    editMessage: "Edit",
+    deleteMessage: "Delete",
+    saveEdit: "Save",
+    cancelEdit: "Cancel",
+    createCardFromMessage: "New task",
+    mediaTitlePhoto: "Photo",
+    mediaTitleVideo: "Video",
+    mediaTitleVoice: "Voice note",
+    messageActions: "Message actions",
+    reactionAgree: "Agree",
+    reactionDone: "Done",
+    reactionWatching: "Looking",
+    reactionQuestion: "Question",
+    reactionBlocker: "Blocker",
   },
   comment: {
     placeholder: "Message",
@@ -427,6 +488,7 @@ export const en: Dictionary = {
     playVoice: "Play voice note",
     pauseVoice: "Pause voice note",
     voiceSeek: "Voice note position",
+    mentionSomeone: "Mention",
   },
   notFound: {
     title: "Page not found",
@@ -460,6 +522,8 @@ export const en: Dictionary = {
     moveCard: "Could not move card",
     updateCard: "Could not update card",
     addComment: "Could not add comment",
+    updateComment: "Could not update the message",
+    deleteComment: "Could not delete the message",
     loadCards: "Could not load more tasks",
     loadComments: "Could not load messages",
     joinFailed: "Could not join",

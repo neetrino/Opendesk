@@ -3,7 +3,7 @@
 > Kanban-доска: участники по постоянной join-ссылке; один owner из env создаёт доски и видит все.
 
 **Размер проекта.** A  
-**Обновлено.** 2026-09-12
+**Обновлено.** 2026-09-16
 
 ---
 
@@ -17,7 +17,7 @@ OpenDesk даёт команде общую доску: вход по посто
 - Постоянная ссылка `/b/{slug}/{joinToken}` (и join, и работа на доске)
 - Вход участника без регистрации (ссылка + display name; то же имя = тот же участник)
 - Карточки: заголовок, срочность, 4 колонки, обсуждение в чате
-- Тред комментариев внутри карточки
+- Тред комментариев внутри карточки: реакции, quote-reply, pin, edit/delete своего, @упоминания, поиск, разделители дат и «новые», открытые вопросы (`question` без ответа), задача из сообщения
 - Непрочитанные ответы: зелёный значок на карточке (как в мессенджере). Свои сообщения не считаются; значок пропадает после открытия карточки и выхода. Первое открытие доски на устройстве не помечает старые треды как новые. Пока доска открыта, лёгкий poll `/api/boards/{id}/activity` подтягивает чужие ответы без WebSocket
 - Фото и короткие видео (до 200 MB, около 2 мин 1080p) в чате карточки (Cloudflare R2)
 - Установка на телефон (PWA Add to Home Screen): единый манифест приложения с запуском через `/`, без service worker и без офлайна. Корневой маршрут восстанавливает последнюю доступную доску
@@ -137,8 +137,9 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
    а не из нового loading-скелетона
 3. Скролл колонки: GET `/api/boards/{boardId}/cards?status&cursor` — следующие 10
 4. Открытие карточки: GET `/api/boards/{boardId}/cards/{cardId}/comments` —
-   последние 20; скролл вверх — более старые
-5. Actions: createCard, moveCard, addComment, attachment upload (requireBoardAccess)
+   последние 20; скролл вверх — более старые; `q` ищет по всей ленте
+5. Actions: createCard, moveCard, addComment, edit/delete/react/pin comment,
+   createCardFromComment, attachment upload (requireBoardAccess)
 6. Пока workspace открыт: GET `/api/boards/{boardId}/activity` (карточки + курсоры чужих комментариев) → при изменении `router.refresh()`
 7. Last-read карточки хранится в `localStorage` на устройстве участника
    (`opendesk.cardReads.v1.{boardId}.{participantId}`); `seededAt` покрывает
@@ -158,7 +159,9 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 | Invite | Legacy одноразовый токен |
 | Participant | Участник (displayName) |
 | Card | title + urgent + status + position |
-| Comment | Сообщение в треде карточки |
+| Comment | Сообщение в треде карточки (reply, edit, soft-delete) |
+| CommentReaction | Рабочая реакция на сообщение |
+| CommentMention | @упоминание участника в сообщении |
 | Attachment | Фото/видео карточки или комментария (R2) |
 
 ```
@@ -167,9 +170,15 @@ Board 1──* Participant
 Board 1──* Card
 Participant 1──* Card (author)
 Card 1──* Comment
+Card 0──1 Comment (pin)
+Comment 0──1 Comment (reply parent)
+Comment 1──* CommentReaction
+Comment 1──* CommentMention
 Card 1──* Attachment
 Comment 1──* Attachment
 Participant 1──* Comment (author)
+Participant 1──* CommentReaction
+Participant 1──* CommentMention
 Participant 1──* Attachment (author)
 ```
 

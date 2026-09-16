@@ -2601,6 +2601,194 @@ textarea {
   text-align: right;
 }
 
+.thread-toolbar {
+  display: grid;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding: 0 0.15rem 0.45rem;
+}
+
+.thread-search {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.65rem;
+}
+
+.thread-search:focus {
+  outline: none;
+  border-color: rgba(15, 107, 92, 0.45);
+}
+
+.thread-pin,
+.thread-questions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(23, 33, 27, 0.045);
+  border: 1px solid var(--line);
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.thread-pin {
+  cursor: pointer;
+}
+
+.thread-day,
+.thread-new {
+  margin: 0.15rem 0;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.thread-new {
+  color: var(--accent);
+}
+
+.thread-reply-to,
+.thread-deleted {
+  margin: 0 0 0.3rem;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.thread-mention {
+  color: var(--accent);
+  font-weight: 750;
+}
+
+.thread-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+
+.thread-reaction,
+.thread-react-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.thread-reaction.is-mine {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.thread-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+}
+
+.thread-more {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.08em;
+}
+
+.thread-menu {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.thread-react-row,
+.thread-menu-actions,
+.thread-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.thread-menu-actions button,
+.thread-edit-actions button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.thread-edit textarea {
+  width: 100%;
+  min-height: 3.5rem;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  padding: 0.35rem 0.45rem;
+}
+
+.comment-reply-bar,
+.mention-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(23, 33, 27, 0.045);
+  border: 1px solid var(--line);
+  font-size: 0.78rem;
+}
+
+.comment-reply-bar button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.mention-picker {
+  display: grid;
+  padding: 0.2rem;
+  list-style: none;
+  margin: 0;
+}
+
+.mention-picker button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mention-picker button:hover {
+  background: var(--accent-soft);
+}
+
 .comment-form {
   --composer-control: 2.75rem;
   display: grid;

@@ -17,6 +17,8 @@ const comment: CardThreadComment = {
   authorId,
   body: "Need a photo",
   createdAt: new Date("2026-09-12T11:00:00.000Z"),
+  editedAt: null,
+  deleted: false,
   author: {
     id: authorId,
     boardId,
@@ -24,6 +26,8 @@ const comment: CardThreadComment = {
     createdAt: new Date("2026-09-12T09:00:00.000Z"),
   },
   attachments: [],
+  replyTo: null,
+  reactions: [],
 };
 
 describe("card comments", () => {

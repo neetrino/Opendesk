@@ -108,6 +108,7 @@ export function parseBoardCard(raw: unknown): LocalBoardCard | null {
   const card = parsed.data;
   return {
     ...card,
+    pinnedCommentId: null,
     createdAt: new Date(card.createdAt),
     updatedAt: new Date(card.updatedAt),
     author: {

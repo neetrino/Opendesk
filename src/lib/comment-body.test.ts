@@ -58,6 +58,23 @@ describe("parseCommentBody", () => {
     });
   });
 
+  it("marks an @mention inside nearby text", () => {
+    expect(
+      parseCommentBody("ping @Anna please", [
+        { id: "clannaxxxxxxxxxxxxxxxxxxxxx", displayName: "Anna" },
+      ]),
+    ).toEqual([
+      {
+        type: "text",
+        spans: [
+          { type: "text", value: "ping " },
+          { type: "mention", value: "@Anna" },
+          { type: "text", value: " please" },
+        ],
+      },
+    ]);
+  });
+
   it("reads prototype and FigJam paths", () => {
     expect(
       parseCommentBody("https://figma.com/proto/abc123/Checkout-flow"),
