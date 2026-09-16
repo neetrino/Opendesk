@@ -9,6 +9,7 @@ import {
   type RefObject,
 } from "react";
 import { ThreadList } from "@/components/thread-list";
+import { ThreadSearchField } from "@/components/thread-search-field";
 import type { CardThreadComment, ThreadReplyTo } from "@/lib/card-comment-view";
 import {
   deleteCommentAction,
@@ -254,11 +255,10 @@ export function CardThreadPane({
   return (
     <>
       <div className="thread-toolbar">
-        <input
-          className="thread-search"
+        <ThreadSearchField
           value={query}
-          onChange={(event) => runSearch(event.target.value)}
-          placeholder={t.cardPage.searchThread}
+          hitCount={hits ? hits.length : null}
+          onChange={runSearch}
         />
         {thread.pinned ? (
           <button
@@ -318,7 +318,7 @@ export function CardThreadPane({
         ) : thread.error ? (
           <p className="form-error thread-empty">{t.errors.loadComments}</p>
         ) : hits && hits.length === 0 ? (
-          <p className="muted thread-empty">{t.cardPage.searchEmpty}</p>
+          <p className="thread-empty is-search">{t.cardPage.searchEmpty}</p>
         ) : (
           <ThreadList
             comments={visible}
