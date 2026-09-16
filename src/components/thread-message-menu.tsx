@@ -1,16 +1,18 @@
 "use client";
 
-import {
-  COMMENT_REACTION_GLYPHS,
-  type CommentReactionEmoji,
-} from "@/lib/comment-reactions";
-import { COMMENT_REACTION_EMOJIS } from "@/lib/constants";
+import type { ReactNode } from "react";
+import { ThreadActionPopover } from "@/components/thread-action-popover";
+import { DotsActionIcon, FaceActionIcon } from "@/components/thread-action-icons";
+import type { CommentReactionEmoji } from "@/lib/comment-reactions";
+import { useThreadLongPress } from "@/lib/use-thread-long-press";
+import { useThreadPopover } from "@/lib/use-thread-popover";
 import { useI18n } from "@/i18n/provider";
 
 type ThreadMessageMenuProps = {
+  children: ReactNode;
+  disabled: boolean;
   isOwn: boolean;
   pinned: boolean;
-  deleted: boolean;
   onReply: () => void;
   onReact: (emoji: CommentReactionEmoji) => void;
   onCopy: () => void;
@@ -21,9 +23,10 @@ type ThreadMessageMenuProps = {
 };
 
 export function ThreadMessageMenu({
+  children,
+  disabled,
   isOwn,
   pinned,
-  deleted,
   onReply,
   onReact,
   onCopy,
@@ -32,71 +35,88 @@ export function ThreadMessageMenu({
   onDelete,
   onCreateCard,
 }: ThreadMessageMenuProps) {
-  const { t } = useI18n();
-  if (deleted) {
-    return null;
+  const popover = useThreadPopover(isOwn ? "bottom-start" : "bottom-end");
+  const longPress = useThreadLongPress(popover.openAtPoint, !disabled);
+
+  if (disabled) {
+    return children;
+  }
+
+  function run(action: () => void): void {
+    popover.close();
+    action();
   }
 
   return (
-    <div className="thread-menu">
-      <div className="thread-react-row" role="group" aria-label={t.cardPage.messageActions}>
-        {COMMENT_REACTION_EMOJIS.map((emoji) => (
-          <button
-            key={emoji}
-            type="button"
-            className="thread-react-btn"
-            onClick={() => onReact(emoji)}
-            aria-label={reactionLabel(emoji, t.cardPage)}
-            title={reactionLabel(emoji, t.cardPage)}
-          >
-            {COMMENT_REACTION_GLYPHS[emoji]}
-          </button>
-        ))}
-      </div>
-      <div className="thread-menu-actions">
-        <button type="button" onClick={onReply}>
-          {t.cardPage.reply}
-        </button>
-        <button type="button" onClick={onCopy}>
-          {t.cardPage.copyMessage}
-        </button>
-        <button type="button" onClick={onPin}>
-          {pinned ? t.cardPage.unpinMessage : t.cardPage.pinMessage}
-        </button>
-        <button type="button" onClick={onCreateCard}>
-          {t.cardPage.createCardFromMessage}
-        </button>
-        {isOwn ? (
-          <>
-            <button type="button" onClick={onEdit}>
-              {t.cardPage.editMessage}
-            </button>
-            <button type="button" onClick={onDelete}>
-              {t.cardPage.deleteMessage}
-            </button>
-          </>
-        ) : null}
-      </div>
+    <div
+      className={
+        popover.open ? "thread-item-shell is-menu-open" : "thread-item-shell"
+      }
+      onContextMenu={(event) => {
+        event.preventDefault();
+        popover.openAtPoint({ x: event.clientX, y: event.clientY });
+      }}
+      {...longPress}
+    >
+      {children}
+      <ThreadHoverChip
+        open={popover.open}
+        setReference={popover.refs.setReference}
+        referenceProps={popover.getReferenceProps({
+          onClick: () => openFromChip(popover),
+        })}
+      />
+      {popover.open ? (
+        <ThreadActionPopover
+          context={popover.context}
+          setFloating={popover.refs.setFloating}
+          floatingStyles={popover.floatingStyles}
+          floatingProps={popover.getFloatingProps()}
+          isOwn={isOwn}
+          pinned={pinned}
+          onReply={() => run(onReply)}
+          onReact={(emoji) => run(() => onReact(emoji))}
+          onCopy={() => run(onCopy)}
+          onPin={() => run(onPin)}
+          onCreateCard={() => run(onCreateCard)}
+          onEdit={() => run(onEdit)}
+          onDelete={() => run(onDelete)}
+        />
+      ) : null}
     </div>
   );
 }
 
-function reactionLabel(
-  emoji: CommentReactionEmoji,
-  copy: {
-    reactionAgree: string;
-    reactionDone: string;
-    reactionWatching: string;
-    reactionQuestion: string;
-    reactionBlocker: string;
-  },
-): string {
-  const labels = {
-    agree: copy.reactionAgree,
-    done: copy.reactionDone,
-    watching: copy.reactionWatching,
-    question: copy.reactionQuestion,
-    blocker: copy.reactionBlocker,
-  } as const;
-  return labels[emoji];
+function openFromChip(popover: ReturnType<typeof useThreadPopover>): void {
+  const node = popover.refs.domReference.current;
+  if (node) {
+    popover.refs.setPositionReference(node);
+  }
+  popover.openAtTrigger();
+}
+
+function ThreadHoverChip({
+  open,
+  setReference,
+  referenceProps,
+}: {
+  open: boolean;
+  setReference: (node: HTMLButtonElement | null) => void;
+  referenceProps: Record<string, unknown>;
+}) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      className="thread-hover-chip"
+      aria-label={t.cardPage.messageActions}
+      aria-expanded={open}
+      aria-haspopup="menu"
+      ref={setReference}
+      {...referenceProps}
+    >
+      <FaceActionIcon size={16} />
+      <DotsActionIcon size={16} />
+    </button>
+  );
 }

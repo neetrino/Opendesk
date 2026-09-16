@@ -2470,7 +2470,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  padding: 0.15rem 0.35rem 0.5rem 0;
+  padding: 1.1rem 0.35rem 0.5rem 0;
   margin: 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -2494,6 +2494,7 @@ textarea {
 }
 
 .thread-item {
+  position: relative;
   align-self: flex-start;
   max-width: min(100%, 22rem);
   padding: 0.55rem 0.7rem 0.4rem;
@@ -2680,19 +2681,21 @@ textarea {
   margin-top: 0.35rem;
 }
 
-.thread-reaction,
-.thread-react-btn {
-  border: 1px solid var(--line);
-  background: #fff;
+.thread-reaction {
+  border: 0;
+  background: color-mix(in srgb, var(--paper) 72%, white);
   border-radius: 999px;
-  padding: 0.1rem 0.4rem;
+  padding: 0.12rem 0.5rem;
   font-size: 0.72rem;
   cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 4px 10px rgba(16, 24, 20, 0.06);
 }
 
 .thread-reaction.is-mine {
   background: var(--accent-soft);
-  border-color: transparent;
+  color: var(--accent-hover);
 }
 
 .thread-meta {
@@ -2705,37 +2708,188 @@ textarea {
   font-size: 0.62rem;
 }
 
-.thread-more {
+.thread-item-shell {
+  display: block;
+}
+
+.thread-hover-chip {
+  position: absolute;
+  top: -0.95rem;
+  right: 0.2rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  min-height: 1.85rem;
+  padding: 0.18rem 0.42rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--paper-raised) 70%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 10px 24px rgba(16, 24, 20, 0.12);
+  backdrop-filter: blur(16px) saturate(1.35);
+  -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px) scale(0.96);
+  transition:
+    opacity var(--duration-ui) var(--ease-ui),
+    transform var(--duration-ui) var(--ease-ui),
+    background var(--duration-ui) var(--ease-ui);
+}
+
+.thread-item.is-own .thread-hover-chip {
+  right: auto;
+  left: 0.2rem;
+}
+
+.thread-item:hover .thread-hover-chip,
+.thread-item:focus-within .thread-hover-chip,
+.thread-item-shell.is-menu-open .thread-hover-chip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+.thread-hover-chip:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 82%, white);
+}
+
+@media (hover: none) {
+  .thread-hover-chip {
+    display: none;
+  }
+
+  .thread-item-shell.is-menu-open .thread-hover-chip {
+    display: inline-flex;
+  }
+}
+
+.thread-popover {
+  z-index: 70;
+  min-width: 15.75rem;
+  padding: 0.42rem;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--paper-raised) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.42) inset,
+    0 22px 54px rgba(16, 24, 20, 0.18);
+  backdrop-filter: blur(22px) saturate(1.45);
+  -webkit-backdrop-filter: blur(22px) saturate(1.45);
+  animation: thread-popover-in var(--duration-ui) var(--ease-ui);
+}
+
+@keyframes thread-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.thread-popover-react {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.2rem;
+  padding: 0.15rem 0.15rem 0.42rem;
+}
+
+.thread-react-orb {
+  width: 2.35rem;
+  height: 2.35rem;
   border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 68%, white);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 8px 16px rgba(16, 24, 20, 0.08);
+  font-size: 1.12rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform var(--duration-ui) var(--ease-ui),
+    background var(--duration-ui) var(--ease-ui);
+}
+
+.thread-react-orb:hover,
+.thread-react-orb:focus-visible {
+  background: var(--accent-soft);
+  transform: translateY(-3px) scale(1.08);
+}
+
+.thread-popover-list {
+  display: grid;
+  padding: 0.18rem;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--paper) 88%, white);
+}
+
+.thread-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 0.65rem;
+  border: 0;
+  border-radius: 12px;
   background: transparent;
   color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  text-align: left;
   cursor: pointer;
-  padding: 0;
-  letter-spacing: 0.08em;
 }
 
-.thread-menu {
+.thread-popover-item:hover,
+.thread-popover-item:focus-visible {
+  background: color-mix(in srgb, var(--accent-soft) 78%, white);
+}
+
+.thread-popover-item.is-danger {
+  color: var(--danger);
+}
+
+.thread-popover-ico {
   display: grid;
-  gap: 0.35rem;
-  margin-top: 0.4rem;
+  place-items: center;
+  width: 1.7rem;
+  color: var(--ink-soft);
 }
 
-.thread-react-row,
-.thread-menu-actions,
+.thread-popover-item.is-danger .thread-popover-ico {
+  color: var(--danger);
+}
+
+.thread-popover-rule {
+  height: 1px;
+  margin: 0.2rem 0.45rem;
+  background: var(--line);
+}
+
 .thread-edit-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
 }
 
-.thread-menu-actions button,
 .thread-edit-actions button {
-  border: 1px solid var(--line);
-  background: #fff;
+  border: 0;
+  background: color-mix(in srgb, var(--paper) 72%, white);
   border-radius: 999px;
-  padding: 0.15rem 0.5rem;
-  font-size: 0.68rem;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.72rem;
   cursor: pointer;
+  box-shadow: 0 4px 10px rgba(16, 24, 20, 0.06);
 }
 
 .thread-edit textarea {

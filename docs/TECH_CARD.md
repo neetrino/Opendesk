@@ -32,7 +32,7 @@
 |---|----------|---------|--------|---------|
 | 2.1 | Framework | Next.js 16.x (App Router) | ✅ | |
 | 2.2 | Стили | Tailwind CSS 4.x | ✅ | |
-| 2.3 | UI Kit | custom (минимальный набор) | ✅ | |
+| 2.3 | UI Kit | custom (минимальный набор) | ✅ | меню сообщения в треде: `@floating-ui/react` только для placement/dismiss; визуал свой |
 | 2.4 | State | useState / Server Components | ✅ | |
 | 2.5 | Формы | Server Actions + Zod | ✅ | |
 | 2.6 | Data fetching | Server Components + Server Actions | ✅ | |
