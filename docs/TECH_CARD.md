@@ -32,7 +32,7 @@
 |---|----------|---------|--------|---------|
 | 2.1 | Framework | Next.js 16.x (App Router) | ✅ | |
 | 2.2 | Стили | Tailwind CSS 4.x | ✅ | |
-| 2.3 | UI Kit | custom (минимальный набор) | ✅ | |
+| 2.3 | UI Kit | custom (минимальный набор) | ✅ | меню сообщения в треде: `@floating-ui/react` только для placement/dismiss; визуал свой |
 | 2.4 | State | useState / Server Components | ✅ | |
 | 2.5 | Формы | Server Actions + Zod | ✅ | |
 | 2.6 | Data fetching | Server Components + Server Actions | ✅ | |
@@ -78,7 +78,7 @@
 - `Board` — id, title, slug (unique), joinToken (unique), createdAt
   - постоянная ссылка (join + workspace): `/b/{slug}/{joinToken}`
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
-- `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
+- `Participant` — id, boardId, displayName, avatarKey? (уникальный стикер на доске), createdAt (макс. 20 на доску)
 - `Card` — id, boardId, status, title, urgent, authorId, position, pinnedCommentId?
 - `Comment` — id, cardId, authorId, body, createdAt, editedAt?, deletedAt?, parentId? (quote-reply + snapshot автора/отрывка)
 - `CommentReaction` — commentId, participantId, emoji (`agree` \| `done` \| `watching` \| `question` \| `blocker`)

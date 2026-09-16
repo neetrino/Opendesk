@@ -158,6 +158,7 @@ export type Dictionary = {
     newMessages: string;
     searchThread: string;
     searchEmpty: string;
+    clearSearch: string;
     pinned: string;
     openQuestions: string;
     messageDeleted: string;
@@ -435,6 +436,7 @@ export const en: Dictionary = {
     newMessages: "New",
     searchThread: "Search messages",
     searchEmpty: "No messages found",
+    clearSearch: "Clear search",
     pinned: "Pinned",
     openQuestions: "Open questions",
     messageDeleted: "Message deleted",

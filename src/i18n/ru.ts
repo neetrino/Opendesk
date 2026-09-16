@@ -165,6 +165,7 @@ export const ru: Dictionary = {
     newMessages: "Новые",
     searchThread: "Поиск по сообщениям",
     searchEmpty: "Ничего не найдено",
+    clearSearch: "Очистить поиск",
     pinned: "Закреплено",
     openQuestions: "Открытые вопросы",
     messageDeleted: "Сообщение удалено",

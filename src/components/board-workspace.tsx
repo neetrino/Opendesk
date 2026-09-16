@@ -13,11 +13,12 @@ import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import { ParticipantsPanel } from "@/components/participants-panel";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionary";
-import { displayInitials } from "@/lib/initials";
+import { BoardAvatar } from "@/components/board-avatar";
 
 type BoardWorkspaceParticipant = {
   id: string;
   displayName: string;
+  avatarKey: string | null;
   createdAt: Date;
 };
 
@@ -36,6 +37,7 @@ type BoardWorkspaceProps = {
   currentUser: {
     participantId: string;
     displayName: string;
+    avatarKey: string | null;
   };
   isOwner: boolean;
   attachmentsEnabled: boolean;
@@ -59,9 +61,11 @@ export function BoardWorkspace({
             <BoardMarkAllHeaderButton />
             <div className="board-top-actions">
               <p className="board-identity">
-                <span className="board-avatar" aria-hidden="true">
-                  {displayInitials(currentUser.displayName)}
-                </span>
+                <BoardAvatar
+                  name={currentUser.displayName}
+                  mark={currentUser.avatarKey}
+                  size="md"
+                />
                 <span>
                   <span className="visually-hidden">{t.board.youAre} </span>
                   <strong>{currentUser.displayName}</strong>

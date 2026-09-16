@@ -53,6 +53,7 @@ model Participant {
   id          String   @id @default(cuid())
   boardId     String
   displayName String
+  avatarKey   String?
   createdAt   DateTime @default(now())
 
   board            Board              @relation(fields: [boardId], references: [id], onDelete: Cascade)
@@ -64,6 +65,7 @@ model Participant {
   commentMentions  CommentMention[]
 
   @@index([boardId])
+  @@unique([boardId, avatarKey])
 }
 
 model Card {

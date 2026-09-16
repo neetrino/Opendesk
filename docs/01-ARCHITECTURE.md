@@ -157,7 +157,7 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 |--------|----------|
 | Board | Доска + `slug` + постоянный `joinToken` |
 | Invite | Legacy одноразовый токен |
-| Participant | Участник (displayName) |
+| Participant | Участник (displayName + уникальный `avatarKey` на доске) |
 | Card | title + urgent + status + position |
 | Comment | Сообщение в треде карточки (reply, edit, soft-delete) |
 | CommentReaction | Рабочая реакция на сообщение |

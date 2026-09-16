@@ -1,3 +1,7 @@
+import {
+  assignBoardAvatar,
+  nextBoardAvatarKey,
+} from "@/lib/assign-board-avatars";
 import { OWNER_PARTICIPANT_NAME } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getOwnerSession } from "@/lib/owner-session";
@@ -10,7 +14,7 @@ export type BoardAccess = SessionPayload & {
 /** Ensure a stable Owner participant exists for env-owner mutations. */
 export async function ensureOwnerParticipant(
   boardId: string,
-): Promise<{ id: string; displayName: string }> {
+): Promise<{ id: string; displayName: string; avatarKey: string | null }> {
   const existing = await prisma.participant.findFirst({
     where: {
       boardId,
@@ -20,19 +24,29 @@ export async function ensureOwnerParticipant(
       },
     },
     orderBy: { createdAt: "asc" },
-    select: { id: true, displayName: true },
+    select: { id: true, displayName: true, avatarKey: true },
   });
 
   if (existing) {
-    return existing;
+    if (existing.avatarKey) {
+      return existing;
+    }
+    const avatarKey = await assignBoardAvatar(boardId, existing.id);
+    return { ...existing, avatarKey };
   }
 
+  const avatarKey = await nextBoardAvatarKey(
+    prisma,
+    boardId,
+    `${boardId}:${OWNER_PARTICIPANT_NAME}`,
+  );
   return prisma.participant.create({
     data: {
       boardId,
       displayName: OWNER_PARTICIPANT_NAME,
+      avatarKey,
     },
-    select: { id: true, displayName: true },
+    select: { id: true, displayName: true, avatarKey: true },
   });
 }
 

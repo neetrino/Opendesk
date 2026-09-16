@@ -28,6 +28,7 @@ const boardCardListSelect = {
       id: true,
       boardId: true,
       displayName: true,
+      avatarKey: true,
       createdAt: true,
     },
   },
@@ -56,6 +57,7 @@ type BoardCardRow = {
     id: string;
     boardId: string;
     displayName: string;
+    avatarKey: string | null;
     createdAt: Date;
   };
   _count: {

@@ -165,6 +165,7 @@ export const hy: Dictionary = {
     newMessages: "Նոր",
     searchThread: "Որոնել հաղորդագրություններում",
     searchEmpty: "Ոչինչ չի գտնվել",
+    clearSearch: "Մաքրել որոնումը",
     pinned: "Ամրացված",
     openQuestions: "Բաց հարցեր",
     messageDeleted: "Հաղորդագրությունը ջնջված է",

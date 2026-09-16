@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BoardAvatar } from "@/components/board-avatar";
 import { MediaThumb, type MediaItem } from "@/components/media-thumb";
 import { ThreadBody, type ThreadLinkCopy } from "@/components/thread-body";
 import { ThreadMessageMenu } from "@/components/thread-message-menu";
@@ -58,7 +59,6 @@ export function ThreadCommentItem({
   onCreateCard,
 }: ThreadCommentItemProps) {
   const { t } = useI18n();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const time = new Date(comment.createdAt).toLocaleTimeString(locale, {
@@ -82,110 +82,100 @@ export function ThreadCommentItem({
       id={`thread-comment-${comment.id}`}
       className={isOwn ? "thread-item is-own" : "thread-item"}
     >
-      {isOwn || comment.deleted ? null : (
-        <span className="thread-author">{comment.author.displayName}</span>
-      )}
-      {comment.replyTo ? (
-        <p className="thread-reply-to">
-          {t.cardPage.replyTo.replace("{name}", comment.replyTo.authorName)}
-          {": "}
-          {comment.replyTo.deleted
-            ? t.cardPage.messageDeleted
-            : comment.replyTo.excerpt}
-        </p>
-      ) : null}
-      <ThreadCommentContent
-        comment={comment}
-        editing={editing}
-        draft={draft}
-        linkCopy={linkCopy}
-        participants={participants}
-        openLabel={openLabel}
-        onOpen={onOpen}
-        onDraftChange={setDraft}
-        onCancelEdit={() => {
-          setEditing(false);
+      <ThreadMessageMenu
+        disabled={comment.deleted}
+        isOwn={isOwn}
+        pinned={pinned}
+        onReply={onReply}
+        onReact={onReact}
+        onCopy={() => {
+          void copyBody();
+        }}
+        onPin={onPin}
+        onEdit={() => {
           setDraft(comment.body);
+          setEditing(true);
         }}
-        onSaveEdit={() => {
-          const next = draft.trim();
-          if (next.length === 0) {
-            return;
-          }
-          onEdit(next);
-          setEditing(false);
-        }}
-      />
-      {comment.reactions.length > 0 && !comment.deleted ? (
-        <div className="thread-reactions">
-          {comment.reactions.map((reaction) => (
-            <button
-              key={reaction.emoji}
-              type="button"
-              className={
-                reaction.reactedByMe
-                  ? "thread-reaction is-mine"
-                  : "thread-reaction"
-              }
-              onClick={() => onReact(reaction.emoji)}
-            >
-              {COMMENT_REACTION_GLYPHS[reaction.emoji]} {reaction.count}
-            </button>
-          ))}
-        </div>
-      ) : null}
-      <div className="thread-meta">
-        <time dateTime={new Date(comment.createdAt).toISOString()}>
-          {time}
-          {comment.editedAt ? ` · ${t.cardPage.edited}` : ""}
-        </time>
-        {comment.deleted ? null : (
-          <button
-            type="button"
-            className="thread-more"
-            aria-label={t.cardPage.messageActions}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            ···
-          </button>
-        )}
-      </div>
-      {menuOpen ? (
-        <ThreadMessageMenu
-          isOwn={isOwn}
-          pinned={pinned}
-          deleted={comment.deleted}
-          onReply={() => {
-            setMenuOpen(false);
-            onReply();
-          }}
-          onReact={(emoji) => {
-            setMenuOpen(false);
-            onReact(emoji);
-          }}
-          onCopy={() => {
-            setMenuOpen(false);
-            void copyBody();
-          }}
-          onPin={() => {
-            setMenuOpen(false);
-            onPin();
-          }}
-          onEdit={() => {
-            setMenuOpen(false);
+        onDelete={onDelete}
+        onCreateCard={onCreateCard}
+        reactions={comment.reactions}
+      >
+        <span className="thread-author">
+          <BoardAvatar
+            name={comment.author.displayName}
+            mark={comment.author.avatarKey}
+          />
+          {isOwn || comment.deleted ? null : comment.author.displayName}
+        </span>
+        {comment.replyTo ? (
+          <p className="thread-reply-to">
+            {t.cardPage.replyTo.replace("{name}", comment.replyTo.authorName)}
+            {": "}
+            {comment.replyTo.deleted
+              ? t.cardPage.messageDeleted
+              : comment.replyTo.excerpt}
+          </p>
+        ) : null}
+        <ThreadCommentContent
+          comment={comment}
+          editing={editing}
+          draft={draft}
+          linkCopy={linkCopy}
+          participants={participants}
+          openLabel={openLabel}
+          onOpen={onOpen}
+          onDraftChange={setDraft}
+          onCancelEdit={() => {
+            setEditing(false);
             setDraft(comment.body);
-            setEditing(true);
           }}
-          onDelete={() => {
-            setMenuOpen(false);
-            onDelete();
-          }}
-          onCreateCard={() => {
-            setMenuOpen(false);
-            onCreateCard();
+          onSaveEdit={() => {
+            const next = draft.trim();
+            if (next.length === 0) {
+              return;
+            }
+            onEdit(next);
+            setEditing(false);
           }}
         />
-      ) : null}
+        {comment.reactions.length > 0 && !comment.deleted ? (
+          <ThreadReactionChips
+            reactions={comment.reactions}
+            onReact={onReact}
+          />
+        ) : null}
+        <div className="thread-meta">
+          <time dateTime={new Date(comment.createdAt).toISOString()}>
+            {time}
+            {comment.editedAt ? ` · ${t.cardPage.edited}` : ""}
+          </time>
+        </div>
+      </ThreadMessageMenu>
+    </div>
+  );
+}
+
+function ThreadReactionChips({
+  reactions,
+  onReact,
+}: {
+  reactions: CardThreadComment["reactions"];
+  onReact: (emoji: CommentReactionEmoji) => void;
+}) {
+  return (
+    <div className="thread-reactions">
+      {reactions.map((reaction) => (
+        <button
+          key={reaction.emoji}
+          type="button"
+          className={
+            reaction.reactedByMe ? "thread-reaction is-mine" : "thread-reaction"
+          }
+          onClick={() => onReact(reaction.emoji)}
+        >
+          {COMMENT_REACTION_GLYPHS[reaction.emoji]} {reaction.count}
+        </button>
+      ))}
     </div>
   );
 }

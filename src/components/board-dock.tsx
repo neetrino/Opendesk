@@ -13,6 +13,7 @@ type BoardDockProps = {
   participants: BoardParticipant[];
   locale: string;
   displayName: string;
+  avatarKey: string | null;
   isOwner: boolean;
   onStartCreate: () => void;
   onMarkAllRead?: () => void;
@@ -44,6 +45,7 @@ export function BoardDock({
   participants,
   locale,
   displayName,
+  avatarKey,
   isOwner,
   onStartCreate,
   onMarkAllRead,
@@ -60,6 +62,7 @@ export function BoardDock({
           participants={participants}
           locale={locale}
           displayName={displayName}
+          avatarKey={avatarKey}
           isOwner={isOwner}
         />
         <BoardSearchDockButton />

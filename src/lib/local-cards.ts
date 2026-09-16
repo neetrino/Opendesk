@@ -30,6 +30,7 @@ export type OptimisticCommentAttachment = Pick<
 export type LocalCardAuthor = {
   participantId: string;
   displayName: string;
+  avatarKey: string | null;
 };
 
 type BuildLocalCardInput = {
@@ -134,6 +135,7 @@ export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard 
       id: input.author.participantId,
       boardId: input.boardId,
       displayName: input.author.displayName,
+      avatarKey: input.author.avatarKey,
       createdAt: now,
     },
     commentCount: 0,
@@ -156,6 +158,7 @@ export function toBoardCardFromCreated(
       id: author.participantId,
       boardId: created.boardId,
       displayName: author.displayName,
+      avatarKey: author.avatarKey,
       createdAt,
     },
     commentCount: 0,

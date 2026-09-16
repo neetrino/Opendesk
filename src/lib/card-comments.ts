@@ -30,6 +30,7 @@ const commentAuthorSelect = {
   id: true,
   boardId: true,
   displayName: true,
+  avatarKey: true,
   createdAt: true,
 } as const;
 
@@ -53,6 +54,7 @@ type CommentRow = {
     id: string;
     boardId: string;
     displayName: string;
+    avatarKey: string | null;
     createdAt: Date;
   };
   attachments: Array<{
