@@ -147,7 +147,11 @@ export function canPreviewInline(
   kind: AttachmentKind,
 ): boolean {
   if (kind === "video") {
-    return contentType === "video/mp4" || contentType === "video/webm";
+    return (
+      contentType === "video/mp4" ||
+      contentType === "video/webm" ||
+      contentType === "video/quicktime"
+    );
   }
   if (kind === "audio") {
     return (

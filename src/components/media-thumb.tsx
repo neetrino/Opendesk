@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { VoiceNotePlayer } from "@/components/voice-note-player";
 import { canPreviewInline } from "@/lib/attachments";
 import { useHistoryTrap } from "@/lib/use-history-trap";
@@ -30,8 +30,15 @@ export function MediaThumb({
   openLabel,
   removeLabel,
 }: MediaThumbProps) {
-  const previewable = canPreviewInline(item.contentType, item.kind);
+  const preview = useInlinePreview(item);
   const uploading = progress !== undefined && progress < 100;
+  const classes = [
+    "media-thumb",
+    uploading ? "is-uploading" : "",
+    item.kind === "video" ? "is-video" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (item.kind === "audio") {
     return (
@@ -44,21 +51,14 @@ export function MediaThumb({
   }
 
   return (
-    <div className={uploading ? "media-thumb is-uploading" : "media-thumb"}>
+    <div className={classes}>
       <button
         type="button"
         className="media-thumb-open"
         onClick={onOpen}
         aria-label={`${openLabel}: ${item.filename}`}
       >
-        {previewable && item.kind === "image" ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.src} alt="" />
-        ) : previewable && item.kind === "video" ? (
-          <video src={item.src} muted playsInline preload="metadata" />
-        ) : (
-          <span className="media-thumb-fallback">{item.filename}</span>
-        )}
+        <InlineMedia item={item} previewable={preview.ready} onError={preview.fail} />
         {item.kind === "video" ? <span className="media-play" /> : null}
       </button>
       {onRemove && removeLabel ? (
@@ -85,7 +85,7 @@ type MediaLightboxProps = {
 };
 
 export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps) {
-  const previewable = canPreviewInline(item.contentType, item.kind);
+  const preview = useInlinePreview(item);
 
   useHistoryTrap({
     id: "media",
@@ -129,34 +129,106 @@ export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps)
         ×
       </button>
       <div className="media-lightbox-frame">
-        {previewable && item.kind === "image" ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.src} alt={item.filename} onClick={keepOpen} />
-        ) : previewable && item.kind === "video" ? (
-          <video
-            src={item.src}
-            controls
-            autoPlay
-            playsInline
-            onClick={keepOpen}
-          />
-        ) : previewable && item.kind === "audio" ? (
-          <div onClick={keepOpen}>
-            <VoiceNotePlayer src={item.src} filename={item.filename} />
-          </div>
-        ) : (
-          <a
-            className="media-lightbox-link"
-            href={item.src}
-            target="_blank"
-            rel="noreferrer"
-            onClick={keepOpen}
-          >
-            {item.filename}
-          </a>
-        )}
+        <LightboxMedia
+          item={item}
+          previewable={preview.ready}
+          onError={preview.fail}
+          onKeepOpen={keepOpen}
+        />
         <p onClick={keepOpen}>{item.filename}</p>
       </div>
     </div>
+  );
+}
+
+function useInlinePreview(item: MediaItem): {
+  ready: boolean;
+  fail: () => void;
+} {
+  const [failed, setFailed] = useState(false);
+  return {
+    ready: canPreviewInline(item.contentType, item.kind) && !failed,
+    fail: () => setFailed(true),
+  };
+}
+
+function InlineMedia({
+  item,
+  previewable,
+  onError,
+}: {
+  item: MediaItem;
+  previewable: boolean;
+  onError: () => void;
+}) {
+  if (previewable && item.kind === "image") {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={item.src} alt="" onError={onError} />;
+  }
+  if (previewable && item.kind === "video") {
+    return (
+      <video
+        src={item.src}
+        muted
+        playsInline
+        preload="metadata"
+        onError={onError}
+      />
+    );
+  }
+  return <span className="media-thumb-fallback">{item.filename}</span>;
+}
+
+function LightboxMedia({
+  item,
+  previewable,
+  onError,
+  onKeepOpen,
+}: {
+  item: MediaItem;
+  previewable: boolean;
+  onError: () => void;
+  onKeepOpen: (event: MouseEvent<HTMLElement>) => void;
+}) {
+  if (previewable && item.kind === "image") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={item.src}
+        alt={item.filename}
+        onClick={onKeepOpen}
+        onError={onError}
+      />
+    );
+  }
+  if (previewable && item.kind === "video") {
+    return (
+      <video
+        src={item.src}
+        controls
+        autoPlay
+        playsInline
+        onClick={onKeepOpen}
+        onError={onError}
+      />
+    );
+  }
+  if (previewable && item.kind === "audio") {
+    return (
+      <div onClick={onKeepOpen}>
+        <VoiceNotePlayer src={item.src} filename={item.filename} />
+      </div>
+    );
+  }
+  return (
+    <a
+      className="media-lightbox-link"
+      href={item.src}
+      target="_blank"
+      rel="noreferrer"
+      onClick={onKeepOpen}
+    >
+      {item.filename}
+    </a>
   );
 }

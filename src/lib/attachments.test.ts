@@ -45,11 +45,12 @@ describe("attachment helpers", () => {
     expect(sanitizeFilename(" folder/secret.png ")).toBe("folder_secret.png");
   });
 
-  it("previews common images and mp4, not heic or mov", () => {
+  it("previews common images, mp4, webm and mov, not heic", () => {
     expect(canPreviewInline("image/png", "image")).toBe(true);
     expect(canPreviewInline("image/heic", "image")).toBe(false);
     expect(canPreviewInline("video/mp4", "video")).toBe(true);
-    expect(canPreviewInline("video/quicktime", "video")).toBe(false);
+    expect(canPreviewInline("video/webm", "video")).toBe(true);
+    expect(canPreviewInline("video/quicktime", "video")).toBe(true);
     expect(canPreviewInline("audio/webm", "audio")).toBe(true);
     expect(canPreviewInline("audio/mp4", "audio")).toBe(true);
   });
