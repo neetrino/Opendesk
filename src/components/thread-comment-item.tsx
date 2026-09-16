@@ -97,6 +97,7 @@ export function ThreadCommentItem({
         }}
         onDelete={onDelete}
         onCreateCard={onCreateCard}
+        reactions={comment.reactions}
       >
         {isOwn || comment.deleted ? null : (
           <span className="thread-author">{comment.author.displayName}</span>

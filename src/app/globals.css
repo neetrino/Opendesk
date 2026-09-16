@@ -2470,7 +2470,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  padding: 1.1rem 0.35rem 0.5rem 0;
+  padding: 0.35rem 0.35rem 0.5rem 0;
   margin: 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -2510,6 +2510,13 @@ textarea {
   border-radius: 16px 16px 6px 16px;
   background: var(--accent-soft);
   border-color: transparent;
+}
+
+.thread-item:has(.thread-item-shell.is-menu-open) {
+  z-index: 6;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  box-shadow: 0 14px 32px rgba(16, 24, 20, 0.12);
 }
 
 .thread-author {
@@ -2674,23 +2681,31 @@ textarea {
   font-weight: 750;
 }
 
+.thread-item:has(.thread-reactions) {
+  margin-bottom: 0.7rem;
+}
+
 .thread-reactions {
+  position: absolute;
+  left: 0.5rem;
+  bottom: -0.95rem;
+  z-index: 4;
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
-  margin-top: 0.35rem;
+  margin: 0;
 }
 
 .thread-reaction {
   border: 0;
-  background: color-mix(in srgb, var(--paper) 72%, white);
+  background: color-mix(in srgb, var(--paper) 86%, white);
   border-radius: 999px;
-  padding: 0.12rem 0.5rem;
-  font-size: 0.72rem;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.78rem;
   cursor: pointer;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 4px 10px rgba(16, 24, 20, 0.06);
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 8px 18px rgba(16, 24, 20, 0.14);
 }
 
 .thread-reaction.is-mine {
@@ -2714,8 +2729,10 @@ textarea {
 
 .thread-hover-chip {
   position: absolute;
-  top: -0.95rem;
-  right: 0.2rem;
+  top: auto;
+  right: 0.28rem;
+  bottom: 1.15rem;
+  left: auto;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -2739,11 +2756,6 @@ textarea {
     opacity var(--duration-ui) var(--ease-ui),
     transform var(--duration-ui) var(--ease-ui),
     background var(--duration-ui) var(--ease-ui);
-}
-
-.thread-item.is-own .thread-hover-chip {
-  right: auto;
-  left: 0.2rem;
 }
 
 .thread-item:hover .thread-hover-chip,
@@ -2771,9 +2783,9 @@ textarea {
 
 .thread-popover {
   z-index: 70;
-  min-width: 15.75rem;
-  padding: 0.42rem;
-  border-radius: 22px;
+  min-width: 13rem;
+  padding: 0.28rem;
+  border-radius: 18px;
   background: color-mix(in srgb, var(--paper-raised) 78%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
   box-shadow:
@@ -2787,37 +2799,46 @@ textarea {
 @keyframes thread-popover-in {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.96);
   }
 
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
 .thread-popover-react {
   display: flex;
   justify-content: space-between;
-  gap: 0.2rem;
-  padding: 0.15rem 0.15rem 0.42rem;
+  gap: 0.12rem;
+  padding: 0.1rem 0.1rem 0.28rem;
 }
 
 .thread-react-orb {
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 1.9rem;
+  height: 1.9rem;
   border: 0;
   border-radius: 50%;
   background: color-mix(in srgb, var(--paper) 68%, white);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.72) inset,
     0 8px 16px rgba(16, 24, 20, 0.08);
-  font-size: 1.12rem;
+  font-size: 0.95rem;
   line-height: 1;
   cursor: pointer;
   transition:
     transform var(--duration-ui) var(--ease-ui),
     background var(--duration-ui) var(--ease-ui);
+}
+
+.thread-react-orb.is-on {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-mid);
+}
+
+.thread-react-orb.is-mine {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2.5px var(--accent);
+  transform: scale(1.08);
 }
 
 .thread-react-orb:hover,
@@ -2828,24 +2849,24 @@ textarea {
 
 .thread-popover-list {
   display: grid;
-  padding: 0.18rem;
-  border-radius: 16px;
+  padding: 0.1rem;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--paper) 88%, white);
 }
 
 .thread-popover-item {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.5rem;
   width: 100%;
-  min-height: 2.5rem;
-  padding: 0 0.65rem;
+  min-height: 2rem;
+  padding: 0 0.5rem;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.8rem;
   text-align: left;
   cursor: pointer;
 }
@@ -2862,7 +2883,7 @@ textarea {
 .thread-popover-ico {
   display: grid;
   place-items: center;
-  width: 1.7rem;
+  width: 1.35rem;
   color: var(--ink-soft);
 }
 

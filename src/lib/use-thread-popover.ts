@@ -1,45 +1,25 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import {
   autoUpdate,
-  flip,
-  offset,
-  shift,
   useDismiss,
   useFloating,
   useInteractions,
   useRole,
-  type Placement,
-  type VirtualElement,
 } from "@floating-ui/react";
 import { useCallback, useState } from "react";
+import { threadPopoverDock } from "@/lib/thread-popover-dock";
 
-export type ThreadPopoverPoint = {
-  x: number;
-  y: number;
-};
-
-function pointVirtual(point: ThreadPopoverPoint): VirtualElement {
-  return {
-    getBoundingClientRect: () =>
-      DOMRect.fromRect({
-        x: point.x,
-        y: point.y,
-        width: 0,
-        height: 0,
-      }),
-  };
-}
-
-export function useThreadPopover(placement: Placement) {
+export function useThreadPopover() {
   const [open, setOpen] = useState(false);
 
   const { refs, floatingStyles, context } = useFloating({
     open,
     onOpenChange: setOpen,
-    placement,
+    placement: "right-start",
     strategy: "fixed",
-    middleware: [offset(10), flip({ padding: 12 }), shift({ padding: 12 })],
+    middleware: [threadPopoverDock],
     whileElementsMounted: autoUpdate,
   });
 
@@ -50,17 +30,9 @@ export function useThreadPopover(placement: Placement) {
     role,
   ]);
 
-  const openAtTrigger = useCallback(() => {
+  const openMenu = useCallback(() => {
     setOpen(true);
   }, []);
-
-  const openAtPoint = useCallback(
-    (point: ThreadPopoverPoint) => {
-      refs.setPositionReference(pointVirtual(point));
-      setOpen(true);
-    },
-    [refs],
-  );
 
   const close = useCallback(() => {
     setOpen(false);
@@ -68,13 +40,24 @@ export function useThreadPopover(placement: Placement) {
 
   return {
     open,
+    ready: isDocked(floatingStyles),
     context,
     refs,
     floatingStyles,
     getReferenceProps,
     getFloatingProps,
-    openAtTrigger,
-    openAtPoint,
+    openAtTrigger: openMenu,
     close,
   };
+}
+
+function isDocked(styles: CSSProperties): boolean {
+  const transform = styles.transform;
+  if (typeof transform !== "string") {
+    return false;
+  }
+  return (
+    transform.includes("translate(") &&
+    !transform.includes("translate(0px, 0px)")
+  );
 }

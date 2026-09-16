@@ -3,7 +3,10 @@
 import type { ReactNode } from "react";
 import { ThreadActionPopover } from "@/components/thread-action-popover";
 import { DotsActionIcon, FaceActionIcon } from "@/components/thread-action-icons";
-import type { CommentReactionEmoji } from "@/lib/comment-reactions";
+import type {
+  CommentReactionEmoji,
+  ThreadReactionCount,
+} from "@/lib/comment-reactions";
 import { useThreadLongPress } from "@/lib/use-thread-long-press";
 import { useThreadPopover } from "@/lib/use-thread-popover";
 import { useI18n } from "@/i18n/provider";
@@ -20,6 +23,7 @@ type ThreadMessageMenuProps = {
   onEdit: () => void;
   onDelete: () => void;
   onCreateCard: () => void;
+  reactions: ThreadReactionCount[];
 };
 
 export function ThreadMessageMenu({
@@ -34,9 +38,10 @@ export function ThreadMessageMenu({
   onEdit,
   onDelete,
   onCreateCard,
+  reactions,
 }: ThreadMessageMenuProps) {
-  const popover = useThreadPopover(isOwn ? "bottom-start" : "bottom-end");
-  const longPress = useThreadLongPress(popover.openAtPoint, !disabled);
+  const popover = useThreadPopover();
+  const longPress = useThreadLongPress(popover.openAtTrigger, !disabled);
 
   if (disabled) {
     return children;
@@ -52,25 +57,26 @@ export function ThreadMessageMenu({
       className={
         popover.open ? "thread-item-shell is-menu-open" : "thread-item-shell"
       }
+      ref={(node) => {
+        const bubble = node?.closest(".thread-item") ?? node;
+        popover.refs.setReference(bubble);
+      }}
       onContextMenu={(event) => {
         event.preventDefault();
-        popover.openAtPoint({ x: event.clientX, y: event.clientY });
+        popover.openAtTrigger();
       }}
       {...longPress}
     >
       {children}
       <ThreadHoverChip
         open={popover.open}
-        setReference={popover.refs.setReference}
-        referenceProps={popover.getReferenceProps({
-          onClick: () => openFromChip(popover),
-        })}
+        onOpen={popover.openAtTrigger}
       />
       {popover.open ? (
         <ThreadActionPopover
           context={popover.context}
           setFloating={popover.refs.setFloating}
-          floatingStyles={popover.floatingStyles}
+          floatingStyles={popover.ready ? popover.floatingStyles : hiddenFloating}
           floatingProps={popover.getFloatingProps()}
           isOwn={isOwn}
           pinned={pinned}
@@ -81,28 +87,26 @@ export function ThreadMessageMenu({
           onCreateCard={() => run(onCreateCard)}
           onEdit={() => run(onEdit)}
           onDelete={() => run(onDelete)}
+          reactions={reactions}
         />
       ) : null}
     </div>
   );
 }
 
-function openFromChip(popover: ReturnType<typeof useThreadPopover>): void {
-  const node = popover.refs.domReference.current;
-  if (node) {
-    popover.refs.setPositionReference(node);
-  }
-  popover.openAtTrigger();
-}
+const hiddenFloating = {
+  position: "fixed" as const,
+  top: 0,
+  left: 0,
+  visibility: "hidden" as const,
+};
 
 function ThreadHoverChip({
   open,
-  setReference,
-  referenceProps,
+  onOpen,
 }: {
   open: boolean;
-  setReference: (node: HTMLButtonElement | null) => void;
-  referenceProps: Record<string, unknown>;
+  onOpen: () => void;
 }) {
   const { t } = useI18n();
   return (
@@ -112,8 +116,7 @@ function ThreadHoverChip({
       aria-label={t.cardPage.messageActions}
       aria-expanded={open}
       aria-haspopup="menu"
-      ref={setReference}
-      {...referenceProps}
+      onClick={onOpen}
     >
       <FaceActionIcon size={16} />
       <DotsActionIcon size={16} />

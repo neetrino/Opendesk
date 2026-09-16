@@ -17,6 +17,7 @@ import {
 import {
   COMMENT_REACTION_GLYPHS,
   type CommentReactionEmoji,
+  type ThreadReactionCount,
 } from "@/lib/comment-reactions";
 import { COMMENT_REACTION_EMOJIS } from "@/lib/constants";
 import { useI18n } from "@/i18n/provider";
@@ -35,6 +36,7 @@ type ThreadActionPopoverProps = {
   onCreateCard: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  reactions: ThreadReactionCount[];
 };
 
 export function ThreadActionPopover({
@@ -51,6 +53,7 @@ export function ThreadActionPopover({
   onCreateCard,
   onEdit,
   onDelete,
+  reactions,
 }: ThreadActionPopoverProps) {
   return (
     <FloatingPortal>
@@ -61,7 +64,7 @@ export function ThreadActionPopover({
           style={floatingStyles}
           {...floatingProps}
         >
-          <ThreadReactionOrbs onReact={onReact} />
+          <ThreadReactionOrbs onReact={onReact} reactions={reactions} />
           <ThreadActionList
             isOwn={isOwn}
             pinned={pinned}
@@ -80,8 +83,10 @@ export function ThreadActionPopover({
 
 function ThreadReactionOrbs({
   onReact,
+  reactions,
 }: {
   onReact: (emoji: CommentReactionEmoji) => void;
+  reactions: ThreadReactionCount[];
 }) {
   const { t } = useI18n();
   return (
@@ -90,21 +95,34 @@ function ThreadReactionOrbs({
       role="group"
       aria-label={t.cardPage.messageActions}
     >
-      {COMMENT_REACTION_EMOJIS.map((emoji) => (
-        <button
-          key={emoji}
-          type="button"
-          role="menuitem"
-          className="thread-react-orb"
-          onClick={() => onReact(emoji)}
-          aria-label={reactionLabel(emoji, t.cardPage)}
-          title={reactionLabel(emoji, t.cardPage)}
-        >
-          {COMMENT_REACTION_GLYPHS[emoji]}
-        </button>
-      ))}
+      {COMMENT_REACTION_EMOJIS.map((emoji) => {
+        const hit = reactions.find((item) => item.emoji === emoji);
+        return (
+          <button
+            key={emoji}
+            type="button"
+            role="menuitem"
+            className={orbClassName(hit)}
+            onClick={() => onReact(emoji)}
+            aria-label={reactionLabel(emoji, t.cardPage)}
+            title={reactionLabel(emoji, t.cardPage)}
+          >
+            {COMMENT_REACTION_GLYPHS[emoji]}
+          </button>
+        );
+      })}
     </div>
   );
+}
+
+function orbClassName(hit: ThreadReactionCount | undefined): string {
+  if (!hit) {
+    return "thread-react-orb";
+  }
+  if (hit.reactedByMe) {
+    return "thread-react-orb is-on is-mine";
+  }
+  return "thread-react-orb is-on";
 }
 
 function ThreadActionList({
@@ -130,22 +148,22 @@ function ThreadActionList({
   return (
     <div className="thread-popover-list">
       <ThreadActionItem
-        icon={<ReplyActionIcon />}
+        icon={<ReplyActionIcon size={15} />}
         label={t.cardPage.reply}
         onSelect={onReply}
       />
       <ThreadActionItem
-        icon={<CopyActionIcon />}
+        icon={<CopyActionIcon size={15} />}
         label={t.cardPage.copyMessage}
         onSelect={onCopy}
       />
       <ThreadActionItem
-        icon={<PinActionIcon />}
+        icon={<PinActionIcon size={15} />}
         label={pinned ? t.cardPage.unpinMessage : t.cardPage.pinMessage}
         onSelect={onPin}
       />
       <ThreadActionItem
-        icon={<TaskActionIcon />}
+        icon={<TaskActionIcon size={15} />}
         label={t.cardPage.createCardFromMessage}
         onSelect={onCreateCard}
       />
@@ -153,12 +171,12 @@ function ThreadActionList({
         <>
           <div className="thread-popover-rule" />
           <ThreadActionItem
-            icon={<EditActionIcon />}
+            icon={<EditActionIcon size={15} />}
             label={t.cardPage.editMessage}
             onSelect={onEdit}
           />
           <ThreadActionItem
-            icon={<DeleteActionIcon />}
+            icon={<DeleteActionIcon size={15} />}
             label={t.cardPage.deleteMessage}
             onSelect={onDelete}
             danger

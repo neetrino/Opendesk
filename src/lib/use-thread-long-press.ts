@@ -2,10 +2,13 @@
 
 import { useRef } from "react";
 import type { PointerEvent } from "react";
-import type { ThreadPopoverPoint } from "@/lib/use-thread-popover";
-
 const LONG_PRESS_MS = 460;
 const MOVE_CANCEL_PX = 8;
+
+type PressPoint = {
+  x: number;
+  y: number;
+};
 
 type LongPressHandlers = {
   onPointerDown: (event: PointerEvent<HTMLElement>) => void;
@@ -15,11 +18,11 @@ type LongPressHandlers = {
 };
 
 export function useThreadLongPress(
-  onFire: (point: ThreadPopoverPoint) => void,
+  onFire: () => void,
   enabled: boolean,
 ): LongPressHandlers {
   const timerRef = useRef(0);
-  const originRef = useRef<ThreadPopoverPoint | null>(null);
+  const originRef = useRef<PressPoint | null>(null);
 
   function clear(): void {
     window.clearTimeout(timerRef.current);
@@ -38,7 +41,7 @@ export function useThreadLongPress(
         if (!origin) {
           return;
         }
-        onFire(origin);
+        onFire();
         clear();
       }, LONG_PRESS_MS);
     },
