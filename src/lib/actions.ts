@@ -3,6 +3,7 @@
 import type { Card } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { nextBoardAvatarKey } from "@/lib/assign-board-avatars";
 import { requireBoardAccess } from "@/lib/board-access";
 import {
   computeMovedCardPosition,
@@ -156,10 +157,16 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
         throw new Error("BOARD_FULL");
       }
 
+      const avatarKey = await nextBoardAvatarKey(
+        tx,
+        invite.boardId,
+        `${invite.boardId}:${parsed.data.displayName}`,
+      );
       const created = await tx.participant.create({
         data: {
           boardId: invite.boardId,
           displayName: parsed.data.displayName,
+          avatarKey,
         },
       });
 
@@ -252,10 +259,16 @@ export async function joinBoardByTokenAction(
         throw new Error("BOARD_FULL");
       }
 
+      const avatarKey = await nextBoardAvatarKey(
+        tx,
+        board.id,
+        `${board.id}:${parsed.data.displayName}`,
+      );
       return tx.participant.create({
         data: {
           boardId: board.id,
           displayName: parsed.data.displayName,
+          avatarKey,
         },
       });
     });

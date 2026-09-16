@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BoardAvatar } from "@/components/board-avatar";
 import { MediaThumb, type MediaItem } from "@/components/media-thumb";
 import { ThreadBody, type ThreadLinkCopy } from "@/components/thread-body";
 import { ThreadMessageMenu } from "@/components/thread-message-menu";
@@ -99,9 +100,13 @@ export function ThreadCommentItem({
         onCreateCard={onCreateCard}
         reactions={comment.reactions}
       >
-        {isOwn || comment.deleted ? null : (
-          <span className="thread-author">{comment.author.displayName}</span>
-        )}
+        <span className="thread-author">
+          <BoardAvatar
+            name={comment.author.displayName}
+            mark={comment.author.avatarKey}
+          />
+          {isOwn || comment.deleted ? null : comment.author.displayName}
+        </span>
         {comment.replyTo ? (
           <p className="thread-reply-to">
             {t.cardPage.replyTo.replace("{name}", comment.replyTo.authorName)}

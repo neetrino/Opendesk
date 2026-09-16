@@ -96,6 +96,7 @@ export function useCardThread(
     tempId: string,
     authorId: string,
     displayName: string,
+    avatarKey: string | null,
     attachments: OptimisticCommentAttachment[],
     replyTo?: ThreadReplyTo | null,
   ) => void;
@@ -249,6 +250,7 @@ export function useCardThread(
       tempId: string,
       authorId: string,
       displayName: string,
+      avatarKey: string | null,
       attachments: OptimisticCommentAttachment[],
       replyTo: ThreadReplyTo | null = null,
     ): void => {
@@ -265,6 +267,7 @@ export function useCardThread(
           id: authorId,
           boardId,
           displayName,
+          avatarKey,
           createdAt,
         },
         attachments: attachments.map((attachment) => ({

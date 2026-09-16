@@ -34,6 +34,7 @@ export type CardThreadComment = {
     id: string;
     boardId: string;
     displayName: string;
+    avatarKey: string | null;
     createdAt: Date;
   };
   attachments: BoardAttachment[];
@@ -83,6 +84,7 @@ export const cardThreadCommentJsonSchema = z.object({
     id: z.string().cuid(),
     boardId: z.string().cuid(),
     displayName: z.string(),
+    avatarKey: z.string().nullable(),
     createdAt: z.string(),
   }),
   attachments: z.array(commentAttachmentJsonSchema),
@@ -126,6 +128,7 @@ export function serializeThreadComment(comment: CardThreadComment): z.infer<
       id: comment.author.id,
       boardId: comment.author.boardId,
       displayName: comment.author.displayName,
+      avatarKey: comment.author.avatarKey,
       createdAt: toIsoDate(comment.author.createdAt),
     },
     attachments: comment.attachments.map((attachment) => ({

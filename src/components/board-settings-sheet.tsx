@@ -12,7 +12,7 @@ import {
 import { SettingsIcon } from "@/components/settings-icon";
 import { useI18n } from "@/i18n/provider";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
-import { displayInitials } from "@/lib/initials";
+import { BoardAvatar } from "@/components/board-avatar";
 
 const SETTINGS_DOCK_TITLE_MAX_CHARS = 8;
 
@@ -29,6 +29,7 @@ type BoardSettingsSheetProps = {
   participants: BoardParticipant[];
   locale: string;
   displayName: string;
+  avatarKey: string | null;
   isOwner: boolean;
 };
 
@@ -39,6 +40,7 @@ export function BoardSettingsSheet({
   participants,
   locale,
   displayName,
+  avatarKey,
   isOwner,
 }: BoardSettingsSheetProps) {
   const { t } = useI18n();
@@ -120,9 +122,11 @@ export function BoardSettingsSheet({
                     <div className="sheet-block">
                       <div className="board-session-card">
                         <p className="board-identity">
-                          <span className="board-avatar" aria-hidden="true">
-                            {displayInitials(displayName)}
-                          </span>
+                          <BoardAvatar
+                            name={displayName}
+                            mark={avatarKey}
+                            size="md"
+                          />
                           <span>
                             {t.board.youAre}{" "}
                             <strong>{displayName}</strong>

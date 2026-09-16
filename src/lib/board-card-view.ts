@@ -26,6 +26,7 @@ export const boardCardJsonSchema = z.object({
     id: z.string().cuid(),
     boardId: z.string().cuid(),
     displayName: z.string(),
+    avatarKey: z.string().nullable(),
     createdAt: z.string(),
   }),
 });
@@ -94,6 +95,7 @@ export function serializeBoardCard(card: LocalBoardCard): z.infer<
       id: card.author.id,
       boardId: card.author.boardId,
       displayName: card.author.displayName,
+      avatarKey: card.author.avatarKey,
       createdAt: toIsoDate(card.author.createdAt),
     },
   };

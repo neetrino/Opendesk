@@ -78,7 +78,7 @@
 - `Board` — id, title, slug (unique), joinToken (unique), createdAt
   - постоянная ссылка (join + workspace): `/b/{slug}/{joinToken}`
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
-- `Participant` — id, boardId, displayName, createdAt (макс. 20 на доску)
+- `Participant` — id, boardId, displayName, avatarKey? (уникальный стикер на доске), createdAt (макс. 20 на доску)
 - `Card` — id, boardId, status, title, urgent, authorId, position, pinnedCommentId?
 - `Comment` — id, cardId, authorId, body, createdAt, editedAt?, deletedAt?, parentId? (quote-reply + snapshot автора/отрывка)
 - `CommentReaction` — commentId, participantId, emoji (`agree` \| `done` \| `watching` \| `question` \| `blocker`)

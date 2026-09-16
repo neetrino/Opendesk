@@ -1,5 +1,6 @@
 "use client";
 
+import { BoardAvatar } from "@/components/board-avatar";
 import type { MentionParticipant } from "@/lib/comment-mentions";
 import { useI18n } from "@/i18n/provider";
 
@@ -47,6 +48,10 @@ export function CommentMentionPicker({
               onPick(participant);
             }}
           >
+            <BoardAvatar
+              name={participant.displayName}
+              mark={participant.avatarKey}
+            />
             {participant.displayName}
           </button>
         </li>

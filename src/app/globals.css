@@ -1337,15 +1337,27 @@ textarea {
 }
 
 .board-avatar {
-  width: 1.45rem;
-  height: 1.45rem;
-  font-size: 0.58rem;
+  width: 1.85rem;
+  height: 1.85rem;
+  font-size: 0.62rem;
 }
 
 .card-avatar {
-  width: 1.3rem;
-  height: 1.3rem;
-  font-size: 0.52rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  font-size: 0.56rem;
+}
+
+.board-avatar.is-sticker,
+.card-avatar.is-sticker {
+  background: transparent;
+  overflow: visible;
+  color: inherit;
+}
+
+.board-avatar.is-sticker svg,
+.card-avatar.is-sticker svg {
+  display: block;
 }
 
 .board-grid {
@@ -2526,11 +2538,17 @@ textarea {
 }
 
 .thread-author {
-  display: block;
-  margin-bottom: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
   color: var(--accent);
   font-size: 0.72rem;
   font-weight: 700;
+}
+
+.thread-item.is-own .thread-author {
+  justify-content: flex-end;
 }
 
 .thread-item p {
@@ -3043,6 +3061,9 @@ textarea {
 }
 
 .mention-picker button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   width: 100%;
   border: 0;
   background: transparent;

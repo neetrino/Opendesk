@@ -23,6 +23,7 @@ const comment: CardThreadComment = {
     id: authorId,
     boardId,
     displayName: "Anna",
+    avatarKey: "fox",
     createdAt: new Date("2026-09-12T09:00:00.000Z"),
   },
   attachments: [],

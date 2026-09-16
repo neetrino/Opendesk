@@ -4,6 +4,10 @@ import { JoinBoardForm } from "@/components/join-board-form";
 import { RememberBoardVisit } from "@/components/remember-board-visit";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
+import {
+  ensureBoardAvatars,
+  loadBoardParticipantIdentities,
+} from "@/lib/assign-board-avatars";
 import { ensureOwnerParticipant } from "@/lib/board-access";
 import { getParticipantBoardDestination } from "@/lib/board-navigation";
 import { loadBoardCardPages } from "@/lib/board-cards";
@@ -75,6 +79,7 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
           select: {
             id: true,
             displayName: true,
+            avatarKey: true,
             createdAt: true,
           },
         },
@@ -86,6 +91,11 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
     notFound();
   }
 
+  if (board.participants.some((person) => !person.avatarKey)) {
+    await ensureBoardAvatars(board.id);
+    board.participants = await loadBoardParticipantIdentities(board.id);
+  }
+
   const cardPages = await loadBoardCardPages(board.id);
 
   const canonicalPath = buildJoinPath(board.slug, board.joinToken);
@@ -94,17 +104,31 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
   }
 
   const t = getDictionary(locale);
-  let currentUser: { participantId: string; displayName: string };
+
+  let currentUser: {
+    participantId: string;
+    displayName: string;
+    avatarKey: string | null;
+  };
   if (owner) {
-    const participant =
-      board.participants.find(
-        (item) =>
-          item.displayName.toLocaleLowerCase() ===
-          OWNER_PARTICIPANT_NAME.toLocaleLowerCase(),
-      ) ?? (await ensureOwnerParticipant(board.id));
+    let participant = board.participants.find(
+      (item) =>
+        item.displayName.toLocaleLowerCase() ===
+        OWNER_PARTICIPANT_NAME.toLocaleLowerCase(),
+    );
+    if (!participant) {
+      const created = await ensureOwnerParticipant(board.id);
+      board.participants = await loadBoardParticipantIdentities(board.id);
+      participant =
+        board.participants.find((item) => item.id === created.id) ?? {
+          ...created,
+          createdAt: new Date(),
+        };
+    }
     currentUser = {
       participantId: participant.id,
       displayName: participant.displayName,
+      avatarKey: participant.avatarKey,
     };
   } else {
     if (!participantBoard || participantBoard.boardId !== board.id) {
@@ -113,6 +137,10 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
     currentUser = {
       participantId: participantBoard.participantId,
       displayName: participantBoard.displayName,
+      avatarKey:
+        board.participants.find(
+          (item) => item.id === participantBoard.participantId,
+        )?.avatarKey ?? null,
     };
   }
 

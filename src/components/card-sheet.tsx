@@ -37,6 +37,7 @@ type CardSheetProps = {
   locale: string;
   currentUserId: string;
   currentUserName: string;
+  currentUserAvatar: string | null;
   participants: MentionParticipant[];
   lastReadAt: Date | null;
   attachmentsEnabled: boolean;
@@ -60,6 +61,7 @@ export function CardSheet({
   locale,
   currentUserId,
   currentUserName,
+  currentUserAvatar,
   participants,
   lastReadAt,
   attachmentsEnabled,
@@ -532,6 +534,7 @@ export function CardSheet({
                       tempId,
                       currentUserId,
                       currentUserName,
+                      currentUserAvatar,
                       attachments,
                       reply,
                     );

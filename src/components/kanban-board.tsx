@@ -32,7 +32,7 @@ import {
 } from "@/lib/card-position";
 import { applyForeignActivity, isUnseenCard, resolveLastReadAt } from "@/lib/card-reads";
 import { CARD_STATUSES } from "@/lib/constants";
-import { displayInitials } from "@/lib/initials";
+import { BoardAvatar } from "@/components/board-avatar";
 import {
   buildLocalBoardCard,
   isLocalCardId,
@@ -63,6 +63,7 @@ type KanbanBoardProps = {
   currentUser: {
     participantId: string;
     displayName: string;
+    avatarKey: string | null;
   };
   isOwner: boolean;
 };
@@ -653,9 +654,10 @@ export function KanbanBoard({
                       ) : null}
                       <div className="card-meta">
                         <span className="author">
-                          <span className="card-avatar" aria-hidden="true">
-                            {displayInitials(card.author.displayName)}
-                          </span>
+                          <BoardAvatar
+                            name={card.author.displayName}
+                            mark={card.author.avatarKey}
+                          />
                           {card.author.displayName}
                         </span>
                         <span className="card-meta-right">
@@ -733,6 +735,7 @@ export function KanbanBoard({
         participants={participants}
         locale={locale}
         displayName={currentUser.displayName}
+        avatarKey={currentUser.avatarKey}
         isOwner={isOwner}
         onStartCreate={() => startCreate(activeStatus)}
         onMarkAllRead={hasInbox ? markBoardInboxRead : undefined}
@@ -745,6 +748,7 @@ export function KanbanBoard({
           locale={locale}
           currentUserId={currentUser.participantId}
           currentUserName={currentUser.displayName}
+          currentUserAvatar={currentUser.avatarKey}
           participants={participants}
           lastReadAt={threadOpenedReadAt}
           attachmentsEnabled={attachmentsEnabled}

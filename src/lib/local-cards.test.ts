@@ -14,6 +14,7 @@ import {
 const author = {
   participantId: "clauthorxxxxxxxxxxxxxxxxxxx",
   displayName: "Anna",
+  avatarKey: "fox",
 };
 
 describe("local cards", () => {

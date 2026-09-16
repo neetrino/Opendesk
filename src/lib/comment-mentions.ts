@@ -1,6 +1,7 @@
 export type MentionParticipant = {
   id: string;
   displayName: string;
+  avatarKey?: string | null;
 };
 
 export type MentionMatch = {
