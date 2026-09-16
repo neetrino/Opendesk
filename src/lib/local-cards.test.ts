@@ -74,6 +74,7 @@ describe("local cards", () => {
         title: "Need copy",
         urgent: false,
         position: 3,
+        pinnedCommentId: null,
         createdAt,
         updatedAt: createdAt,
       },

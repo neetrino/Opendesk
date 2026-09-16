@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidateBoardPath } from "@/lib/revalidate-board";
 import { clearSessionCookie, setSessionCookie } from "@/lib/session";
 import { createJoinToken } from "@/lib/tokens";
+import { replaceCommentMentions, replySnapshot } from "@/lib/comment-persist";
 import {
   persistVerifiedAttachments,
   verifyOwnedUploads,
@@ -541,6 +542,7 @@ export async function addCommentAction(
     boardId: formData.get("boardId"),
     cardId: formData.get("cardId"),
     body: formData.get("body") ?? "",
+    parentId: formData.get("parentId") ?? "",
     attachments,
   });
 
@@ -566,14 +568,50 @@ export async function addCommentAction(
       parsed.data.attachments,
     );
 
+    let reply:
+      | ReturnType<typeof replySnapshot>
+      | undefined;
+    if (parsed.data.parentId) {
+      const parent = await prisma.comment.findFirst({
+        where: { id: parsed.data.parentId, cardId: card.id },
+        select: {
+          id: true,
+          body: true,
+          deletedAt: true,
+          parentAuthorName: true,
+          parentExcerpt: true,
+          author: { select: { displayName: true } },
+        },
+      });
+      if (!parent) {
+        return { ok: false, error: errors.cardNotFound };
+      }
+      reply = replySnapshot(parent);
+    }
+
+    const participants = await prisma.participant.findMany({
+      where: { boardId: parsed.data.boardId },
+      select: { id: true, displayName: true },
+    });
+
     await prisma.$transaction(async (tx) => {
       const created = await tx.comment.create({
         data: {
           cardId: card.id,
           authorId: access.participantId,
           body: parsed.data.body,
+          parentId: reply?.parentId,
+          parentAuthorName: reply?.parentAuthorName,
+          parentExcerpt: reply?.parentExcerpt,
         },
       });
+
+      await replaceCommentMentions(
+        tx,
+        created.id,
+        parsed.data.body,
+        participants,
+      );
 
       if (verified.length > 0) {
         await persistVerifiedAttachments({

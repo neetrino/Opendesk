@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ATTACHMENT_CONTENT_TYPES } from "@/lib/attachments";
 import {
+  COMMENT_REACTION_EMOJIS,
   MAX_ATTACHMENT_BYTES,
   MAX_ATTACHMENT_FILENAME_LENGTH,
   MAX_COMMENT_ATTACHMENTS,
@@ -139,6 +140,7 @@ export const addCommentWithAttachmentsSchema = z
     boardId: z.string().cuid(),
     cardId: z.string().cuid(),
     body: z.string().trim().max(MAX_COMMENT_LENGTH).default(""),
+    parentId: optionalCuid,
     attachments: z
       .array(attachmentMetaSchema)
       .max(MAX_COMMENT_ATTACHMENTS)
@@ -148,3 +150,37 @@ export const addCommentWithAttachmentsSchema = z
     (value) => value.body.length > 0 || value.attachments.length > 0,
     { message: "commentEmpty" },
   );
+
+export const editCommentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  commentId: z.string().cuid(),
+  body: z.string().trim().min(1, "commentEmpty").max(MAX_COMMENT_LENGTH),
+});
+
+export const commentTargetSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  commentId: z.string().cuid(),
+});
+
+export const toggleCommentReactionSchema = commentTargetSchema.extend({
+  emoji: z.enum(COMMENT_REACTION_EMOJIS),
+});
+
+export const setCardPinnedCommentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  commentId: optionalCuid,
+});
+
+export const createCardFromCommentSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  commentId: z.string().cuid(),
+  title: z
+    .string()
+    .trim()
+    .min(2, "cardTitleShort")
+    .max(MAX_TITLE_LENGTH),
+});

@@ -16,7 +16,13 @@ import {
 } from "@/components/media-capture-controls";
 import { SendIcon } from "@/components/send-icon";
 import { VoiceNotePlayer } from "@/components/voice-note-player";
+import {
+  CommentMentionPicker,
+  mentionQueryAtCaret,
+} from "@/components/comment-mention-picker";
 import { addCommentAction } from "@/lib/actions";
+import type { ThreadReplyTo } from "@/lib/card-comment-view";
+import type { MentionParticipant } from "@/lib/comment-mentions";
 import { applyAttachmentLimitCopy, attachmentKindFor } from "@/lib/attachments";
 import { MAX_COMMENT_ATTACHMENTS, MAX_COMMENT_LENGTH } from "@/lib/constants";
 import {
@@ -76,10 +82,14 @@ type CommentFormProps = {
   boardId: string;
   cardId: string;
   enabled: boolean;
+  participants: MentionParticipant[];
+  replyTo: ThreadReplyTo | null;
+  onCancelReply: () => void;
   onOptimisticSend: (
     body: string,
     tempId: string,
     attachments: OptimisticCommentAttachment[],
+    replyTo: ThreadReplyTo | null,
   ) => void;
   onOptimisticRollback: (tempId: string) => void;
 };
@@ -116,12 +126,18 @@ export function CommentForm({
   boardId,
   cardId,
   enabled,
+  participants,
+  replyTo,
+  onCancelReply,
   onOptimisticSend,
   onOptimisticRollback,
 }: CommentFormProps) {
   const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [hasText, setHasText] = useState(false);
+  const [mention, setMention] = useState<{ start: number; query: string } | null>(
+    null,
+  );
   const [pendingFiles, setPendingFiles] = useState<PendingCommentFile[]>([]);
   const [, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -218,7 +234,7 @@ export function CommentForm({
     setError(null);
 
     startTransition(async () => {
-      onOptimisticSend(body, tempId, optimisticAttachments);
+      onOptimisticSend(body, tempId, optimisticAttachments, replyTo);
       try {
         const uploaded = [];
         for (const item of files) {
@@ -236,11 +252,15 @@ export function CommentForm({
         formData.set("boardId", boardId);
         formData.set("cardId", cardId);
         formData.set("body", body);
+        if (replyTo) {
+          formData.set("parentId", replyTo.id);
+        }
         formData.set("attachments", JSON.stringify(uploaded));
         const response = await addCommentAction(formData);
         if (!response.ok) {
           throw new Error(response.error);
         }
+        onCancelReply();
       } catch (caught) {
         onOptimisticRollback(tempId);
         const message =
@@ -341,6 +361,36 @@ export function CommentForm({
       onSubmit={onSubmit}
       className={recording ? "comment-form is-recording" : "comment-form"}
     >
+      {replyTo ? (
+        <div className="comment-reply-bar">
+          <span>
+            {t.cardPage.replyTo.replace("{name}", replyTo.authorName)}
+            {replyTo.excerpt ? `: ${replyTo.excerpt}` : ""}
+          </span>
+          <button type="button" onClick={onCancelReply} aria-label={t.cardPage.cancelReply}>
+            ×
+          </button>
+        </div>
+      ) : null}
+      {mention ? (
+        <CommentMentionPicker
+          participants={participants}
+          query={mention.query}
+          onPick={(participant) => {
+            const textarea = textareaRef.current;
+            if (!textarea) {
+              return;
+            }
+            const before = textarea.value.slice(0, mention.start);
+            const after = textarea.value.slice(textarea.selectionStart);
+            textarea.value = `${before}@${participant.displayName} ${after}`;
+            fitTextarea(textarea);
+            setHasText(textarea.value.trim().length > 0);
+            setMention(null);
+            textarea.focus();
+          }}
+        />
+      ) : null}
       {pendingFiles.length > 0 ? (
         <ul className="comment-previews">
           {pendingFiles.map((item) => (
@@ -418,6 +468,12 @@ export function CommentForm({
               onInput={(event) => {
                 fitTextarea(event.currentTarget);
                 setHasText(event.currentTarget.value.trim().length > 0);
+                setMention(
+                  mentionQueryAtCaret(
+                    event.currentTarget.value,
+                    event.currentTarget.selectionStart,
+                  ),
+                );
               }}
             />
           )}

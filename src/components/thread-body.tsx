@@ -12,13 +12,20 @@ export type ThreadLinkCopy = {
   figmaFile: string;
 };
 
+import type { MentionParticipant } from "@/lib/comment-mentions";
+
 type ThreadBodyProps = {
   body: string;
   copy: ThreadLinkCopy;
+  participants?: MentionParticipant[];
 };
 
-export function ThreadBody({ body, copy }: ThreadBodyProps) {
-  const blocks = parseCommentBody(body);
+export function ThreadBody({
+  body,
+  copy,
+  participants = [],
+}: ThreadBodyProps) {
+  const blocks = parseCommentBody(body, participants);
 
   return (
     <div className="thread-body">
@@ -28,6 +35,10 @@ export function ThreadBody({ body, copy }: ThreadBodyProps) {
             {block.spans.map((span, spanIndex) =>
               span.type === "text" ? (
                 <span key={`span-${spanIndex}`}>{span.value}</span>
+              ) : span.type === "mention" ? (
+                <strong key={`span-${spanIndex}`} className="thread-mention">
+                  {span.value}
+                </strong>
               ) : (
                 <a
                   key={`span-${spanIndex}`}

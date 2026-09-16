@@ -1,41 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { MediaLightbox, MediaThumb, type MediaItem } from "@/components/media-thumb";
-import { ThreadBody, type ThreadLinkCopy } from "@/components/thread-body";
-import { attachmentPublicPath } from "@/lib/attachments";
-import type { BoardAttachment } from "@/lib/local-cards";
+import { MediaLightbox, type MediaItem } from "@/components/media-thumb";
+import { ThreadCommentItem } from "@/components/thread-comment-item";
+import type { ThreadLinkCopy } from "@/components/thread-body";
+import type { CardThreadComment } from "@/lib/card-comment-view";
+import type { MentionParticipant } from "@/lib/comment-mentions";
+import type { CommentReactionEmoji } from "@/lib/comment-reactions";
+import { dayBreakForComment } from "@/lib/thread-day-breaks";
+import { findFirstUnreadCommentId } from "@/lib/thread-unread";
 import { useI18n } from "@/i18n/provider";
 
-export type ThreadAttachment = BoardAttachment & {
-  previewUrl?: string;
-};
-
-type ThreadComment = {
-  id: string;
-  body: string;
-  createdAt: Date;
-  author: { id: string; displayName: string };
-  attachments: ThreadAttachment[];
-};
-
 type ThreadListProps = {
-  comments: ThreadComment[];
+  comments: CardThreadComment[];
   locale: string;
   currentUserId: string;
+  participants: MentionParticipant[];
+  pinnedCommentId: string | null;
+  lastReadAt: Date | null;
+  onReply: (comment: CardThreadComment) => void;
+  onReact: (commentId: string, emoji: CommentReactionEmoji) => void;
+  onPin: (comment: CardThreadComment) => void;
+  onEdit: (comment: CardThreadComment, body: string) => void;
+  onDelete: (comment: CardThreadComment) => void;
+  onCreateCard: (comment: CardThreadComment) => void;
 };
 
-function toItem(attachment: ThreadAttachment): MediaItem {
-  return {
-    id: attachment.id,
-    filename: attachment.filename,
-    contentType: attachment.contentType,
-    kind: attachment.kind,
-    src: attachment.previewUrl ?? attachmentPublicPath(attachment.id),
-  };
-}
-
-export function ThreadList({ comments, locale, currentUserId }: ThreadListProps) {
+export function ThreadList({
+  comments,
+  locale,
+  currentUserId,
+  participants,
+  pinnedCommentId,
+  lastReadAt,
+  onReply,
+  onReact,
+  onPin,
+  onEdit,
+  onDelete,
+  onCreateCard,
+}: ThreadListProps) {
   const { t } = useI18n();
   const [openItem, setOpenItem] = useState<MediaItem | null>(null);
   const linkCopy: ThreadLinkCopy = {
@@ -47,6 +51,11 @@ export function ThreadList({ comments, locale, currentUserId }: ThreadListProps)
     figmaBoard: t.cardPage.figmaBoard,
     figmaFile: t.cardPage.figmaFile,
   };
+  const unreadId = findFirstUnreadCommentId(
+    comments,
+    lastReadAt,
+    currentUserId,
+  );
 
   if (comments.length === 0) {
     return <p className="muted thread-empty">{t.cardPage.emptyThread}</p>;
@@ -54,17 +63,43 @@ export function ThreadList({ comments, locale, currentUserId }: ThreadListProps)
 
   return (
     <>
-      {comments.map((comment) => (
-        <ThreadCommentItem
-          key={comment.id}
-          comment={comment}
-          locale={locale}
-          isOwn={comment.author.id === currentUserId}
-          linkCopy={linkCopy}
-          openLabel={t.cardPage.attachmentOpen}
-          onOpen={setOpenItem}
-        />
-      ))}
+      {comments.map((comment, index) => {
+        const previous = comments[index - 1] ?? null;
+        const dayBreak = dayBreakForComment(
+          comment.createdAt,
+          previous?.createdAt ?? null,
+          locale,
+          new Date(),
+          {
+            today: t.cardPage.threadToday,
+            yesterday: t.cardPage.threadYesterday,
+          },
+        );
+        return (
+          <div key={comment.id}>
+            {dayBreak ? <p className="thread-day">{dayBreak.label}</p> : null}
+            {comment.id === unreadId ? (
+              <p className="thread-new">{t.cardPage.newMessages}</p>
+            ) : null}
+            <ThreadCommentItem
+              comment={comment}
+              locale={locale}
+              isOwn={comment.author.id === currentUserId}
+              pinned={pinnedCommentId === comment.id}
+              linkCopy={linkCopy}
+              participants={participants}
+              openLabel={t.cardPage.attachmentOpen}
+              onOpen={setOpenItem}
+              onReply={() => onReply(comment)}
+              onReact={(emoji) => onReact(comment.id, emoji)}
+              onPin={() => onPin(comment)}
+              onEdit={(body) => onEdit(comment, body)}
+              onDelete={() => onDelete(comment)}
+              onCreateCard={() => onCreateCard(comment)}
+            />
+          </div>
+        );
+      })}
       {openItem ? (
         <MediaLightbox
           item={openItem}
@@ -73,53 +108,5 @@ export function ThreadList({ comments, locale, currentUserId }: ThreadListProps)
         />
       ) : null}
     </>
-  );
-}
-
-function ThreadCommentItem({
-  comment,
-  locale,
-  isOwn,
-  linkCopy,
-  openLabel,
-  onOpen,
-}: {
-  comment: ThreadComment;
-  locale: string;
-  isOwn: boolean;
-  linkCopy: ThreadLinkCopy;
-  openLabel: string;
-  onOpen: (item: MediaItem) => void;
-}) {
-  const time = new Date(comment.createdAt).toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  return (
-    <div className={isOwn ? "thread-item is-own" : "thread-item"}>
-      {isOwn ? null : (
-        <span className="thread-author">{comment.author.displayName}</span>
-      )}
-      {comment.body ? <ThreadBody body={comment.body} copy={linkCopy} /> : null}
-      {comment.attachments.length > 0 ? (
-        <div className="thread-media">
-          {comment.attachments.map((attachment) => {
-            const item = toItem(attachment);
-            return (
-              <MediaThumb
-                key={attachment.id}
-                item={item}
-                onOpen={() => onOpen(item)}
-                openLabel={openLabel}
-              />
-            );
-          })}
-        </div>
-      ) : null}
-      <time className="thread-time" dateTime={new Date(comment.createdAt).toISOString()}>
-        {time}
-      </time>
-    </div>
   );
 }

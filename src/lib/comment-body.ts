@@ -1,3 +1,8 @@
+import {
+  findMentionRanges,
+  type MentionParticipant,
+} from "@/lib/comment-mentions";
+
 export type FigmaLinkKind = "design" | "prototype" | "board" | "file";
 
 const URL_PATTERN = /https?:\/\/[^\s<]+/gi;
@@ -20,7 +25,8 @@ const FIGMA_PATH_KIND: Record<string, FigmaLinkKind> = {
 
 export type CommentTextSpan =
   | { type: "text"; value: string }
-  | { type: "link"; href: string; label: string };
+  | { type: "link"; href: string; label: string }
+  | { type: "mention"; value: string };
 
 export type CommentTextBlock = {
   type: "text";
@@ -46,7 +52,10 @@ type UrlMatch = {
  * Turns a comment into messenger-style blocks: text with inline links,
  * and Figma URLs as dedicated preview cards instead of a raw string.
  */
-export function parseCommentBody(body: string): CommentBodyBlock[] {
+export function parseCommentBody(
+  body: string,
+  participants: MentionParticipant[] = [],
+): CommentBodyBlock[] {
   const urls = findUrls(body);
   const blocks: CommentBodyBlock[] = [];
   let cursor = 0;
@@ -54,7 +63,9 @@ export function parseCommentBody(body: string): CommentBodyBlock[] {
 
   for (const url of urls) {
     if (url.start > cursor) {
-      textSpans.push({ type: "text", value: body.slice(cursor, url.start) });
+      textSpans.push(
+        ...textSpansWithMentions(body.slice(cursor, url.start), participants),
+      );
     }
     const figma = parseFigmaLink(url.href);
     if (figma) {
@@ -72,10 +83,41 @@ export function parseCommentBody(body: string): CommentBodyBlock[] {
   }
 
   if (cursor < body.length) {
-    textSpans.push({ type: "text", value: body.slice(cursor) });
+    textSpans.push(
+      ...textSpansWithMentions(body.slice(cursor), participants),
+    );
   }
   flushText(blocks, textSpans);
   return blocks;
+}
+
+function textSpansWithMentions(
+  value: string,
+  participants: MentionParticipant[],
+): CommentTextSpan[] {
+  if (value.length === 0) {
+    return [];
+  }
+  const mentions = findMentionRanges(value, participants);
+  if (mentions.length === 0) {
+    return [{ type: "text", value }];
+  }
+  const spans: CommentTextSpan[] = [];
+  let cursor = 0;
+  for (const mention of mentions) {
+    if (mention.start > cursor) {
+      spans.push({ type: "text", value: value.slice(cursor, mention.start) });
+    }
+    spans.push({
+      type: "mention",
+      value: value.slice(mention.start, mention.end),
+    });
+    cursor = mention.end;
+  }
+  if (cursor < value.length) {
+    spans.push({ type: "text", value: value.slice(cursor) });
+  }
+  return spans;
 }
 
 function findUrls(body: string): UrlMatch[] {

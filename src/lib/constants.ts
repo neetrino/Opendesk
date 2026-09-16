@@ -27,6 +27,15 @@ export const MAX_BOARD_PARTICIPANTS = 20;
 export const COLUMN_PAGE_SIZE = 10;
 /** Newest messages when a card chat opens; older pages load on scroll up. */
 export const COMMENT_PAGE_SIZE = 20;
+export const COMMENT_REACTION_EMOJIS = [
+  "agree",
+  "done",
+  "watching",
+  "question",
+  "blocker",
+] as const;
+export const PARENT_EXCERPT_LENGTH = 140;
+export const COMMENT_SEARCH_MIN_LENGTH = 2;
 
 export const MAX_ATTACHMENT_SIZE_MB = 200;
 export const MAX_ATTACHMENT_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;

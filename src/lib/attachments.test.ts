@@ -14,7 +14,10 @@ import {
   MAX_CARD_COMMENT_ATTACHMENTS,
   MAX_COMMENT_ATTACHMENTS,
 } from "@/lib/constants";
-import { addCommentWithAttachmentsSchema } from "@/lib/validation";
+import {
+  addCommentWithAttachmentsSchema,
+  toggleCommentReactionSchema,
+} from "@/lib/validation";
 
 const boardId = "clxxxxxxxxxxxxxxxxxxxxxxxxx";
 const cardId = "clyyyyyyyyyyyyyyyyyyyyyyyyy";
@@ -102,6 +105,31 @@ describe("comment attachments schema", () => {
       attachments,
     });
     expect(parsed.success).toBe(false);
+  });
+
+  it("accepts an optional parent id", () => {
+    const parsed = addCommentWithAttachmentsSchema.safeParse({
+      boardId,
+      cardId,
+      body: "reply",
+      parentId: cardId,
+      attachments: [],
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.parentId).toBe(cardId);
+    }
+  });
+
+  it("rejects an unknown reaction", () => {
+    expect(
+      toggleCommentReactionSchema.safeParse({
+        boardId,
+        cardId,
+        commentId: cardId,
+        emoji: "fire",
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects an empty comment without files", () => {

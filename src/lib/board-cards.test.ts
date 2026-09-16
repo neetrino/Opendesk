@@ -21,6 +21,7 @@ const card: LocalBoardCard = {
   title: "Need copy",
   urgent: false,
   position: 3,
+  pinnedCommentId: null,
   createdAt: new Date("2026-09-12T10:00:00.000Z"),
   updatedAt: new Date("2026-09-12T10:00:00.000Z"),
   commentCount: 4,
