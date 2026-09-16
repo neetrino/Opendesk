@@ -331,8 +331,8 @@ export function CommentForm({
   const captureLabels = {
     camera: applyAttachmentLimitCopy(t.comment.captureCamera),
     cameraAria: t.comment.captureCameraAria,
-    gallery: t.comment.captureGallery,
-    galleryAria: t.comment.captureGalleryAria,
+    file: t.comment.captureFile,
+    fileAria: t.comment.captureFileAria,
   };
 
   return (
@@ -438,6 +438,7 @@ export function CommentForm({
                 <MediaCaptureControls
                   disabled={!canAttach}
                   onOpenCamera={openCamera}
+                  onPickFiles={addFiles}
                   labels={captureLabels}
                   unavailableReason={unavailableReason}
                 />
@@ -467,6 +468,7 @@ export function CommentForm({
             appearance="action"
             disabled={!canAttach}
             onOpenCamera={openCamera}
+            onPickFiles={addFiles}
             labels={captureLabels}
             unavailableReason={unavailableReason}
           />

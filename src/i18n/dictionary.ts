@@ -160,6 +160,8 @@ export type Dictionary = {
     send: string;
     captureCamera: string;
     captureCameraAria: string;
+    captureFile: string;
+    captureFileAria: string;
     captureGallery: string;
     captureGalleryAria: string;
     captureLimitHint: string;
@@ -403,6 +405,8 @@ export const en: Dictionary = {
     send: "Send",
     captureCamera: "Tap for a photo. Hold to start video, tap again to stop, about {minutes} min",
     captureCameraAria: "Open camera",
+    captureFile: "Attach a file",
+    captureFileAria: "Attach a file",
     captureGallery: "Gallery",
     captureGalleryAria: "Choose from gallery",
     captureLimitHint: "Video about {minutes} min, up to {n} MB",

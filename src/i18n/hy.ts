@@ -167,6 +167,8 @@ export const hy: Dictionary = {
     send: "Ուղարկել",
     captureCamera: "Հպեք լուսանկարի համար։ Պահեք տեսանյութը սկսելու համար, կանգնեցնելու համար հպեք նորից, մոտ {minutes} րոպե",
     captureCameraAria: "Բացել տեսախցիկը",
+    captureFile: "Կցել ֆայլ",
+    captureFileAria: "Կցել ֆայլ",
     captureGallery: "Պատկերասրահ",
     captureGalleryAria: "Ընտրել պատկերասրահից",
     captureLimitHint: "Տեսանյութը մոտ {minutes} րոպե, մինչև {n} ՄԲ",

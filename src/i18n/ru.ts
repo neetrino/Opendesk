@@ -167,6 +167,8 @@ export const ru: Dictionary = {
     send: "Отправить",
     captureCamera: "Нажмите для фото. Удерживайте, чтобы начать видео, нажмите ещё раз чтобы остановить, около {minutes} мин",
     captureCameraAria: "Открыть камеру",
+    captureFile: "Прикрепить файл",
+    captureFileAria: "Прикрепить файл",
     captureGallery: "Галерея",
     captureGalleryAria: "Выбрать из галереи",
     captureLimitHint: "Видео примерно {minutes} мин, до {n} МБ",
