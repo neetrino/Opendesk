@@ -1759,8 +1759,12 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--urgent);
   flex-shrink: 0;
+}
+
+.fire-icon {
+  display: block;
+  object-fit: contain;
 }
 
 .card-tile.is-unread {
@@ -2219,26 +2223,48 @@ textarea {
   cursor: default;
 }
 
-.sheet-urgent {
-  color: #b0b7b3;
+.sheet-icon-btn.sheet-urgent {
+  width: auto;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.sheet-urgent:hover:not(:disabled) {
-  color: #e2410d;
-  border-color: rgba(226, 65, 13, 0.28);
-  background: #fff7f1;
+.sheet-icon-btn.sheet-urgent .fire-icon {
+  filter: saturate(0.7) brightness(1.28);
+  opacity: 0.4;
 }
 
-.sheet-urgent.is-on {
-  color: #fff;
-  background: #e2410d;
-  border-color: transparent;
-  box-shadow: 0 6px 14px rgba(226, 65, 13, 0.28);
+.sheet-icon-btn.sheet-urgent:hover:not(:disabled) {
+  border: none;
+  background: transparent;
 }
 
-.sheet-urgent.is-on:hover:not(:disabled) {
-  color: #fff;
-  background: #c2410c;
+.sheet-icon-btn.sheet-urgent:hover:not(:disabled) .fire-icon {
+  opacity: 0.62;
+}
+
+.sheet-icon-btn.sheet-urgent:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.sheet-icon-btn.sheet-urgent.is-on {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.sheet-icon-btn.sheet-urgent.is-on .fire-icon,
+.sheet-icon-btn.sheet-urgent.is-on:hover:not(:disabled) .fire-icon {
+  filter: none;
+  opacity: 1;
+}
+
+.sheet-icon-btn.sheet-urgent.is-on:hover:not(:disabled) {
+  background: transparent;
 }
 
 .sheet-delete:hover:not(:disabled) {
@@ -4401,6 +4427,11 @@ textarea {
   .sheet-icon-btn {
     width: 2.55rem;
     height: 2.55rem;
+  }
+
+  .sheet-icon-btn.sheet-urgent {
+    width: auto;
+    height: auto;
   }
 
   .sheet-stage-anchor {

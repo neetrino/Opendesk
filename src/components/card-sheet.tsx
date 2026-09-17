@@ -483,7 +483,7 @@ export function CardSheet({
                 urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
               }
             >
-              <FireIcon size={18} />
+              <FireIcon size={28} />
             </button>
           </div>
         </header>
