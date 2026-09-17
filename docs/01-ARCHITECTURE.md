@@ -106,8 +106,8 @@ docs/
 ```
 1. GET /b/:slug/:joinToken → форма имени (если нет доступа)
 2. Server Action joinBoardByToken(token, name)
-3. Если Participant с таким именем есть → rejoin (новая cookie)
-4. Иначе создать Participant (если < 20), cookie
+3. Если Participant с таким именем есть → rejoin (новая cookie, lastSeenAt = now)
+4. Иначе создать Participant (если активных < 20), cookie
 5. Redirect → /b/:slug/:joinToken (workspace)
 6. Следующий запуск `/`, `/login` или `/boards` → эта же единственная доступная доска
 ```
@@ -131,7 +131,9 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 ### Работа на доске
 
 ```
-1. Access: participant cookie для boardId ИЛИ owner cookie
+1. Access: participant cookie для boardId ИЛИ owner cookie.
+   Открытие доски и мутации обновляют `lastSeenAt` (не чаще чем раз в 12 часов).
+   Список людей и `@` — только активные участники.
 2. RSC загружает по 10 карточек на колонку (название, автор, счётчики) без тел чата.
    Повторный переход `/boards` ↔ доска берётся из Client Router Cache (~30s),
    а не из нового loading-скелетона
@@ -158,7 +160,7 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 |--------|----------|
 | Board | Доска + `slug` + постоянный `joinToken` |
 | Invite | Legacy одноразовый токен |
-| Participant | Участник (displayName + уникальный `avatarKey` на доске) |
+| Participant | Участник (displayName + уникальный `avatarKey` на доске). Активен 90 дней с `lastSeenAt` или имя Owner; неактивные скрыты из списка/`@`, слот 20 не занимают, записи и имя на карточках сохраняются. То же имя = тот же человек. |
 | Card | title + urgent + labels + status + position |
 | BoardLabel | Цветная метка доски, до 10 |
 | CardLabel | Связь задачи с меткой доски |
@@ -223,6 +225,6 @@ Participant 1──* Attachment (author)
 
 ---
 
-**Версия.** 1.9
+**Версия.** 1.10
 
 **Дата.** 2026-09-17

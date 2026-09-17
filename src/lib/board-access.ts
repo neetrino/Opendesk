@@ -3,6 +3,7 @@ import {
   nextBoardAvatarKey,
 } from "@/lib/assign-board-avatars";
 import { OWNER_PARTICIPANT_NAME } from "@/lib/constants";
+import { touchParticipantLastSeen } from "@/lib/participant-activity";
 import { prisma } from "@/lib/prisma";
 import { getOwnerSession } from "@/lib/owner-session";
 import { getSession, type SessionPayload } from "@/lib/session";
@@ -119,6 +120,7 @@ export async function requireBoardAccess(
   const owner = await getOwnerSession();
   if (owner) {
     const participant = await ensureOwnerParticipant(boardId);
+    await touchParticipantLastSeen(prisma, participant.id);
     return {
       boardId,
       participantId: participant.id,
@@ -132,6 +134,7 @@ export async function requireBoardAccess(
     throw new Error("UNAUTHORIZED");
   }
 
+  await touchParticipantLastSeen(prisma, session.participantId);
   return { ...session, isOwner: false };
 }
 

@@ -78,7 +78,7 @@
 - `Board` — id, title, slug (unique), joinToken (unique), createdAt
   - постоянная ссылка (join + workspace): `/b/{slug}/{joinToken}`
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
-- `Participant` — id, boardId, displayName, avatarKey? (уникальный стикер на доске), createdAt (макс. 20 на доску)
+- `Participant` — id, boardId, displayName, avatarKey? (уникальный стикер на доске), createdAt, lastSeenAt (макс. 20 **активных** на доску; активен Owner или lastSeenAt за 90 дней)
 - `Card` — id, boardId, status, title, urgent, authorId, position, pinnedCommentId?
 - `BoardLabel` — id, boardId, name, color, position (до 10 меток на доску)
 - `CardLabel` — cardId, labelId (метки задачи; набор меток свой у каждой доски)

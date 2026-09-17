@@ -43,14 +43,22 @@ export function hashAvatarSeed(seed: string): number {
   return hash >>> 0;
 }
 
+export function takenBoardAvatarMarks(taken: Iterable<string>): Set<BoardAvatarMark> {
+  return new Set(
+    [...taken].filter((item) => isBoardAvatarMark(item)),
+  );
+}
+
+export function hasFreeAvatar(taken: Iterable<string>): boolean {
+  return takenBoardAvatarMarks(taken).size < BOARD_AVATAR_MARKS.length;
+}
+
 /** First unused mark, starting from a stable hash of the participant id. */
 export function pickFreeAvatar(
   seed: string,
   taken: Iterable<string>,
 ): BoardAvatarMark {
-  const used = new Set(
-    [...taken].filter((item) => isBoardAvatarMark(item)),
-  );
+  const used = takenBoardAvatarMarks(taken);
   const start = hashAvatarSeed(seed) % BOARD_AVATAR_MARKS.length;
   for (let step = 0; step < BOARD_AVATAR_MARKS.length; step += 1) {
     const mark = BOARD_AVATAR_MARKS[(start + step) % BOARD_AVATAR_MARKS.length];

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BOARD_AVATAR_MARKS,
+  hasFreeAvatar,
   pickFreeAvatar,
 } from "@/lib/board-avatars";
 
@@ -20,5 +21,10 @@ describe("pickFreeAvatar", () => {
     expect(assigned.every((mark) => BOARD_AVATAR_MARKS.includes(mark))).toBe(
       true,
     );
+  });
+
+  it("reports when the sticker pool is exhausted", () => {
+    expect(hasFreeAvatar([])).toBe(true);
+    expect(hasFreeAvatar(BOARD_AVATAR_MARKS)).toBe(false);
   });
 });
