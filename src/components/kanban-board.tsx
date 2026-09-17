@@ -160,6 +160,7 @@ export function KanbanBoard({
   const [boardError, setBoardError] = useState<string | null>(null);
   const [localCards, setLocalCards] = useState<BoardCard[]>([]);
   const [heldCards, setHeldCards] = useState<BoardCard[]>([]);
+  const [removedCardIds, setRemovedCardIds] = useState<string[]>([]);
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
   const { extraCards, hasMore, loadMore } = useColumnPages(
@@ -192,13 +193,18 @@ export function KanbanBoard({
     knownServerCards.map((card) => [card.id, card.status]),
   );
 
+  const mergedCards = mergeVisibleCards(
+    cards,
+    extraCards,
+    pendingHeldCards,
+    pendingLocalCards,
+  );
+  const sourceCards =
+    removedCardIds.length === 0
+      ? mergedCards
+      : mergedCards.filter((card) => !removedCardIds.includes(card.id));
   const [optimisticCards, setOptimisticCards] = useOptimistic(
-    mergeVisibleCards(
-      cards,
-      extraCards,
-      pendingHeldCards,
-      pendingLocalCards,
-    ),
+    sourceCards,
     (current, update: OptimisticUpdate) => {
       if (update.kind === "move") {
         return applyCardMove(current, {
@@ -314,6 +320,16 @@ export function KanbanBoard({
     if (selectedCardId !== null && !isLocalCardId(selectedCardId)) {
       markCardRead(selectedCardId);
     }
+    setSelectedCardId(null);
+    setDraftCard(null);
+  }
+
+  function removeCard(cardId: string): void {
+    setRemovedCardIds((current) =>
+      current.includes(cardId) ? current : [...current, cardId],
+    );
+    setLocalCards((current) => current.filter((card) => card.id !== cardId));
+    setHeldCards((current) => current.filter((card) => card.id !== cardId));
     setSelectedCardId(null);
     setDraftCard(null);
   }
@@ -752,8 +768,10 @@ export function KanbanBoard({
           participants={participants}
           lastReadAt={threadOpenedReadAt}
           attachmentsEnabled={attachmentsEnabled}
+          isOwner={isOwner}
           isDraft={selectedIsDraft}
           onClose={closeSheet}
+          onDeleted={removeCard}
           onDraftCommit={commitDraft}
           onCreatedCard={(created) => {
             const nextCard = {

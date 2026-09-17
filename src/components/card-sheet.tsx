@@ -10,6 +10,7 @@ import {
   type PointerEvent,
 } from "react";
 import type { Card, CardStatus } from "@prisma/client";
+import { CardDeleteControl } from "@/components/card-delete-control";
 import { CardThreadPane } from "@/components/card-thread-pane";
 import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
@@ -41,8 +42,10 @@ type CardSheetProps = {
   participants: MentionParticipant[];
   lastReadAt: Date | null;
   attachmentsEnabled: boolean;
+  isOwner: boolean;
   isDraft?: boolean;
   onClose: () => void;
+  onDeleted: (cardId: string) => void;
   onDraftCommit?: (title: string, urgent: boolean) => Promise<string | null>;
   onStatusChange: (
     cardId: string,
@@ -65,8 +68,10 @@ export function CardSheet({
   participants,
   lastReadAt,
   attachmentsEnabled,
+  isOwner,
   isDraft = false,
   onClose,
+  onDeleted,
   onDraftCommit,
   onStatusChange,
   onUrgentChange,
@@ -96,6 +101,8 @@ export function CardSheet({
   const titleReady = title.trim().length >= MIN_CARD_TITLE_LENGTH;
   const titleAtLimit = title.length >= MAX_TITLE_LENGTH;
   const titleLimitHintId = `card-title-limit-${card.id}`;
+  const canDelete =
+    isOwner && !isDraft && !isLocalCardId(card.id);
 
   const requestClose = useCallback((): void => {
     dismissIntentRef.current = false;
@@ -143,6 +150,9 @@ export function CardSheet({
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {
+        if (document.querySelector(".confirm-dialog-root")) {
+          return;
+        }
         if (stageMenuOpen) {
           setStageMenuOpen(false);
           return;
@@ -404,6 +414,15 @@ export function CardSheet({
             ) : null}
           </div>
           <div className="sheet-actions">
+            {canDelete ? (
+              <CardDeleteControl
+                boardId={boardId}
+                cardId={card.id}
+                disabled={isPending}
+                onDeleted={() => onDeleted(card.id)}
+                onError={setError}
+              />
+            ) : null}
             <button
               type="button"
               className={

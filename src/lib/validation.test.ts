@@ -4,6 +4,7 @@ import {
   claimInviteSchema,
   createBoardSchema,
   createCardSchema,
+  deleteCardSchema,
   joinBoardSchema,
   moveCardSchema,
   setCardUrgentSchema,
@@ -100,5 +101,21 @@ describe("validation schemas", () => {
     if (parsed.success) {
       expect(parsed.data.urgent).toBe(false);
     }
+  });
+
+  it("accepts a valid card delete payload", () => {
+    const parsed = deleteCardSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      cardId: "clyyyyyyyyyyyyyyyyyyyyyyyyy",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects a local card id on delete", () => {
+    const parsed = deleteCardSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      cardId: "local-not-a-cuid",
+    });
+    expect(parsed.success).toBe(false);
   });
 });

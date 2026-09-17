@@ -172,6 +172,11 @@ export type Dictionary = {
     unpinMessage: string;
     editMessage: string;
     deleteMessage: string;
+    deleteCard: string;
+    deleteCardConfirm: string;
+    deleteCardConfirmHint: string;
+    deleteCardCancel: string;
+    deleteCardYes: string;
     saveEdit: string;
     cancelEdit: string;
     createCardFromMessage: string;
@@ -249,6 +254,7 @@ export type Dictionary = {
     addComment: string;
     updateComment: string;
     deleteComment: string;
+    deleteCard: string;
     loadCards: string;
     loadComments: string;
     joinFailed: string;
@@ -451,6 +457,12 @@ export const en: Dictionary = {
     unpinMessage: "Unpin",
     editMessage: "Edit",
     deleteMessage: "Delete",
+    deleteCard: "Delete task",
+    deleteCardConfirm: "Delete this task?",
+    deleteCardConfirmHint:
+      "The task and its chat will be removed. This cannot be undone.",
+    deleteCardCancel: "Cancel",
+    deleteCardYes: "Delete",
     saveEdit: "Save",
     cancelEdit: "Cancel",
     createCardFromMessage: "New task",
@@ -528,6 +540,7 @@ export const en: Dictionary = {
     addComment: "Could not add comment",
     updateComment: "Could not update the message",
     deleteComment: "Could not delete the message",
+    deleteCard: "Could not delete the task",
     loadCards: "Could not load more tasks",
     loadComments: "Could not load messages",
     joinFailed: "Could not join",

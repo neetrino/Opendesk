@@ -139,7 +139,8 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 4. Открытие карточки: GET `/api/boards/{boardId}/cards/{cardId}/comments` —
    последние 20; скролл вверх — более старые; `q` ищет по всей ленте
 5. Actions: createCard, moveCard, addComment, edit/delete/react/pin comment,
-   createCardFromComment, attachment upload (requireBoardAccess)
+   createCardFromComment, attachment upload (requireBoardAccess);
+   deleteCard — только owner-сессия
 6. Пока workspace открыт: GET `/api/boards/{boardId}/activity` (карточки + курсоры чужих комментариев) → при изменении `router.refresh()`
 7. Last-read карточки хранится в `localStorage` на устройстве участника
    (`opendesk.cardReads.v1.{boardId}.{participantId}`); `seededAt` покрывает
@@ -189,7 +190,7 @@ Participant 1──* Attachment (author)
 - Join link: многоразовый; имя (case-insensitive) привязывает к participant
 - Cookie: httpOnly, secure (prod), signed HMAC (`opendesk_session` / `opendesk_owner`)
 - Доступ к доске: participant этой доски **или** owner
-- Создание досок только с owner-сессией; credentials только в env
+- Создание досок и удаление задач только с owner-сессией; credentials только в env
 - Zod на всех входах
 - Базовый rate limit на join / owner login / mutations / downloads
 - Вложения: allowlist MIME, 200 MB, ключи сервера, presigned PUT/GET, доступ только с доски

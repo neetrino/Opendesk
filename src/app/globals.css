@@ -2181,6 +2181,12 @@ textarea {
   background: #c2410c;
 }
 
+.sheet-delete:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--line));
+  background: color-mix(in srgb, var(--danger) 8%, #fff);
+}
+
 .urgent-pill {
   display: inline-flex;
   align-items: center;
