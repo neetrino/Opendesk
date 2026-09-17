@@ -4,7 +4,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useTransition,
   type ClipboardEvent,
   type FormEvent,
   type MouseEvent,
@@ -27,6 +26,7 @@ import { applyAttachmentLimitCopy, attachmentKindFor } from "@/lib/attachments";
 import { MAX_COMMENT_ATTACHMENTS, MAX_COMMENT_LENGTH } from "@/lib/constants";
 import {
   isLocalCardId,
+  OPTIMISTIC_COMMENT_ID_PREFIX,
   type BoardAttachment,
   type OptimisticCommentAttachment,
 } from "@/lib/local-cards";
@@ -91,6 +91,7 @@ type CommentFormProps = {
     attachments: OptimisticCommentAttachment[],
     replyTo: ThreadReplyTo | null,
   ) => void;
+  onOptimisticConfirm: (tempId: string, commentId: string) => void;
   onOptimisticRollback: (tempId: string) => void;
 };
 
@@ -130,6 +131,7 @@ export function CommentForm({
   replyTo,
   onCancelReply,
   onOptimisticSend,
+  onOptimisticConfirm,
   onOptimisticRollback,
 }: CommentFormProps) {
   const { t } = useI18n();
@@ -139,7 +141,6 @@ export function CommentForm({
     null,
   );
   const [pendingFiles, setPendingFiles] = useState<PendingCommentFile[]>([]);
-  const [, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const locked = isLocalCardId(cardId);
   const canAttach = enabled && !locked;
@@ -213,7 +214,7 @@ export function CommentForm({
     }
 
     const textarea = textareaRef.current;
-    const tempId = `optimistic-${crypto.randomUUID()}`;
+    const tempId = `${OPTIMISTIC_COMMENT_ID_PREFIX}${crypto.randomUUID()}`;
     const optimisticAttachments: OptimisticCommentAttachment[] = files.map(
       (item) => ({
         id: item.localId,
@@ -224,6 +225,7 @@ export function CommentForm({
         previewUrl: item.previewUrl,
       }),
     );
+    const reply = replyTo;
 
     if (textarea) {
       textarea.value = "";
@@ -232,49 +234,57 @@ export function CommentForm({
     setHasText(false);
     setPendingFiles([]);
     setError(null);
+    onOptimisticSend(body, tempId, optimisticAttachments, reply);
+    void persistComment(body, files, tempId, reply, textarea);
+  }
 
-    startTransition(async () => {
-      onOptimisticSend(body, tempId, optimisticAttachments, replyTo);
-      try {
-        const uploaded = [];
-        for (const item of files) {
-          uploaded.push(
-            await requestAndUploadFile({
-              boardId,
-              cardId,
-              file: item.file,
-              target: "comment",
-            }),
-          );
-        }
-
-        const formData = new FormData();
-        formData.set("boardId", boardId);
-        formData.set("cardId", cardId);
-        formData.set("body", body);
-        if (replyTo) {
-          formData.set("parentId", replyTo.id);
-        }
-        formData.set("attachments", JSON.stringify(uploaded));
-        const response = await addCommentAction(formData);
-        if (!response.ok) {
-          throw new Error(response.error);
-        }
-        onCancelReply();
-      } catch (caught) {
-        onOptimisticRollback(tempId);
-        const message =
-          caught instanceof Error ? caught.message : t.errors.addComment;
-        setError(mapFileError(message, t.errors));
-        if (textarea) {
-          textarea.value = body;
-          fitTextarea(textarea);
-        }
-        setHasText(body.length > 0);
-        setPendingFiles(files);
-        textarea?.focus();
+  async function persistComment(
+    body: string,
+    files: PendingCommentFile[],
+    tempId: string,
+    reply: ThreadReplyTo | null,
+    textarea: HTMLTextAreaElement | null,
+  ): Promise<void> {
+    try {
+      const uploaded = [];
+      for (const item of files) {
+        uploaded.push(
+          await requestAndUploadFile({
+            boardId,
+            cardId,
+            file: item.file,
+            target: "comment",
+          }),
+        );
       }
-    });
+
+      const formData = new FormData();
+      formData.set("boardId", boardId);
+      formData.set("cardId", cardId);
+      formData.set("body", body);
+      if (reply) {
+        formData.set("parentId", reply.id);
+      }
+      formData.set("attachments", JSON.stringify(uploaded));
+      const response = await addCommentAction(formData);
+      if (!response.ok) {
+        throw new Error(response.error);
+      }
+      onOptimisticConfirm(tempId, response.data.commentId);
+      onCancelReply();
+    } catch (caught) {
+      onOptimisticRollback(tempId);
+      const message =
+        caught instanceof Error ? caught.message : t.errors.addComment;
+      setError(mapFileError(message, t.errors));
+      if (textarea) {
+        textarea.value = body;
+        fitTextarea(textarea);
+      }
+      setHasText(body.length > 0);
+      setPendingFiles(files);
+      textarea?.focus();
+    }
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>): void {

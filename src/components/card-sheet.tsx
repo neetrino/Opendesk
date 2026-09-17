@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  useTransition,
   type FocusEvent,
   type PointerEvent,
 } from "react";
@@ -79,7 +78,6 @@ export function CardSheet({
   onCreatedCard,
 }: CardSheetProps) {
   const { t } = useI18n();
-  const [isPending, startTransition] = useTransition();
   const [cardId, setCardId] = useState(card.id);
   const [title, setTitle] = useState(card.title);
   const [draftUrgent, setDraftUrgent] = useState(card.urgent);
@@ -97,6 +95,8 @@ export function CardSheet({
   const dismissIntentRef = useRef(false);
   const skipCommitRef = useRef(false);
   const commitInFlightRef = useRef(false);
+  const urgentRequestRef = useRef(0);
+  const statusRequestRef = useRef(0);
   const urgent = isDraft ? draftUrgent : card.urgent;
   const titleReady = title.trim().length >= MIN_CARD_TITLE_LENGTH;
   const titleRemaining = MAX_TITLE_LENGTH - title.length;
@@ -246,14 +246,16 @@ export function CardSheet({
 
     const nextUrgent = !card.urgent;
     setError(null);
+    onUrgentChange(card.id, nextUrgent);
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
     formData.set("urgent", nextUrgent ? "true" : "false");
-
-    startTransition(async () => {
-      onUrgentChange(card.id, nextUrgent);
-      const response = await setCardUrgentAction(formData);
+    const requestId = ++urgentRequestRef.current;
+    void setCardUrgentAction(formData).then((response) => {
+      if (requestId !== urgentRequestRef.current) {
+        return;
+      }
       if (!response.ok) {
         onUrgentChange(card.id, !nextUrgent);
         setError(response.error);
@@ -273,14 +275,16 @@ export function CardSheet({
     const previousStatus = card.status;
     const previousPosition = card.position;
     setError(null);
+    onStatusChange(card.id, nextStatus);
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
     formData.set("status", nextStatus);
-
-    startTransition(async () => {
-      onStatusChange(card.id, nextStatus);
-      const response = await moveCardAction(formData);
+    const requestId = ++statusRequestRef.current;
+    void moveCardAction(formData).then((response) => {
+      if (requestId !== statusRequestRef.current) {
+        return;
+      }
       if (!response.ok) {
         onStatusChange(card.id, previousStatus, previousPosition);
         setError(response.error);
@@ -305,8 +309,7 @@ export function CardSheet({
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
     formData.set("title", nextTitle);
-    startTransition(async () => {
-      const response = await updateCardContentAction(formData);
+    void updateCardContentAction(formData).then((response) => {
       if (!response.ok) {
         setError(response.error);
       }
@@ -387,7 +390,6 @@ export function CardSheet({
               <CardDeleteControl
                 boardId={boardId}
                 cardId={card.id}
-                disabled={isPending}
                 onDeleted={() => onDeleted(card.id)}
                 onError={setError}
               />
@@ -474,7 +476,7 @@ export function CardSheet({
                   : "sheet-icon-btn sheet-urgent"
               }
               onClick={toggleUrgent}
-              disabled={isPending || (!isDraft && isLocalCardId(card.id))}
+              disabled={isDraft || isLocalCardId(card.id)}
               aria-pressed={urgent}
               aria-label={
                 urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
@@ -490,7 +492,7 @@ export function CardSheet({
         <div className="sheet-stage-anchor">
           <div
             ref={stageMenuRef}
-            className={`sheet-stage-control stage-${card.status}${isPending ? " is-pending" : ""}`}
+            className={`sheet-stage-control stage-${card.status}`}
             onPointerDown={(event) => {
               event.stopPropagation();
             }}
@@ -498,7 +500,7 @@ export function CardSheet({
             <button
               type="button"
               className="sheet-stage-trigger"
-              disabled={isPending || isDraft || isLocalCardId(card.id)}
+              disabled={isDraft || isLocalCardId(card.id)}
               aria-label={t.common.stageAria}
               aria-haspopup="listbox"
               aria-expanded={stageMenuOpen}
@@ -605,6 +607,9 @@ export function CardSheet({
                       reply,
                     );
                     onCommentSend();
+                  }}
+                  onOptimisticConfirm={(tempId, commentId) => {
+                    thread.confirmOptimistic(tempId, commentId);
                   }}
                   onOptimisticRollback={(tempId) => {
                     thread.rollbackOptimistic(tempId);

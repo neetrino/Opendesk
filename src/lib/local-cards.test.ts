@@ -6,6 +6,7 @@ import {
   mergeLocalCards,
   mergeVisibleCards,
   overlayHeldCards,
+  isOptimisticCommentId,
   pruneConfirmedHeldCards,
   pruneConfirmedLocalCards,
   toBoardCardFromCreated,
@@ -117,5 +118,51 @@ describe("local cards", () => {
         held,
       ),
     ).toEqual([]);
+  });
+
+  it("keeps a held card until urgent and comment count match the server", () => {
+    const held = [
+      {
+        id: "card-1",
+        status: "new" as const,
+        position: 1,
+        urgent: true,
+        commentCount: 4,
+      },
+    ];
+
+    expect(
+      pruneConfirmedHeldCards(
+        [
+          {
+            id: "card-1",
+            status: "new" as const,
+            position: 1,
+            urgent: false,
+            commentCount: 3,
+          },
+        ],
+        held,
+      ),
+    ).toEqual(held);
+    expect(
+      pruneConfirmedHeldCards(
+        [
+          {
+            id: "card-1",
+            status: "new" as const,
+            position: 1,
+            urgent: true,
+            commentCount: 4,
+          },
+        ],
+        held,
+      ),
+    ).toEqual([]);
+  });
+
+  it("recognizes optimistic comment ids", () => {
+    expect(isOptimisticCommentId("optimistic-abc")).toBe(true);
+    expect(isOptimisticCommentId("clxxxxxxxxxxxxxxxxxxxxxxxxx")).toBe(false);
   });
 });

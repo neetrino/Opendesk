@@ -315,7 +315,7 @@ export function CardThreadPane({
         ) : null}
         {thread.loading ? (
           <p className="muted thread-empty">{t.cardPage.loadingThread}</p>
-        ) : thread.error ? (
+        ) : thread.error && visible.length === 0 ? (
           <p className="form-error thread-empty">{t.errors.loadComments}</p>
         ) : hits && hits.length === 0 ? (
           <p className="thread-empty is-search">{t.cardPage.searchEmpty}</p>

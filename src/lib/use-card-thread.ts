@@ -14,7 +14,10 @@ import {
   mergeOpenQuestions,
   type QuestionSyncComment,
 } from "@/lib/comment-questions";
-import type { OptimisticCommentAttachment } from "@/lib/local-cards";
+import {
+  isOptimisticCommentId,
+  type OptimisticCommentAttachment,
+} from "@/lib/local-cards";
 
 type ThreadPage = {
   cardId: string;
@@ -101,6 +104,7 @@ export function useCardThread(
     replyTo?: ThreadReplyTo | null,
   ) => void;
   rollbackOptimistic: (tempId: string) => void;
+  confirmOptimistic: (tempId: string, commentId: string) => void;
   patchComment: (
     commentId: string,
     patch: Partial<CardThreadComment>,
@@ -140,26 +144,27 @@ export function useCardThread(
         if (cancelled) {
           return;
         }
-        commitPage({
+        commitPage((existing) => ({
           cardId: requestedId,
-          comments: next.comments,
+          comments: withPendingOptimistic(next.comments, existing, requestedId),
           nextCursor: next.nextCursor,
           pinned: next.pinned,
           openQuestions: next.openQuestions,
           error: null,
-        });
+        }));
       } catch {
         if (cancelled) {
           return;
         }
-        commitPage({
+        commitPage((existing) => ({
           cardId: requestedId,
-          comments: [],
+          comments: withPendingOptimistic([], existing, requestedId),
           nextCursor: null,
-          pinned: null,
-          openQuestions: [],
+          pinned: existing?.cardId === requestedId ? existing.pinned : null,
+          openQuestions:
+            existing?.cardId === requestedId ? existing.openQuestions : [],
           error: "loadComments",
-        });
+        }));
       }
     })();
 
@@ -285,15 +290,16 @@ export function useCardThread(
         reactions: [],
       };
       commitPage((existing) => {
-        if (!existing || existing.cardId !== cardId) {
-          return existing;
-        }
-        const comments = [...existing.comments, optimistic];
+        const base =
+          existing && existing.cardId === cardId
+            ? existing
+            : emptyThreadPage(cardId);
+        const comments = [...base.comments, optimistic];
         return {
-          ...existing,
+          ...base,
           comments,
           openQuestions: mergeOpenQuestions(
-            existing.openQuestions,
+            base.openQuestions,
             comments.map(toQuestionSync),
           ),
         };
@@ -311,6 +317,39 @@ export function useCardThread(
         const comments = existing.comments.filter(
           (comment) => comment.id !== tempId,
         );
+        return {
+          ...existing,
+          comments,
+          openQuestions: mergeOpenQuestions(
+            existing.openQuestions,
+            comments.map(toQuestionSync),
+          ),
+        };
+      });
+    },
+    [cardId],
+  );
+
+  const confirmOptimistic = useCallback(
+    (tempId: string, commentId: string): void => {
+      commitPage((existing) => {
+        if (!existing || existing.cardId !== cardId) {
+          return existing;
+        }
+        const comments = existing.comments
+          .filter((comment) => comment.id !== commentId)
+          .map((comment) =>
+            comment.id === tempId
+              ? {
+                  ...comment,
+                  id: commentId,
+                  attachments: comment.attachments.map((attachment) => ({
+                    ...attachment,
+                    commentId,
+                  })),
+                }
+              : comment,
+          );
         return {
           ...existing,
           comments,
@@ -388,10 +427,39 @@ export function useCardThread(
     search,
     addOptimistic,
     rollbackOptimistic,
+    confirmOptimistic,
     patchComment,
     setPinned,
     syncOpenQuestions,
   };
+}
+
+function emptyThreadPage(cardId: string): ThreadPage {
+  return {
+    cardId,
+    comments: [],
+    nextCursor: null,
+    pinned: null,
+    openQuestions: [],
+    error: null,
+  };
+}
+
+function withPendingOptimistic(
+  serverComments: CardThreadComment[],
+  existing: ThreadPage | null,
+  cardId: string,
+): CardThreadComment[] {
+  if (!existing || existing.cardId !== cardId) {
+    return serverComments;
+  }
+  const seen = new Set(serverComments.map((comment) => comment.id));
+  const pending = existing.comments.filter(
+    (comment) => isOptimisticCommentId(comment.id) && !seen.has(comment.id),
+  );
+  return pending.length === 0
+    ? serverComments
+    : [...serverComments, ...pending];
 }
 
 function toQuestionSync(comment: CardThreadComment): QuestionSyncComment {
