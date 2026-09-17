@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_TITLE_LENGTH } from "@/lib/constants";
 import {
   claimInviteSchema,
   createBoardSchema,
@@ -36,6 +37,22 @@ describe("validation schemas", () => {
     const parsed = createCardSchema.safeParse({
       boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
       title: "a",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("accepts a card title at the limit", () => {
+    const parsed = createCardSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      title: "a".repeat(MAX_TITLE_LENGTH),
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects card title longer than the limit", () => {
+    const parsed = createCardSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      title: "a".repeat(MAX_TITLE_LENGTH + 1),
     });
     expect(parsed.success).toBe(false);
   });

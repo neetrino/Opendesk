@@ -19,7 +19,8 @@ export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 export const OWNER_PARTICIPANT_NAME = "Owner";
 
 export const MAX_DISPLAY_NAME_LENGTH = 40;
-export const MAX_TITLE_LENGTH = 120;
+/** Card title cap; longer detail belongs in the thread. */
+export const MAX_TITLE_LENGTH = 20;
 export const MAX_COMMENT_LENGTH = 2000;
 /** Soft cap for people on one board. */
 export const MAX_BOARD_PARTICIPANTS = 20;

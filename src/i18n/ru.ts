@@ -140,6 +140,7 @@ export const ru: Dictionary = {
     loadingThread: "Загружаем сообщения…",
     editTitle: "Название",
     titlePlaceholder: "Название задачи",
+    titleLimitHint: "Описание задачи напишите в чате",
     draftLeavePrompt: "Задача ещё не создана. Создать её?",
     draftLeaveCreate: "Создать",
     draftLeaveDiscard: "Не создавать",
