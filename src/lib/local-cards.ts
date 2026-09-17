@@ -20,8 +20,13 @@ export type BoardAttachment = {
   previewUrl?: string;
 };
 
+export type BoardCardAuthor = Pick<
+  Participant,
+  "id" | "boardId" | "displayName" | "avatarKey" | "createdAt"
+>;
+
 export type LocalBoardCard = Card & {
-  author: Participant;
+  author: BoardCardAuthor;
   commentCount: number;
   attachmentCount: number;
   labels: BoardLabelView[];

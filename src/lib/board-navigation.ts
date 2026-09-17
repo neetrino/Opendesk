@@ -3,6 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { LAST_BOARD_COOKIE_NAME } from "@/lib/constants";
 import { buildJoinPath, parseJoinPath } from "@/lib/join-url";
+import { touchParticipantLastSeen } from "@/lib/participant-activity";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -44,6 +45,8 @@ export async function getParticipantBoardDestination(): Promise<ParticipantBoard
   if (!participant) {
     return null;
   }
+
+  await touchParticipantLastSeen(prisma, participant.id);
 
   return {
     boardId: participant.board.id,

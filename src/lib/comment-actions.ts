@@ -2,6 +2,7 @@
 
 import { requireBoardAccess } from "@/lib/board-access";
 import { replaceCommentMentions } from "@/lib/comment-persist";
+import { visibleParticipantFilter } from "@/lib/participant-activity";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
@@ -16,7 +17,10 @@ import type { ActionResult } from "@/types/actions";
 
 async function loadBoardParticipants(boardId: string) {
   return prisma.participant.findMany({
-    where: { boardId },
+    where: {
+      boardId,
+      ...visibleParticipantFilter(),
+    },
     select: { id: true, displayName: true },
   });
 }

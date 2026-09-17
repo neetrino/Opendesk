@@ -3,14 +3,21 @@
 import type { Card } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { nextBoardAvatarKey } from "@/lib/assign-board-avatars";
+import {
+  AVATAR_POOL_EXHAUSTED,
+  nextBoardAvatarKey,
+} from "@/lib/assign-board-avatars";
 import { requireBoardAccess } from "@/lib/board-access";
 import {
   computeMovedCardPosition,
   planDestinationShift,
   resolveMovePlacement,
 } from "@/lib/card-position";
-import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
+import {
+  activeParticipantWhere,
+  decideJoinParticipantSlot,
+  visibleParticipantFilter,
+} from "@/lib/participant-activity";
 import { allocateBoardSlug } from "@/lib/allocate-board-slug";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
 import { buildJoinPath } from "@/lib/join-url";
@@ -151,9 +158,10 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
   try {
     participant = await prisma.$transaction(async (tx) => {
       const participantCount = await tx.participant.count({
-        where: { boardId: invite.boardId },
+        where: activeParticipantWhere(invite.boardId),
       });
-      if (participantCount >= MAX_BOARD_PARTICIPANTS) {
+      // Soft cap: two concurrent creates can both pass the count.
+      if (decideJoinParticipantSlot(false, participantCount) === "full") {
         throw new Error("BOARD_FULL");
       }
 
@@ -189,7 +197,11 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
       return created;
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "BOARD_FULL") {
+    if (
+      error instanceof Error &&
+      (error.message === "BOARD_FULL" ||
+        error.message === AVATAR_POOL_EXHAUSTED)
+    ) {
       throw new Error(errors.boardFull);
     }
     if (error instanceof Error && error.message === "INVITE_CLAIM_CONFLICT") {
@@ -248,14 +260,26 @@ export async function joinBoardByTokenAction(
         orderBy: { createdAt: "asc" },
       });
 
-      if (existing) {
+      const activeCount = existing
+        ? 0
+        : await tx.participant.count({
+            where: activeParticipantWhere(board.id),
+          });
+      const decision = decideJoinParticipantSlot(Boolean(existing), activeCount);
+      if (decision === "rejoin" && existing) {
+        const avatarKey =
+          existing.avatarKey ??
+          (await nextBoardAvatarKey(tx, board.id, existing.id));
+        await tx.participant.update({
+          where: { id: existing.id },
+          data: {
+            lastSeenAt: new Date(),
+            avatarKey,
+          },
+        });
         return existing;
       }
-
-      const participantCount = await tx.participant.count({
-        where: { boardId: board.id },
-      });
-      if (participantCount >= MAX_BOARD_PARTICIPANTS) {
+      if (decision === "full") {
         throw new Error("BOARD_FULL");
       }
 
@@ -273,7 +297,11 @@ export async function joinBoardByTokenAction(
       });
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "BOARD_FULL") {
+    if (
+      error instanceof Error &&
+      (error.message === "BOARD_FULL" ||
+        error.message === AVATAR_POOL_EXHAUSTED)
+    ) {
       throw new Error(errors.boardFull);
     }
     logger.error("joinBoardByTokenAction failed", error);
@@ -622,7 +650,10 @@ export async function addCommentAction(
     }
 
     const participants = await prisma.participant.findMany({
-      where: { boardId: parsed.data.boardId },
+      where: {
+        boardId: parsed.data.boardId,
+        ...visibleParticipantFilter(),
+      },
       select: { id: true, displayName: true },
     });
 

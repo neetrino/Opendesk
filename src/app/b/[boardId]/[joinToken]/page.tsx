@@ -15,6 +15,10 @@ import { loadBoardLabels } from "@/lib/board-labels";
 import { OWNER_PARTICIPANT_NAME } from "@/lib/constants";
 import { buildJoinPath } from "@/lib/join-url";
 import { getOwnerSession } from "@/lib/owner-session";
+import {
+  touchParticipantLastSeen,
+  visibleParticipantFilter,
+} from "@/lib/participant-activity";
 import { prisma } from "@/lib/prisma";
 import { isR2Configured } from "@/lib/r2";
 
@@ -76,6 +80,7 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
       where: owner ? { joinToken } : { id: participantBoard!.boardId },
       include: {
         participants: {
+          where: visibleParticipantFilter(participantBoard?.participantId),
           orderBy: { createdAt: "asc" },
           select: {
             id: true,
@@ -94,7 +99,10 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
 
   if (board.participants.some((person) => !person.avatarKey)) {
     await ensureBoardAvatars(board.id);
-    board.participants = await loadBoardParticipantIdentities(board.id);
+    board.participants = await loadBoardParticipantIdentities(
+      board.id,
+      participantBoard?.participantId,
+    );
   }
 
   const [cardPages, boardLabels] = await Promise.all([
@@ -122,13 +130,17 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
     );
     if (!participant) {
       const created = await ensureOwnerParticipant(board.id);
-      board.participants = await loadBoardParticipantIdentities(board.id);
+      board.participants = await loadBoardParticipantIdentities(
+        board.id,
+        created.id,
+      );
       participant =
         board.participants.find((item) => item.id === created.id) ?? {
           ...created,
           createdAt: new Date(),
         };
     }
+    await touchParticipantLastSeen(prisma, participant.id);
     currentUser = {
       participantId: participant.id,
       displayName: participant.displayName,
