@@ -727,14 +727,43 @@ export function KanbanBoard({
                       {dropLineAfter(dropTarget, status, card.id) ? (
                         <span className="card-drop-line is-over-card is-after" aria-hidden="true" />
                       ) : null}
-                      <div className="card-meta">
-                        <span className="author">
-                          <BoardAvatar
-                            name={card.author.displayName}
-                            mark={card.author.avatarKey}
-                          />
-                          {card.author.displayName}
-                        </span>
+                      <CardLabelMenu
+                        boardId={boardId}
+                        cardId={card.id}
+                        boardLabels={boardLabels}
+                        selectedLabels={resolveCardLabels(
+                          card.labels,
+                          boardLabels,
+                        )}
+                        persist={!isLocal}
+                        placement="bottom-start"
+                        variant="card"
+                        onCardLabelsChange={(nextLabels) => {
+                          applyCardLabels(card.id, nextLabels);
+                        }}
+                        onError={setBoardError}
+                      />
+                      <h3 className="card-title">{card.title}</h3>
+                      <CardLabelChips
+                        labels={resolveCardLabels(card.labels, boardLabels)}
+                      />
+                      <div className="card-foot-row">
+                        {card.commentCount > 0 || card.attachmentCount > 0 ? (
+                          <p className="card-foot">
+                            {card.attachmentCount > 0 ? (
+                              <span className="card-foot-media">
+                                <PaperclipIcon size={11} />
+                                {card.attachmentCount}
+                              </span>
+                            ) : null}
+                            {card.commentCount > 0
+                              ? t.board.replies.replace(
+                                  "{n}",
+                                  String(card.commentCount),
+                                )
+                              : null}
+                          </p>
+                        ) : null}
                         <span className="card-meta-right">
                           {isNew ? (
                             <span
@@ -763,50 +792,17 @@ export function KanbanBoard({
                               <FireIcon size={15} />
                             </span>
                           ) : null}
+                          <span className="author">
+                            <span className="author-name">
+                              {card.author.displayName}
+                            </span>
+                            <BoardAvatar
+                              name={card.author.displayName}
+                              mark={card.author.avatarKey}
+                            />
+                          </span>
                         </span>
                       </div>
-                      <CardLabelMenu
-                        boardId={boardId}
-                        cardId={card.id}
-                        boardLabels={boardLabels}
-                        selectedLabels={resolveCardLabels(
-                          card.labels,
-                          boardLabels,
-                        )}
-                        persist={!isLocal}
-                        placement="bottom-start"
-                        variant="card"
-                        onCardLabelsChange={(nextLabels) => {
-                          applyCardLabels(card.id, nextLabels);
-                        }}
-                        onError={setBoardError}
-                      />
-                      <h3 className="card-title">{card.title}</h3>
-                      <CardLabelChips
-                        labels={resolveCardLabels(card.labels, boardLabels)}
-                      />
-                      <p
-                        className={
-                          card.commentCount > 0 || card.attachmentCount > 0
-                            ? "card-foot"
-                            : "card-foot is-empty"
-                        }
-                      >
-                        {card.attachmentCount > 0 ? (
-                          <span className="card-foot-media">
-                            <PaperclipIcon size={11} />
-                            {card.attachmentCount}
-                          </span>
-                        ) : null}
-                        {card.commentCount > 0
-                          ? t.board.replies.replace(
-                              "{n}",
-                              String(card.commentCount),
-                            )
-                          : card.attachmentCount > 0
-                            ? null
-                            : "\u00a0"}
-                      </p>
                     </article>
                   );
                 })}
