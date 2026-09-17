@@ -141,6 +141,7 @@ export const hy: Dictionary = {
     editTitle: "Անվանում",
     titlePlaceholder: "Առաջադրանքի անվանում",
     titleLimitHint: "Առաջադրանքի նկարագրությունը գրեք չաթում",
+    titleRemainingAria: "Մնացել է {n} նիշ",
     draftLeavePrompt: "Առաջադրանքը դեռ չի ստեղծվել։ Ստեղծե՞լ այն։",
     draftLeaveCreate: "Ստեղծել",
     draftLeaveDiscard: "Չստեղծել",

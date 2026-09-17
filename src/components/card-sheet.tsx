@@ -91,7 +91,7 @@ export function CardSheet({
   const threadEnabled = !isDraft && !isLocalCardId(card.id);
   const thread = useCardThread(boardId, card.id, threadEnabled);
   const threadRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const stageMenuRef = useRef<HTMLDivElement>(null);
   const createConfirmRef = useRef<HTMLButtonElement>(null);
   const dismissIntentRef = useRef(false);
@@ -99,7 +99,8 @@ export function CardSheet({
   const commitInFlightRef = useRef(false);
   const urgent = isDraft ? draftUrgent : card.urgent;
   const titleReady = title.trim().length >= MIN_CARD_TITLE_LENGTH;
-  const titleAtLimit = title.length >= MAX_TITLE_LENGTH;
+  const titleRemaining = MAX_TITLE_LENGTH - title.length;
+  const titleAtLimit = titleRemaining <= 0;
   const titleLimitHintId = `card-title-limit-${card.id}`;
   const canDelete =
     isOwner && !isDraft && !isLocalCardId(card.id);
@@ -311,7 +312,7 @@ export function CardSheet({
     });
   }
 
-  function onTitleBlur(event: FocusEvent<HTMLInputElement>): void {
+  function onTitleBlur(event: FocusEvent<HTMLTextAreaElement>): void {
     if (dismissIntentRef.current || skipCommitRef.current || leaveConfirm) {
       dismissIntentRef.current = false;
       skipCommitRef.current = false;
@@ -376,20 +377,24 @@ export function CardSheet({
               className={isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"}
             >
               <span className="visually-hidden">{t.cardPage.editTitle}</span>
-              <input
+              <textarea
                 ref={titleRef}
                 id={`card-sheet-title-${card.id}`}
                 className="sheet-title-input"
                 value={title}
+                rows={1}
                 maxLength={MAX_TITLE_LENGTH}
                 placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
                 autoFocus={isDraft}
+                wrap="soft"
                 aria-describedby={titleAtLimit ? titleLimitHintId : undefined}
                 onChange={(event) => {
-                  setTitle(event.target.value.slice(0, MAX_TITLE_LENGTH));
+                  setTitle(
+                    event.target.value.replace(/[\r\n]/g, "").slice(0, MAX_TITLE_LENGTH),
+                  );
                   if (leaveConfirm) {
                     setLeaveConfirm(false);
                   }
@@ -397,10 +402,25 @@ export function CardSheet({
                 onBlur={onTitleBlur}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
+                    event.preventDefault();
                     event.currentTarget.blur();
                   }
                 }}
               />
+              <span
+                className={
+                  titleAtLimit
+                    ? "sheet-title-remaining is-limit"
+                    : "sheet-title-remaining"
+                }
+                aria-live="polite"
+                aria-label={t.cardPage.titleRemainingAria.replace(
+                  "{n}",
+                  String(titleRemaining),
+                )}
+              >
+                {titleRemaining}
+              </span>
               <PencilIcon className="sheet-title-edit" size={16} />
             </label>
             {titleAtLimit ? (
