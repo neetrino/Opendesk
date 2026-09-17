@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
-import { LightboxStage, LightboxToolbar } from "@/components/lightbox-image";
+import { LightboxStage, LightboxToolbar, LightboxZoomRail } from "@/components/lightbox-image";
 import { VoiceNotePlayer } from "@/components/voice-note-player";
 import { canPreviewInline } from "@/lib/attachments";
 import { useHistoryTrap } from "@/lib/use-history-trap";
@@ -85,6 +85,7 @@ type MediaLightboxProps = {
   closeLabel: string;
   zoomInLabel: string;
   zoomOutLabel: string;
+  zoomSliderLabel: string;
   onClose: () => void;
 };
 
@@ -93,6 +94,7 @@ export function MediaLightbox({
   closeLabel,
   zoomInLabel,
   zoomOutLabel,
+  zoomSliderLabel,
   onClose,
 }: MediaLightboxProps) {
   const preview = useInlinePreview(item);
@@ -128,6 +130,7 @@ export function MediaLightbox({
       closeLabel={closeLabel}
       zoomInLabel={zoomInLabel}
       zoomOutLabel={zoomOutLabel}
+      zoomSliderLabel={zoomSliderLabel}
       stageRef={stageRef}
       zoom={zoom}
       onError={preview.fail}
@@ -147,6 +150,7 @@ function MediaLightboxDialog({
   closeLabel,
   zoomInLabel,
   zoomOutLabel,
+  zoomSliderLabel,
   stageRef,
   zoom,
   onError,
@@ -158,6 +162,7 @@ function MediaLightboxDialog({
   closeLabel: string;
   zoomInLabel: string;
   zoomOutLabel: string;
+  zoomSliderLabel: string;
   stageRef: RefObject<HTMLDivElement | null>;
   zoom: ReturnType<typeof useLightboxZoom>;
   onError: () => void;
@@ -181,6 +186,12 @@ function MediaLightboxDialog({
       />
       {isImage ? (
         <>
+          <LightboxZoomRail
+            label={zoomSliderLabel}
+            progress={zoom.progress}
+            animating={zoom.animating}
+            onChange={zoom.setProgress}
+          />
           <LightboxStage
             src={item.src}
             filename={item.filename}

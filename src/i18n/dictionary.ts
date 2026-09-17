@@ -166,6 +166,7 @@ export type Dictionary = {
     attachmentClosePreview: string;
     attachmentZoomIn: string;
     attachmentZoomOut: string;
+    attachmentZoomSlider: string;
     openCommentLink: string;
     figmaLabel: string;
     figmaOpenAria: string;
@@ -477,6 +478,7 @@ export const en: Dictionary = {
     attachmentClosePreview: "Close preview",
     attachmentZoomIn: "Zoom in",
     attachmentZoomOut: "Zoom out",
+    attachmentZoomSlider: "Zoom",
     openCommentLink: "Open link",
     figmaLabel: "Figma",
     figmaOpenAria: "Open Figma file {title}",

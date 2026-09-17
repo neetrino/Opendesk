@@ -1,6 +1,5 @@
 export const LIGHTBOX_ZOOM_MIN = 1;
-export const LIGHTBOX_ZOOM_STEP = 1.75;
-export const LIGHTBOX_ZOOM_WHEEL = 1.12;
+export const LIGHTBOX_ZOOM_STEPS = 5;
 export const LIGHTBOX_ZOOM_HARD_CAP = 24;
 export const LIGHTBOX_ZOOM_MIN_MAX = 3;
 export const LIGHTBOX_NATIVE_SCALE_HEADROOM = 2;
@@ -8,7 +7,6 @@ export const LIGHTBOX_PAN_THRESHOLD_PX = 8;
 export const LIGHTBOX_IMAGE_MAX_WIDTH_PX = 920;
 export const LIGHTBOX_IMAGE_MAX_HEIGHT_RATIO = 0.78;
 export const LIGHTBOX_IMAGE_GUTTER_PX = 40;
-export const LIGHTBOX_TOGGLE_IGNORE_MS = 280;
 
 export type LightboxZoom = {
   scale: number;
@@ -109,35 +107,53 @@ export function clampScale(scale: number, maxScale: number): number {
   return Math.min(maxScale, Math.max(LIGHTBOX_ZOOM_MIN, scale));
 }
 
-export function nextScaleUp(
-  current: number,
-  maxScale: number,
-  readableScale: number,
-): number {
-  if (current < readableScale * 0.95) {
-    return clampScale(Math.max(readableScale, current * LIGHTBOX_ZOOM_STEP), maxScale);
-  }
-  return clampScale(current * LIGHTBOX_ZOOM_STEP, maxScale);
+export function zoomStepSize(maxScale: number): number {
+  return (maxScale - LIGHTBOX_ZOOM_MIN) / LIGHTBOX_ZOOM_STEPS;
 }
 
-export function nextScaleDown(current: number, readableScale: number): number {
-  if (current > readableScale * 1.05) {
-    return Math.max(readableScale, current / LIGHTBOX_ZOOM_STEP);
+export function zoomStepIndex(scale: number, maxScale: number): number {
+  const step = zoomStepSize(maxScale);
+  if (step <= 0) {
+    return 0;
   }
-  return LIGHTBOX_ZOOM_MIN;
+  return Math.round((scale - LIGHTBOX_ZOOM_MIN) / step);
 }
 
-export function toggleLightboxScale(
-  current: number,
+export function nextScaleUp(current: number, maxScale: number): number {
+  const step = zoomStepSize(maxScale);
+  return clampScale(
+    LIGHTBOX_ZOOM_MIN + (zoomStepIndex(current, maxScale) + 1) * step,
+    maxScale,
+  );
+}
+
+export function nextScaleDown(current: number, maxScale: number): number {
+  const step = zoomStepSize(maxScale);
+  return clampScale(
+    LIGHTBOX_ZOOM_MIN + (zoomStepIndex(current, maxScale) - 1) * step,
+    maxScale,
+  );
+}
+
+export function scaleFromZoomProgress(
+  progress: number,
   maxScale: number,
-  readableScale: number,
 ): number {
-  if (current > 1.05) {
-    return LIGHTBOX_ZOOM_MIN;
+  const clamped = Math.min(1, Math.max(0, progress));
+  return clampScale(
+    LIGHTBOX_ZOOM_MIN + clamped * (maxScale - LIGHTBOX_ZOOM_MIN),
+    maxScale,
+  );
+}
+
+export function zoomProgress(scale: number, maxScale: number): number {
+  if (maxScale <= LIGHTBOX_ZOOM_MIN) {
+    return 0;
   }
-  const stepped = current * LIGHTBOX_ZOOM_STEP;
-  const target = Math.max(readableScale, stepped);
-  return clampScale(target, maxScale);
+  return Math.min(
+    1,
+    Math.max(0, (scale - LIGHTBOX_ZOOM_MIN) / (maxScale - LIGHTBOX_ZOOM_MIN)),
+  );
 }
 
 export function zoomAtPoint(input: {
