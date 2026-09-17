@@ -21,7 +21,7 @@ import {
   setCardUrgentAction,
   updateCardContentAction,
 } from "@/lib/actions";
-import { CARD_STATUSES } from "@/lib/constants";
+import { CARD_STATUSES, MAX_TITLE_LENGTH } from "@/lib/constants";
 import { isLocalCardId, type LocalBoardCard } from "@/lib/local-cards";
 import { useCardThread } from "@/lib/use-card-thread";
 import { useI18n } from "@/i18n/provider";
@@ -94,6 +94,8 @@ export function CardSheet({
   const commitInFlightRef = useRef(false);
   const urgent = isDraft ? draftUrgent : card.urgent;
   const titleReady = title.trim().length >= MIN_CARD_TITLE_LENGTH;
+  const titleAtLimit = title.length >= MAX_TITLE_LENGTH;
+  const titleLimitHintId = `card-title-limit-${card.id}`;
 
   const requestClose = useCallback((): void => {
     dismissIntentRef.current = false;
@@ -359,36 +361,48 @@ export function CardSheet({
       >
         <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
-          <label
-            className={isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"}
-          >
-            <span className="visually-hidden">{t.cardPage.editTitle}</span>
-            <input
-              ref={titleRef}
-              id={`card-sheet-title-${card.id}`}
-              className="sheet-title-input"
-              value={title}
-              maxLength={120}
-              placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              autoFocus={isDraft}
-              onChange={(event) => {
-                setTitle(event.target.value);
-                if (leaveConfirm) {
-                  setLeaveConfirm(false);
-                }
-              }}
-              onBlur={onTitleBlur}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.currentTarget.blur();
-                }
-              }}
-            />
-            <PencilIcon className="sheet-title-edit" size={16} />
-          </label>
+          <div className="sheet-title-block">
+            <label
+              className={isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"}
+            >
+              <span className="visually-hidden">{t.cardPage.editTitle}</span>
+              <input
+                ref={titleRef}
+                id={`card-sheet-title-${card.id}`}
+                className="sheet-title-input"
+                value={title}
+                maxLength={MAX_TITLE_LENGTH}
+                placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                autoFocus={isDraft}
+                aria-describedby={titleAtLimit ? titleLimitHintId : undefined}
+                onChange={(event) => {
+                  setTitle(event.target.value.slice(0, MAX_TITLE_LENGTH));
+                  if (leaveConfirm) {
+                    setLeaveConfirm(false);
+                  }
+                }}
+                onBlur={onTitleBlur}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
+              <PencilIcon className="sheet-title-edit" size={16} />
+            </label>
+            {titleAtLimit ? (
+              <p
+                id={titleLimitHintId}
+                className="sheet-title-limit-hint"
+                role="status"
+              >
+                {t.cardPage.titleLimitHint}
+              </p>
+            ) : null}
+          </div>
           <div className="sheet-actions">
             <button
               type="button"

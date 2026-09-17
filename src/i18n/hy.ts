@@ -140,6 +140,7 @@ export const hy: Dictionary = {
     loadingThread: "Հաղորդագրությունները բեռնվում են…",
     editTitle: "Անվանում",
     titlePlaceholder: "Առաջադրանքի անվանում",
+    titleLimitHint: "Առաջադրանքի նկարագրությունը գրեք չաթում",
     draftLeavePrompt: "Առաջադրանքը դեռ չի ստեղծվել։ Ստեղծե՞լ այն։",
     draftLeaveCreate: "Ստեղծել",
     draftLeaveDiscard: "Չստեղծել",
