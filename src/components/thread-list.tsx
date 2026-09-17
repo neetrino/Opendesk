@@ -102,8 +102,11 @@ export function ThreadList({
       })}
       {openItem ? (
         <MediaLightbox
+          key={openItem.id}
           item={openItem}
           closeLabel={t.cardPage.attachmentClosePreview}
+          zoomInLabel={t.cardPage.attachmentZoomIn}
+          zoomOutLabel={t.cardPage.attachmentZoomOut}
           onClose={() => setOpenItem(null)}
         />
       ) : null}

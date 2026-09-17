@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -11,12 +12,12 @@ import { createPortal } from "react-dom";
 import { BoardLabelManager } from "@/components/board-label-manager";
 import { CardLabelIcon } from "@/components/card-label-icon";
 import { useI18n } from "@/i18n/provider";
-import type { BoardLabelView } from "@/lib/labels";
+import type { BoardLabelView, LabelCatalogChange } from "@/lib/labels";
 
 export type BoardLabelsControlValue = {
   boardId: string;
   labels: readonly BoardLabelView[];
-  applyBoardLabels: (labels: readonly BoardLabelView[]) => void;
+  applyBoardLabels: LabelCatalogChange;
   onError: (error: string) => void;
 };
 
@@ -47,12 +48,12 @@ export function BoardLabelsControlProvider({
 export function useRegisterBoardLabelsControl(
   boardId: string,
   labels: readonly BoardLabelView[],
-  applyBoardLabels: (labels: readonly BoardLabelView[]) => void,
+  applyBoardLabels: LabelCatalogChange,
   onError: (error: string) => void,
 ): void {
   const setControl = useContext(BoardLabelsSetterContext);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!setControl) {
       return;
     }
@@ -113,7 +114,7 @@ function BoardLabelsSheet({
 }: {
   boardId: string;
   labels: readonly BoardLabelView[];
-  onLabelsChange: (labels: readonly BoardLabelView[]) => void;
+  onLabelsChange: LabelCatalogChange;
   onError: (error: string) => void;
 }) {
   const { t } = useI18n();

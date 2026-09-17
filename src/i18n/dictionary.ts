@@ -164,6 +164,8 @@ export type Dictionary = {
     attachmentsUnavailable: string;
     attachmentsLocalCard: string;
     attachmentClosePreview: string;
+    attachmentZoomIn: string;
+    attachmentZoomOut: string;
     openCommentLink: string;
     figmaLabel: string;
     figmaOpenAria: string;
@@ -473,6 +475,8 @@ export const en: Dictionary = {
     attachmentsUnavailable: "File storage is not configured",
     attachmentsLocalCard: "Wait until the card is saved, then attach files",
     attachmentClosePreview: "Close preview",
+    attachmentZoomIn: "Zoom in",
+    attachmentZoomOut: "Zoom out",
     openCommentLink: "Open link",
     figmaLabel: "Figma",
     figmaOpenAria: "Open Figma file {title}",

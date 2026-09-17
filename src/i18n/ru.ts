@@ -172,6 +172,8 @@ export const ru: Dictionary = {
     attachmentsUnavailable: "Хранилище файлов не настроено",
     attachmentsLocalCard: "Подождите, пока карточка сохранится, затем прикрепите файлы",
     attachmentClosePreview: "Закрыть просмотр",
+    attachmentZoomIn: "Увеличить",
+    attachmentZoomOut: "Уменьшить",
     openCommentLink: "Открыть ссылку",
     figmaLabel: "Figma",
     figmaOpenAria: "Открыть файл Figma {title}",

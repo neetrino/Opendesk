@@ -48,7 +48,7 @@ import { useBoardActivity } from "@/lib/use-board-activity";
 import { useCardReads } from "@/lib/use-card-reads";
 import { useColumnPages } from "@/lib/use-column-pages";
 import { filterCardsByQuery } from "@/lib/filter-cards";
-import { resolveCardLabels, type BoardLabelView } from "@/lib/labels";
+import { optimisticLabelIdRemap, resolveCardLabels, type BoardLabelView, type LabelCatalogChange } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
 
 export type BoardCard = LocalBoardCard;
@@ -182,6 +182,7 @@ export function KanbanBoard({
   const [heldCards, setHeldCards] = useState<BoardCard[]>([]);
   const [removedCardIds, setRemovedCardIds] = useState<string[]>([]);
   const [boardLabels, setBoardLabels] = useState(labels);
+  const boardLabelsRef = useRef(boardLabels);
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
   const { extraCards, hasMore, loadMore } = useColumnPages(
@@ -266,14 +267,21 @@ export function KanbanBoard({
   const selectedIsDraft =
     draftCard !== null && selectedCardId === draftCard.id;
 
-  const applyBoardLabels = useCallback((next: readonly BoardLabelView[]): void => {
-    setBoardLabels([...next]);
-    const byId = new Map(next.map((label) => [label.id, label]));
+  const applyBoardLabels = useCallback<LabelCatalogChange>((next) => {
+    const previous = boardLabelsRef.current;
+    const resolved = [
+      ...(typeof next === "function" ? next(previous) : next),
+    ];
+    const remap = optimisticLabelIdRemap(previous, resolved);
+    boardLabelsRef.current = resolved;
+    setBoardLabels(resolved);
+    const byId = new Map(resolved.map((label) => [label.id, label]));
     function patch(card: BoardCard): BoardCard {
       return {
         ...card,
         labels: card.labels.flatMap((label) => {
-          const current = byId.get(label.id);
+          const id = remap.get(label.id) ?? label.id;
+          const current = byId.get(id);
           return current ? [current] : [];
         }),
       };
