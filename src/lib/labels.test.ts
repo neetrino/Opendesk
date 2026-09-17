@@ -15,7 +15,7 @@ import {
 describe("labels", () => {
   it("accepts palette keys only", () => {
     expect(isLabelColorKey("teal")).toBe(true);
-    expect(parseLabelColor("coral")).toBe("coral");
+    expect(parseLabelColor("fog")).toBe("fog");
     expect(parseLabelColor("magenta")).toBeNull();
   });
 
@@ -35,12 +35,37 @@ describe("labels", () => {
         "gold",
         "coral",
       ]),
+    ).toBe("sky");
+    expect(
+      nextLabelColor([
+        "teal",
+        "amber",
+        "blue",
+        "rose",
+        "violet",
+        "moss",
+        "rust",
+        "slate",
+        "gold",
+        "coral",
+        "sky",
+        "indigo",
+        "plum",
+        "wine",
+        "peach",
+        "olive",
+        "navy",
+        "mustard",
+        "cocoa",
+        "fog",
+      ]),
     ).toBe("teal");
   });
 
   it("cycles colors in palette order", () => {
     expect(cycleLabelColor("teal")).toBe("amber");
-    expect(cycleLabelColor("coral")).toBe("teal");
+    expect(cycleLabelColor("coral")).toBe("sky");
+    expect(cycleLabelColor("fog")).toBe("teal");
   });
 
   it("trims and caps a label name", () => {

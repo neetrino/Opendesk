@@ -104,6 +104,14 @@ export function DeleteActionIcon({ size }: IconProps) {
   );
 }
 
+export function PlusActionIcon({ size }: IconProps) {
+  return (
+    <IconFrame size={size}>
+      <path {...strokeProps()} d="M12 5v14M5 12h14" />
+    </IconFrame>
+  );
+}
+
 export function DotsActionIcon({ size }: IconProps) {
   return (
     <IconFrame size={size}>

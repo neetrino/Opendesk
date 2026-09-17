@@ -9,7 +9,10 @@ import {
 } from "@/components/board-label-commands";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { LabelColorPicker } from "@/components/label-color-picker";
-import { DeleteActionIcon } from "@/components/thread-action-icons";
+import {
+  DeleteActionIcon,
+  PlusActionIcon,
+} from "@/components/thread-action-icons";
 import { useI18n } from "@/i18n/provider";
 import { MAX_BOARD_LABELS, MAX_LABEL_NAME_LENGTH } from "@/lib/constants";
 import {
@@ -188,7 +191,7 @@ function ManageLabelRow({
           aria-label={t.cardPage.labelDeleteAria.replace("{name}", label.name)}
           onClick={onAskDelete}
         >
-          ×
+          <DeleteActionIcon size={14} />
         </button>
       </div>
     </li>
@@ -236,18 +239,16 @@ function CreateLabelRow({
               onSubmit();
             }
           }}
-          onBlur={(event) => {
-            const next = event.relatedTarget;
-            if (
-              next instanceof Element &&
-              (next.closest(".label-color-picker") ||
-                next.closest(".label-color-trigger"))
-            ) {
-              return;
-            }
-            onSubmit();
-          }}
         />
+        <button
+          type="button"
+          className="board-label-add"
+          aria-label={t.cardPage.labelCreateAria}
+          disabled={!value.trim()}
+          onClick={onSubmit}
+        >
+          <PlusActionIcon size={14} />
+        </button>
       </div>
     </li>
   );

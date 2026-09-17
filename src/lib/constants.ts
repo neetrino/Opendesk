@@ -39,6 +39,16 @@ export const LABEL_COLOR_KEYS = [
   "slate",
   "gold",
   "coral",
+  "sky",
+  "indigo",
+  "plum",
+  "wine",
+  "peach",
+  "olive",
+  "navy",
+  "mustard",
+  "cocoa",
+  "fog",
 ] as const;
 /** First paint per column; the rest load when that column is scrolled. */
 export const COLUMN_PAGE_SIZE = 10;
