@@ -138,6 +138,20 @@ function ManageLabelRow({
   return (
     <li className="board-label-edit">
       <div className="board-label-edit-head">
+        <LabelColorPicker
+          value={label.color}
+          name={label.name}
+          onChange={(color) => {
+            void setBoardLabelColor(
+              boardId,
+              label,
+              color,
+              labels,
+              onLabelsChange,
+              onError,
+            );
+          }}
+        />
         <input
           className="board-label-name"
           data-color={label.color}
@@ -177,20 +191,6 @@ function ManageLabelRow({
           ×
         </button>
       </div>
-      <LabelColorPicker
-        value={label.color}
-        name={label.name}
-        onChange={(color) => {
-          void setBoardLabelColor(
-            boardId,
-            label,
-            color,
-            labels,
-            onLabelsChange,
-            onError,
-          );
-        }}
-      />
     </li>
   );
 }
@@ -211,32 +211,44 @@ function CreateLabelRow({
   const { t } = useI18n();
   return (
     <li className="board-label-edit is-create">
-      <input
-        className="board-label-name"
-        data-color={color}
-        value={value}
-        maxLength={MAX_LABEL_NAME_LENGTH}
-        placeholder={t.cardPage.labelCreatePlaceholder}
-        aria-label={t.cardPage.labelCreateAria}
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-        onChange={(event) => {
-          onChange(event.target.value.replace(/[\r\n]/g, ""));
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
+      <div className="board-label-edit-head">
+        <LabelColorPicker
+          value={color}
+          name={t.cardPage.labelCreatePlaceholder}
+          onChange={onColorChange}
+        />
+        <input
+          className="board-label-name"
+          data-color={color}
+          value={value}
+          maxLength={MAX_LABEL_NAME_LENGTH}
+          placeholder={t.cardPage.labelCreatePlaceholder}
+          aria-label={t.cardPage.labelCreateAria}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          onChange={(event) => {
+            onChange(event.target.value.replace(/[\r\n]/g, ""));
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onSubmit();
+            }
+          }}
+          onBlur={(event) => {
+            const next = event.relatedTarget;
+            if (
+              next instanceof Element &&
+              (next.closest(".label-color-picker") ||
+                next.closest(".label-color-trigger"))
+            ) {
+              return;
+            }
             onSubmit();
-          }
-        }}
-        onBlur={onSubmit}
-      />
-      <LabelColorPicker
-        value={color}
-        name={t.cardPage.labelCreatePlaceholder}
-        onChange={onColorChange}
-      />
+          }}
+        />
+      </div>
     </li>
   );
 }

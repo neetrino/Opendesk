@@ -59,6 +59,9 @@ export function BoardSettingsSheet({
         if (document.querySelector(".confirm-dialog-root")) {
           return;
         }
+        if (document.querySelector(".label-color-picker")) {
+          return;
+        }
         setOpen(false);
       }
     }
