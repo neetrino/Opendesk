@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type PointerEvent, type RefObject } from "react";
+import { DownloadIcon } from "@/components/download-icon";
 import type { useLightboxZoom } from "@/lib/use-lightbox-zoom";
 
 type ZoomControls = ReturnType<typeof useLightboxZoom>;
@@ -22,6 +23,9 @@ export function LightboxStage({
 }: LightboxStageProps) {
   const imageRef = useRef<HTMLImageElement>(null);
   const setNaturalSize = zoom.setNaturalSize;
+  const framed = zoom.frame.width > 0;
+  const visualWidth = framed ? zoom.frame.width * zoom.zoom.scale : undefined;
+  const visualHeight = framed ? zoom.frame.height * zoom.zoom.scale : undefined;
 
   useEffect(() => {
     const image = imageRef.current;
@@ -30,19 +34,16 @@ export function LightboxStage({
     }
   }, [src, setNaturalSize]);
 
-  const framed = zoom.natural.width > 0 && zoom.frame.width > 0;
-  const cssScale = framed
-    ? zoom.frame.containScale * zoom.zoom.scale
-    : zoom.zoom.scale;
-
   return (
     <div
       ref={stageRef}
-      className={
-        zoom.zoom.scale > 1.01
-          ? "media-lightbox-stage is-zoomed"
-          : "media-lightbox-stage"
-      }
+      className={[
+        "media-lightbox-stage",
+        zoom.zoom.scale > 1.01 ? "is-zoomed" : "",
+        zoom.canZoomIn ? "" : "is-max",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       onPointerDown={zoom.onPointerDown}
       onPointerMove={zoom.onPointerMove}
       onPointerUp={zoom.onPointerUp}
@@ -50,13 +51,29 @@ export function LightboxStage({
       onClick={zoom.onStageClick}
     >
       <div
-        className={framed ? "media-lightbox-zoom is-framed" : "media-lightbox-zoom"}
+        className={[
+          "media-lightbox-zoom",
+          framed ? "is-framed" : "",
+          zoom.animating ? "is-animating" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         style={{
-          width: framed ? zoom.natural.width : undefined,
-          height: framed ? zoom.natural.height : undefined,
-          marginLeft: framed ? -zoom.natural.width / 2 : undefined,
-          marginTop: framed ? -zoom.natural.height / 2 : undefined,
-          transform: `translate(${zoom.zoom.x}px, ${zoom.zoom.y}px) scale(${cssScale})`,
+          width: visualWidth,
+          height: visualHeight,
+          transform: framed
+            ? `translate(-50%, -50%) translate(${zoom.zoom.x}px, ${zoom.zoom.y}px)`
+            : `translate(${zoom.zoom.x}px, ${zoom.zoom.y}px) scale(${zoom.zoom.scale})`,
+        }}
+        onTransitionEnd={(event) => {
+          if (
+            event.target === event.currentTarget &&
+            (event.propertyName === "transform" ||
+              event.propertyName === "width" ||
+              event.propertyName === "height")
+          ) {
+            zoom.clearAnimating();
+          }
         }}
       >
         {/* Signed R2 URLs are not in the next/image loader. */}
@@ -83,6 +100,74 @@ export function LightboxStage({
             );
           }}
           onError={onError}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function LightboxZoomRail({
+  label,
+  progress,
+  animating,
+  onChange,
+}: {
+  label: string;
+  progress: number;
+  animating: boolean;
+  onChange: (progress: number, live?: boolean) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  function progressFromClientY(clientY: number): number {
+    const track = trackRef.current;
+    if (!track) {
+      return progress;
+    }
+    const rect = track.getBoundingClientRect();
+    if (rect.height <= 0) {
+      return progress;
+    }
+    return Math.min(1, Math.max(0, 1 - (clientY - rect.top) / rect.height));
+  }
+
+  function onPointerDown(event: PointerEvent<HTMLDivElement>): void {
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    onChange(progressFromClientY(event.clientY), true);
+  }
+
+  function onPointerMove(event: PointerEvent<HTMLDivElement>): void {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+    onChange(progressFromClientY(event.clientY), true);
+  }
+
+  return (
+    <div
+      className={
+        animating
+          ? "media-lightbox-zoom-rail is-animating"
+          : "media-lightbox-zoom-rail"
+      }
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={(event) => event.stopPropagation()}
+      onPointerCancel={(event) => event.stopPropagation()}
+    >
+      <div ref={trackRef} className="media-lightbox-zoom-rail-track">
+        <span className="media-lightbox-zoom-rail-fill" style={{ height: `${progress * 100}%` }} />
+        <span
+          className="media-lightbox-zoom-rail-thumb"
+          style={{ top: `${(1 - progress) * 100}%` }}
+          role="slider"
+          aria-label={label}
+          aria-orientation="vertical"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress * 100)}
         />
       </div>
     </div>
@@ -128,22 +213,46 @@ function LightboxZoomTools({
   );
 }
 
-export function LightboxToolbar({
+export function LightboxCloseButton({
   closeLabel,
   onClose,
-  zoom,
-  zoomInLabel,
-  zoomOutLabel,
 }: {
   closeLabel: string;
   onClose: () => void;
-  zoom: ZoomControls | null;
-  zoomInLabel: string;
-  zoomOutLabel: string;
 }) {
   return (
     <div
       className="media-lightbox-tools"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="media-lightbox-tool"
+        aria-label={closeLabel}
+        onClick={onClose}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+export function LightboxFooter({
+  zoom,
+  zoomInLabel,
+  zoomOutLabel,
+  downloadHref,
+  downloadLabel,
+}: {
+  zoom: ZoomControls | null;
+  zoomInLabel: string;
+  zoomOutLabel: string;
+  downloadHref: string;
+  downloadLabel: string;
+}) {
+  return (
+    <div
+      className="media-lightbox-footer"
       onClick={(event) => event.stopPropagation()}
     >
       {zoom ? (
@@ -156,14 +265,16 @@ export function LightboxToolbar({
           onZoomOut={zoom.zoomOut}
         />
       ) : null}
-      <button
-        type="button"
+      <a
         className="media-lightbox-tool"
-        aria-label={closeLabel}
-        onClick={onClose}
+        href={downloadHref}
+        download
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={downloadLabel}
       >
-        ×
-      </button>
+        <DownloadIcon />
+      </a>
     </div>
   );
 }

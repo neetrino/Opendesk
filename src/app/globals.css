@@ -4270,6 +4270,16 @@ button.card-label-chip {
   gap: 0.45rem;
 }
 
+.media-lightbox-footer {
+  position: absolute;
+  left: 50%;
+  bottom: max(0.85rem, env(safe-area-inset-bottom));
+  z-index: 2;
+  display: flex;
+  gap: 0.45rem;
+  transform: translateX(-50%);
+}
+
 .media-lightbox-tool {
   width: 2.75rem;
   height: 2.75rem;
@@ -4282,6 +4292,7 @@ button.card-label-chip {
   color: var(--ink);
   font-size: 1.7rem;
   line-height: 1;
+  text-decoration: none;
   cursor: pointer;
   box-shadow: var(--shadow);
 }
@@ -4306,6 +4317,10 @@ button.card-label-chip {
   justify-items: center;
 }
 
+.media-lightbox.has-footer .media-lightbox-frame {
+  margin-bottom: 4.25rem;
+}
+
 .media-lightbox-frame img,
 .media-lightbox-frame video {
   max-width: 100%;
@@ -4323,9 +4338,11 @@ button.card-label-chip {
 
 .media-lightbox-caption {
   position: absolute;
-  bottom: max(0.85rem, env(safe-area-inset-bottom));
+  left: 50%;
+  bottom: calc(max(0.85rem, env(safe-area-inset-bottom)) + 3.5rem);
   z-index: 2;
   pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .media-lightbox-stage {
@@ -4349,6 +4366,64 @@ button.card-label-chip {
   top: 50%;
 }
 
+.media-lightbox-zoom.is-animating {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.media-lightbox-zoom-rail {
+  position: absolute;
+  left: max(0.85rem, env(safe-area-inset-left));
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: min(16.5rem, 48vh);
+  transform: translateY(-50%);
+  cursor: ns-resize;
+}
+
+.media-lightbox-zoom-rail-track {
+  position: relative;
+  width: 0.28rem;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: var(--shadow);
+}
+
+.media-lightbox-zoom-rail-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.media-lightbox-zoom-rail-thumb {
+  position: absolute;
+  left: 50%;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: var(--paper-raised);
+  box-shadow: var(--shadow);
+  transform: translate(-50%, -50%);
+}
+
+.media-lightbox-zoom-rail.is-animating .media-lightbox-zoom-rail-fill {
+  transition: height 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.media-lightbox-zoom-rail.is-animating .media-lightbox-zoom-rail-thumb {
+  transition: top 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .media-lightbox-zoom img {
   max-width: min(920px, calc(100vw - 2.5rem));
   max-height: 78vh;
@@ -4365,6 +4440,10 @@ button.card-label-chip {
 }
 
 .media-lightbox-stage.is-zoomed .media-lightbox-zoom img {
+  cursor: zoom-in;
+}
+
+.media-lightbox-stage.is-zoomed.is-max .media-lightbox-zoom img {
   cursor: grab;
 }
 
@@ -4496,7 +4575,15 @@ button.card-label-chip {
     top: auto;
     bottom: 100%;
     flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
     margin: 0 0 0.45rem;
+  }
+
+  .sheet-edge-meta {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
   .sheet-frame .card-sheet {

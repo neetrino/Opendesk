@@ -11,7 +11,7 @@ type AttachmentRouteContext = {
 export const runtime = "nodejs";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: AttachmentRouteContext,
 ): Promise<Response> {
   if (!isR2Configured()) {
@@ -22,6 +22,7 @@ export async function GET(
   if (!id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  const asDownload = new URL(request.url).searchParams.get("download") === "1";
 
   const attachment = await prisma.attachment.findUnique({
     where: { id },
@@ -48,6 +49,7 @@ export async function GET(
       attachment.objectKey,
       attachment.filename,
       attachment.contentType,
+      asDownload ? "attachment" : "inline",
     );
     return NextResponse.redirect(url, 302);
   } catch (error) {

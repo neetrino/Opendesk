@@ -11,10 +11,9 @@ import {
 import {
   applyLightboxPan,
   applyLightboxPinch,
-  toggleLightboxAtPoint,
   useLightboxKeyboardZoom,
   useLightboxTouchGuard,
-  useLightboxWheelZoom,
+  useLightboxWheel,
 } from "@/lib/lightbox-zoom-gestures";
 import {
   LIGHTBOX_ZOOM_HARD_CAP,
@@ -26,7 +25,9 @@ import {
   nextScaleUp,
   pointerDistance,
   readLightboxLayout,
+  scaleFromZoomProgress,
   zoomAtPoint,
+  zoomProgress,
   type LightboxLayout,
   type LightboxZoom,
 } from "@/lib/lightbox-zoom";
@@ -39,7 +40,7 @@ type UseLightboxZoomOptions = {
 };
 
 /**
- * Pinch, wheel, pan, and stepped zoom for the image lightbox.
+ * Pinch, wheel, pan, and 20% stepped zoom for the image lightbox.
  */
 export function useLightboxZoom({
   stageRef,
@@ -49,6 +50,7 @@ export function useLightboxZoom({
   const [natural, setNatural] = useState({ width: 0, height: 0 });
   const [maxScale, setMaxScale] = useState(LIGHTBOX_ZOOM_HARD_CAP);
   const [frame, setFrame] = useState({ width: 0, height: 0, containScale: 1 });
+  const [animating, setAnimating] = useState(false);
   const zoomRef = useRef(LIGHTBOX_ZOOM_RESET);
   const naturalRef = useRef({ width: 0, height: 0 });
   const pointersRef = useRef(new Map<number, Point>());
@@ -56,7 +58,6 @@ export function useLightboxZoom({
   const panOriginRef = useRef<Point | null>(null);
   const movedRef = useRef(false);
   const suppressClickRef = useRef(false);
-  const lastToggleAtRef = useRef(0);
 
   const commit = useCallback(
     (next: LightboxZoom, layout: LightboxLayout | null): void => {
@@ -96,47 +97,78 @@ export function useLightboxZoom({
     );
   }, [stageRef]);
 
+  const markLive = useCallback(() => {
+    setAnimating(false);
+  }, []);
+
+  const applySteppedScale = useCallback(
+    (nextScale: number, focusX: number, focusY: number) => {
+      const layout = readLayout();
+      if (!layout) {
+        return;
+      }
+      setAnimating(true);
+      const current = zoomRef.current;
+      const next = zoomAtPoint({ current, nextScale, focusX, focusY });
+      commit(
+        current.scale <= 1.05 ? alignZoomToTop(next, layout) : next,
+        layout,
+      );
+    },
+    [commit, readLayout],
+  );
+
   const zoomIn = useCallback(() => {
     const layout = readLayout();
     if (!layout) {
       return;
     }
-    const current = zoomRef.current;
-    const nextScale = nextScaleUp(
-      current.scale,
-      layout.maxScale,
-      layout.readableScale,
+    applySteppedScale(
+      nextScaleUp(zoomRef.current.scale, layout.maxScale),
+      0,
+      0,
     );
-    const next = zoomAtPoint({
-      current,
-      nextScale,
-      focusX: 0,
-      focusY: 0,
-    });
-    commit(
-      current.scale <= 1.05 ? alignZoomToTop(next, layout) : next,
-      layout,
-    );
-  }, [commit, readLayout]);
+  }, [applySteppedScale, readLayout]);
 
   const zoomOut = useCallback(() => {
     const layout = readLayout();
     if (!layout) {
       return;
     }
-    commit(
-      {
-        ...zoomRef.current,
-        scale: nextScaleDown(zoomRef.current.scale, layout.readableScale),
-      },
-      layout,
+    applySteppedScale(
+      nextScaleDown(zoomRef.current.scale, layout.maxScale),
+      0,
+      0,
     );
-  }, [commit, readLayout]);
+  }, [applySteppedScale, readLayout]);
 
-  const reset = useCallback(() => {
-    zoomRef.current = LIGHTBOX_ZOOM_RESET;
-    setZoom(LIGHTBOX_ZOOM_RESET);
-  }, []);
+  const setProgress = useCallback(
+    (progress: number, live = false) => {
+      const layout = readLayout();
+      if (!layout) {
+        return;
+      }
+      if (live) {
+        markLive();
+      }
+      const nextScale = scaleFromZoomProgress(progress, layout.maxScale);
+      const current = zoomRef.current;
+      const next = zoomAtPoint({
+        current,
+        nextScale,
+        focusX: 0,
+        focusY: 0,
+      });
+      if (!live) {
+        setAnimating(true);
+      }
+      commit(
+        current.scale <= 1.05 ? alignZoomToTop(next, layout) : next,
+        layout,
+      );
+    },
+    [commit, markLive, readLayout],
+  );
 
   const setNaturalSize = useCallback(
     (width: number, height: number) => {
@@ -171,8 +203,10 @@ export function useLightboxZoom({
         x: event.clientX,
         y: event.clientY,
       });
-      event.currentTarget.setPointerCapture(event.pointerId);
       movedRef.current = false;
+      if (pointersRef.current.size >= 2) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
       if (pointersRef.current.size === 1) {
         panOriginRef.current = { x: event.clientX, y: event.clientY };
         pinchRef.current = null;
@@ -185,9 +219,10 @@ export function useLightboxZoom({
         pinchRef.current = { lastDist: pointerDistance(first, second) };
         panOriginRef.current = null;
         suppressClickRef.current = true;
+        markLive();
       }
     },
-    [enabled],
+    [enabled, markLive],
   );
 
   const onPointerMove = useCallback(
@@ -205,6 +240,7 @@ export function useLightboxZoom({
         return;
       }
       if (pointersRef.current.size >= 2 && pinchRef.current) {
+        markLive();
         applyLightboxPinch(
           event.currentTarget,
           pointersRef.current,
@@ -216,18 +252,25 @@ export function useLightboxZoom({
         movedRef.current = true;
         return;
       }
+      const before = zoomRef.current;
       applyLightboxPan(
         event,
         previous,
         panOriginRef.current,
         movedRef,
         suppressClickRef,
-        zoomRef.current,
+        before,
         layout,
         commit,
       );
+      if (movedRef.current) {
+        markLive();
+        if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }
+      }
     },
-    [commit, enabled, readLayout],
+    [commit, enabled, markLive, readLayout],
   );
 
   const onPointerUp = useCallback(
@@ -256,28 +299,44 @@ export function useLightboxZoom({
         suppressClickRef.current = false;
         return;
       }
-      if (event.target instanceof HTMLImageElement) {
+      const wrap = event.currentTarget.querySelector(".media-lightbox-zoom");
+      const onPhoto =
+        wrap instanceof HTMLElement &&
+        isClientPointInRect(event.clientX, event.clientY, wrap.getBoundingClientRect());
+      if (onPhoto) {
         event.stopPropagation();
-        toggleLightboxAtPoint(
-          event.clientX,
-          event.clientY,
-          stageRef.current,
-          zoomRef.current,
-          lastToggleAtRef,
-          readLayout,
-          commit,
+        const layout = readLayout();
+        if (!layout || !stageRef.current) {
+          return;
+        }
+        const focus = {
+          clientX: event.clientX,
+          clientY: event.clientY,
+        };
+        const rect = stageRef.current.getBoundingClientRect();
+        applySteppedScale(
+          nextScaleUp(zoomRef.current.scale, layout.maxScale),
+          focus.clientX - (rect.left + rect.width / 2),
+          focus.clientY - (rect.top + rect.height / 2),
         );
         return;
       }
       if (zoomRef.current.scale > 1.05) {
         event.stopPropagation();
-        reset();
       }
     },
-    [commit, readLayout, reset, stageRef],
+    [applySteppedScale, readLayout, stageRef],
   );
 
-  useLightboxWheelZoom(stageRef, enabled, zoomRef, readLayout, commit);
+  useLightboxWheel(
+    stageRef,
+    enabled,
+    zoomRef,
+    readLayout,
+    commit,
+    markLive,
+    applySteppedScale,
+  );
   useLightboxKeyboardZoom(enabled, zoomIn, zoomOut);
   useLightboxTouchGuard(enabled, zoomRef);
 
@@ -285,14 +344,31 @@ export function useLightboxZoom({
     zoom,
     frame,
     natural,
+    animating,
+    progress: zoomProgress(zoom.scale, maxScale),
     canZoomIn: natural.width > 0 && zoom.scale < maxScale - 0.02,
     canZoomOut: zoom.scale > 1.02,
     zoomIn,
     zoomOut,
+    setProgress,
     setNaturalSize,
     onPointerDown,
     onPointerMove,
     onPointerUp,
     onStageClick,
+    clearAnimating: markLive,
   };
+}
+
+function isClientPointInRect(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+): boolean {
+  return (
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+  );
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  LIGHTBOX_ZOOM_STEPS,
   alignZoomToTop,
   clampPan,
   containedDisplaySize,
@@ -11,9 +12,10 @@ import {
   pointerMidpoint,
   readLightboxLayout,
   readableLightboxScale,
+  scaleFromZoomProgress,
   stageFocus,
-  toggleLightboxScale,
   zoomAtPoint,
+  zoomProgress,
 } from "@/lib/lightbox-zoom";
 
 describe("lightbox zoom", () => {
@@ -34,17 +36,21 @@ describe("lightbox zoom", () => {
     expect(maxLightboxScale(800, 800)).toBe(3);
   });
 
-  it("jumps to a readable scale, then steps, then back", () => {
-    expect(nextScaleUp(1, 20, 10)).toBe(10);
-    expect(nextScaleUp(10, 20, 10)).toBe(17.5);
-    expect(nextScaleDown(17.5, 10)).toBe(10);
-    expect(nextScaleDown(10, 10)).toBe(1);
-  });
-
-  it("toggles a contained photo open and closed", () => {
-    expect(toggleLightboxScale(1, 12, 10)).toBe(10);
-    expect(toggleLightboxScale(10, 12, 10)).toBe(1);
-    expect(toggleLightboxScale(1, 3, 1)).toBe(1.75);
+  it("reaches max in five equal 20% steps", () => {
+    expect(LIGHTBOX_ZOOM_STEPS).toBe(5);
+    expect(nextScaleUp(1, 3)).toBe(1.4);
+    expect(nextScaleUp(1.4, 3)).toBe(1.8);
+    expect(nextScaleUp(2.6, 3)).toBe(3);
+    expect(nextScaleDown(3, 3)).toBe(2.6);
+    expect(nextScaleDown(1.4, 3)).toBe(1);
+    expect(zoomProgress(1, 3)).toBe(0);
+    expect(zoomProgress(3, 3)).toBe(1);
+    expect(scaleFromZoomProgress(0.4, 3)).toBe(1.8);
+    let scale = 1;
+    for (let step = 0; step < LIGHTBOX_ZOOM_STEPS; step += 1) {
+      scale = nextScaleUp(scale, 6);
+    }
+    expect(scale).toBe(6);
   });
 
   it("keeps the focus point still while scaling", () => {
