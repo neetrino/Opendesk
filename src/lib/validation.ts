@@ -79,6 +79,11 @@ export const updateCardContentSchema = z.object({
     .max(MAX_TITLE_LENGTH),
 });
 
+export const deleteCardSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+});
+
 export const addCommentSchema = z.object({
   boardId: z.string().cuid(),
   cardId: z.string().cuid(),

@@ -98,7 +98,7 @@
 | 5.1 | Решение | Owner env login + permanent join link + signed cookies | ✅ | owner: `OWNER_*`; участник: имя + cookie |
 | 5.2 | Провайдеры | — | ➖ | |
 | 5.3 | Сессии | HTTP-only signed cookies | ✅ | `opendesk_owner` + `opendesk_session`; `opendesk_last_board` записывается после успешного рендера доски и не предоставляет доступ |
-| 5.4 | RBAC | owner vs participant | ✅ | создание досок только owner |
+| 5.4 | RBAC | owner vs participant | ✅ | создание досок и удаление задач только owner |
 | 5.5 | Email verify | не нужно | ➖ | |
 | 5.6 | Password reset | не нужно | ➖ | пароль owner только в env |
 
