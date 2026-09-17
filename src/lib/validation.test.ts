@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MAX_TITLE_LENGTH } from "@/lib/constants";
+import { MAX_LABEL_NAME_LENGTH, MAX_TITLE_LENGTH } from "@/lib/constants";
 import {
   claimInviteSchema,
+  createBoardLabelSchema,
   createBoardSchema,
   createCardSchema,
   deleteCardSchema,
   joinBoardSchema,
+  renameBoardLabelSchema,
   moveCardSchema,
   setCardUrgentSchema,
 } from "@/lib/validation";
@@ -115,6 +117,57 @@ describe("validation schemas", () => {
     const parsed = deleteCardSchema.safeParse({
       boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
       cardId: "local-not-a-cuid",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("accepts a new board label name", () => {
+    const parsed = createBoardLabelSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      name: "Design",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("accepts a chosen label color on create", () => {
+    const parsed = createBoardLabelSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      name: "Design",
+      color: "rose",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects an empty label name", () => {
+    const parsed = createBoardLabelSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      name: "   ",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("rejects a label name over the length cap", () => {
+    const parsed = createBoardLabelSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      name: "a".repeat(MAX_LABEL_NAME_LENGTH + 1),
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("accepts a renamed board label", () => {
+    const parsed = renameBoardLabelSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      labelId: "clyyyyyyyyyyyyyyyyyyyyyyyyy",
+      name: "Export",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects a renamed label over the length cap", () => {
+    const parsed = renameBoardLabelSchema.safeParse({
+      boardId: "clxxxxxxxxxxxxxxxxxxxxxxxxx",
+      labelId: "clyyyyyyyyyyyyyyyyyyyyyyyyy",
+      name: "a".repeat(MAX_LABEL_NAME_LENGTH + 1),
     });
     expect(parsed.success).toBe(false);
   });

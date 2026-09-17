@@ -24,6 +24,22 @@ export const MAX_TITLE_LENGTH = 45;
 export const MAX_COMMENT_LENGTH = 2000;
 /** Soft cap for people on one board. */
 export const MAX_BOARD_PARTICIPANTS = 20;
+/** Board-owned tags; created inline from a card, reused across that board. */
+export const MAX_BOARD_LABELS = 10;
+/** Short chip text; longer naming belongs in the card title. */
+export const MAX_LABEL_NAME_LENGTH = 10;
+export const LABEL_COLOR_KEYS = [
+  "teal",
+  "amber",
+  "blue",
+  "rose",
+  "violet",
+  "moss",
+  "rust",
+  "slate",
+  "gold",
+  "coral",
+] as const;
 /** First paint per column; the rest load when that column is scrolled. */
 export const COLUMN_PAGE_SIZE = 10;
 /** Newest messages when a card chat opens; older pages load on scroll up. */

@@ -80,6 +80,8 @@
 - `Invite` — id, boardId, token (unique), claimedAt?, participantId? (legacy one-time)
 - `Participant` — id, boardId, displayName, avatarKey? (уникальный стикер на доске), createdAt (макс. 20 на доску)
 - `Card` — id, boardId, status, title, urgent, authorId, position, pinnedCommentId?
+- `BoardLabel` — id, boardId, name, color, position (до 10 меток на доску)
+- `CardLabel` — cardId, labelId (метки задачи; набор меток свой у каждой доски)
 - `Comment` — id, cardId, authorId, body, createdAt, editedAt?, deletedAt?, parentId? (quote-reply + snapshot автора/отрывка)
 - `CommentReaction` — commentId, participantId, emoji (`agree` \| `done` \| `watching` \| `question` \| `blocker`)
 - `CommentMention` — commentId, participantId

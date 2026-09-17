@@ -13,8 +13,10 @@ import {
 import type { CardStatus } from "@prisma/client";
 import { BoardDock } from "@/components/board-dock";
 import { useRegisterBoardInboxControl } from "@/components/board-inbox-control";
+import { useRegisterBoardLabelsControl } from "@/components/board-labels-control";
 import { BoardSearchMobileBar, useBoardSearch } from "@/components/board-search";
 import { CardSheet } from "@/components/card-sheet";
+import { CardLabelChips, CardLabelMenu } from "@/components/card-labels";
 import { FireIcon } from "@/components/fire-icon";
 import { LoadMoreSentinel } from "@/components/load-more-sentinel";
 import { PaperclipIcon } from "@/components/paperclip-icon";
@@ -46,6 +48,7 @@ import { useBoardActivity } from "@/lib/use-board-activity";
 import { useCardReads } from "@/lib/use-card-reads";
 import { useColumnPages } from "@/lib/use-column-pages";
 import { filterCardsByQuery } from "@/lib/filter-cards";
+import { resolveCardLabels, type BoardLabelView } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
 
 export type BoardCard = LocalBoardCard;
@@ -66,6 +69,7 @@ type KanbanBoardProps = {
     avatarKey: string | null;
   };
   isOwner: boolean;
+  labels: BoardLabelView[];
 };
 
 type DragPayload = {
@@ -161,6 +165,7 @@ export function KanbanBoard({
   participants,
   currentUser,
   isOwner,
+  labels,
 }: KanbanBoardProps) {
   const { t } = useI18n();
   const { query } = useBoardSearch();
@@ -176,6 +181,7 @@ export function KanbanBoard({
   const [localCards, setLocalCards] = useState<BoardCard[]>([]);
   const [heldCards, setHeldCards] = useState<BoardCard[]>([]);
   const [removedCardIds, setRemovedCardIds] = useState<string[]>([]);
+  const [boardLabels, setBoardLabels] = useState(labels);
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
   const { extraCards, hasMore, loadMore } = useColumnPages(
@@ -259,6 +265,54 @@ export function KanbanBoard({
         (draftCard?.id === selectedCardId ? draftCard : null));
   const selectedIsDraft =
     draftCard !== null && selectedCardId === draftCard.id;
+
+  const applyBoardLabels = useCallback((next: readonly BoardLabelView[]): void => {
+    setBoardLabels([...next]);
+    const byId = new Map(next.map((label) => [label.id, label]));
+    function patch(card: BoardCard): BoardCard {
+      return {
+        ...card,
+        labels: card.labels.flatMap((label) => {
+          const current = byId.get(label.id);
+          return current ? [current] : [];
+        }),
+      };
+    }
+    setHeldCards((current) => current.map(patch));
+    setLocalCards((current) => current.map(patch));
+    setDraftCard((current) => (current ? patch(current) : current));
+  }, []);
+
+  useRegisterBoardLabelsControl(
+    boardId,
+    boardLabels,
+    applyBoardLabels,
+    setBoardError,
+  );
+
+  function applyCardLabels(
+    cardId: string,
+    nextLabels: readonly BoardLabelView[],
+  ): void {
+    const labels = [...nextLabels];
+    if (draftCard?.id === cardId) {
+      setDraftCard({ ...draftCard, labels });
+      return;
+    }
+    setHeldCards((current) =>
+      patchHeldCard(
+        current,
+        cardId,
+        optimisticCards.find((card) => card.id === cardId),
+        { labels },
+      ),
+    );
+    setLocalCards((current) =>
+      current.map((card) =>
+        card.id === cardId ? { ...card, labels } : card,
+      ),
+    );
+  }
 
   function startCreate(status: CardStatus): void {
     const draft = buildLocalBoardCard({
@@ -357,6 +411,12 @@ export function KanbanBoard({
     formData.set("status", localCard.status);
     formData.set("title", title);
     formData.set("urgent", urgent ? "true" : "false");
+    if (localCard.labels.length > 0) {
+      formData.set(
+        "labelIds",
+        localCard.labels.map((label) => label.id).join(","),
+      );
+    }
 
     const response = await createCardAction(formData);
     if (!response.ok) {
@@ -368,7 +428,10 @@ export function KanbanBoard({
       return response.error;
     }
 
-    const confirmed = toBoardCardFromCreated(response.data, currentUser);
+    const confirmed = {
+      ...toBoardCardFromCreated(response.data, currentUser),
+      labels: localCard.labels,
+    };
     setLocalCards((current) =>
       current.map((item) => (item.id === localCard.id ? confirmed : item)),
     );
@@ -702,7 +765,26 @@ export function KanbanBoard({
                           ) : null}
                         </span>
                       </div>
+                      <CardLabelMenu
+                        boardId={boardId}
+                        cardId={card.id}
+                        boardLabels={boardLabels}
+                        selectedLabels={resolveCardLabels(
+                          card.labels,
+                          boardLabels,
+                        )}
+                        persist={!isLocal}
+                        placement="bottom-start"
+                        variant="card"
+                        onCardLabelsChange={(nextLabels) => {
+                          applyCardLabels(card.id, nextLabels);
+                        }}
+                        onError={setBoardError}
+                      />
                       <h3 className="card-title">{card.title}</h3>
+                      <CardLabelChips
+                        labels={resolveCardLabels(card.labels, boardLabels)}
+                      />
                       <p
                         className={
                           card.commentCount > 0 || card.attachmentCount > 0
@@ -813,6 +895,8 @@ export function KanbanBoard({
               ),
             );
           }}
+          boardLabels={boardLabels}
+          onCardLabelsChange={applyCardLabels}
           onCommentSend={() => {
             setHeldCards((current) => {
               const source =

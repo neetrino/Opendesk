@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { CardStatus } from "@prisma/client";
+import { mapBoardLabelRow } from "@/lib/board-labels";
 import {
   afterCardCursor,
   emptyColumnPages,
@@ -32,6 +33,23 @@ const boardCardListSelect = {
       createdAt: true,
     },
   },
+  labels: {
+    select: {
+      label: {
+        select: {
+          id: true,
+          name: true,
+          color: true,
+          position: true,
+        },
+      },
+    },
+    orderBy: {
+      label: {
+        position: "asc",
+      },
+    },
+  },
   _count: {
     select: {
       comments: true,
@@ -60,6 +78,14 @@ type BoardCardRow = {
     avatarKey: string | null;
     createdAt: Date;
   };
+  labels: Array<{
+    label: {
+      id: string;
+      name: string;
+      color: string;
+      position: number;
+    };
+  }>;
   _count: {
     comments: number;
     attachments: number;
@@ -81,6 +107,10 @@ export function mapBoardCardRow(row: BoardCardRow): LocalBoardCard {
     author: row.author,
     commentCount: row._count.comments,
     attachmentCount: row._count.attachments,
+    labels: row.labels.flatMap((item) => {
+      const label = mapBoardLabelRow(item.label);
+      return label ? [label] : [];
+    }),
   };
 }
 

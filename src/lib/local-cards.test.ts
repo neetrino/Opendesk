@@ -63,6 +63,7 @@ describe("local cards", () => {
     expect(card.author.displayName).toBe("Anna");
     expect(card.commentCount).toBe(0);
     expect(card.attachmentCount).toBe(0);
+    expect(card.labels).toEqual([]);
   });
 
   it("maps a created server card onto the local board shape", () => {
@@ -88,6 +89,7 @@ describe("local cards", () => {
     expect(card.author.id).toBe(author.participantId);
     expect(card.commentCount).toBe(0);
     expect(card.attachmentCount).toBe(0);
+    expect(card.labels).toEqual([]);
   });
 
   it("keeps first-page cards ahead of extras and held cards", () => {

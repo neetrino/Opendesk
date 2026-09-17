@@ -1,0 +1,242 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import {
+  createBoardLabel,
+  deleteBoardLabel,
+  renameBoardLabel,
+  setBoardLabelColor,
+} from "@/components/board-label-commands";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { LabelColorPicker } from "@/components/label-color-picker";
+import { DeleteActionIcon } from "@/components/thread-action-icons";
+import { useI18n } from "@/i18n/provider";
+import { MAX_BOARD_LABELS, MAX_LABEL_NAME_LENGTH } from "@/lib/constants";
+import {
+  nextLabelColor,
+  sortBoardLabels,
+  type BoardLabelView,
+  type LabelColorKey,
+} from "@/lib/labels";
+
+type BoardLabelManagerProps = {
+  boardId: string;
+  labels: readonly BoardLabelView[];
+  onLabelsChange: (labels: readonly BoardLabelView[]) => void;
+  onError: (error: string) => void;
+};
+
+export function BoardLabelManager({
+  boardId,
+  labels,
+  onLabelsChange,
+  onError,
+}: BoardLabelManagerProps) {
+  const { t } = useI18n();
+  const [draftName, setDraftName] = useState("");
+  const [draftColor, setDraftColor] = useState<LabelColorKey>(() =>
+    nextLabelColor(labels.map((label) => label.color)),
+  );
+  const [pendingDelete, setPendingDelete] = useState<BoardLabelView | null>(
+    null,
+  );
+  const createBusyRef = useRef(false);
+  const catalog = sortBoardLabels(labels);
+  const canCreate = labels.length < MAX_BOARD_LABELS;
+
+  useEffect(() => {
+    setDraftColor(nextLabelColor(labels.map((label) => label.color)));
+  }, [labels]);
+
+  return (
+    <>
+      <ul className="board-label-list" aria-label={t.board.labelsAria}>
+        {catalog.map((label) => (
+          <ManageLabelRow
+            key={label.id}
+            boardId={boardId}
+            label={label}
+            labels={labels}
+            onLabelsChange={onLabelsChange}
+            onError={onError}
+            onAskDelete={() => setPendingDelete(label)}
+          />
+        ))}
+        {canCreate ? (
+          <CreateLabelRow
+            color={draftColor}
+            value={draftName}
+            onColorChange={setDraftColor}
+            onChange={setDraftName}
+            onSubmit={() => {
+              void createBoardLabel(
+                boardId,
+                draftName,
+                draftColor,
+                labels,
+                createBusyRef,
+                setDraftName,
+                onLabelsChange,
+                onError,
+              );
+            }}
+          />
+        ) : null}
+      </ul>
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={t.cardPage.labelDeleteConfirm.replace(
+          "{name}",
+          pendingDelete?.name ?? "",
+        )}
+        description={t.cardPage.labelDeleteConfirmHint}
+        cancelLabel={t.cardPage.labelDeleteCancel}
+        confirmLabel={t.cardPage.labelDeleteYes}
+        icon={<DeleteActionIcon size={20} />}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (!pendingDelete) {
+            return;
+          }
+          const target = pendingDelete;
+          setPendingDelete(null);
+          void deleteBoardLabel(
+            boardId,
+            target,
+            labels,
+            onLabelsChange,
+            onError,
+          );
+        }}
+      />
+    </>
+  );
+}
+
+function ManageLabelRow({
+  boardId,
+  label,
+  labels,
+  onLabelsChange,
+  onError,
+  onAskDelete,
+}: {
+  boardId: string;
+  label: BoardLabelView;
+  labels: readonly BoardLabelView[];
+  onLabelsChange: (labels: readonly BoardLabelView[]) => void;
+  onError: (error: string) => void;
+  onAskDelete: () => void;
+}) {
+  const { t } = useI18n();
+  const [draftName, setDraftName] = useState(label.name);
+
+  useEffect(() => {
+    setDraftName(label.name);
+  }, [label.name]);
+
+  return (
+    <li className="board-label-edit">
+      <div className="board-label-edit-head">
+        <input
+          className="board-label-name"
+          data-color={label.color}
+          value={draftName}
+          maxLength={MAX_LABEL_NAME_LENGTH}
+          aria-label={t.board.labelRenameAria.replace("{name}", label.name)}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          onChange={(event) => {
+            setDraftName(event.target.value.replace(/[\r\n]/g, ""));
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
+          onBlur={() => {
+            void renameBoardLabel(
+              boardId,
+              label,
+              draftName,
+              labels,
+              onLabelsChange,
+              onError,
+              setDraftName,
+            );
+          }}
+        />
+        <button
+          type="button"
+          className="card-label-remove"
+          aria-label={t.cardPage.labelDeleteAria.replace("{name}", label.name)}
+          onClick={onAskDelete}
+        >
+          ×
+        </button>
+      </div>
+      <LabelColorPicker
+        value={label.color}
+        name={label.name}
+        onChange={(color) => {
+          void setBoardLabelColor(
+            boardId,
+            label,
+            color,
+            labels,
+            onLabelsChange,
+            onError,
+          );
+        }}
+      />
+    </li>
+  );
+}
+
+function CreateLabelRow({
+  color,
+  value,
+  onColorChange,
+  onChange,
+  onSubmit,
+}: {
+  color: LabelColorKey;
+  value: string;
+  onColorChange: (color: LabelColorKey) => void;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <li className="board-label-edit is-create">
+      <input
+        className="board-label-name"
+        data-color={color}
+        value={value}
+        maxLength={MAX_LABEL_NAME_LENGTH}
+        placeholder={t.cardPage.labelCreatePlaceholder}
+        aria-label={t.cardPage.labelCreateAria}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        onChange={(event) => {
+          onChange(event.target.value.replace(/[\r\n]/g, ""));
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onSubmit();
+          }
+        }}
+        onBlur={onSubmit}
+      />
+      <LabelColorPicker
+        value={color}
+        name={t.cardPage.labelCreatePlaceholder}
+        onChange={onColorChange}
+      />
+    </li>
+  );
+}

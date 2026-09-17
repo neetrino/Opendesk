@@ -1,4 +1,5 @@
 import type { Card, CardStatus, Participant } from "@prisma/client";
+import { sameLabelIds, type BoardLabelView } from "@/lib/labels";
 
 export const LOCAL_CARD_ID_PREFIX = "local-";
 export const OPTIMISTIC_COMMENT_ID_PREFIX = "optimistic-";
@@ -23,6 +24,7 @@ export type LocalBoardCard = Card & {
   author: Participant;
   commentCount: number;
   attachmentCount: number;
+  labels: BoardLabelView[];
 };
 
 export type OptimisticCommentAttachment = Pick<
@@ -81,6 +83,7 @@ export function pruneConfirmedHeldCards<
     position: number;
     urgent?: boolean;
     commentCount?: number;
+    labels?: { id: string }[];
   },
 >(serverCards: T[], heldCards: T[]): T[] {
   if (heldCards.length === 0) {
@@ -97,7 +100,8 @@ export function pruneConfirmedHeldCards<
       server.status !== held.status ||
       server.position !== held.position ||
       server.urgent !== held.urgent ||
-      server.commentCount !== held.commentCount
+      server.commentCount !== held.commentCount ||
+      !sameLabelIds(server.labels ?? [], held.labels ?? [])
     );
   });
   return next.length === heldCards.length ? heldCards : next;
@@ -156,6 +160,7 @@ export function buildLocalBoardCard(input: BuildLocalCardInput): LocalBoardCard 
     },
     commentCount: 0,
     attachmentCount: 0,
+    labels: [],
   };
 }
 
@@ -179,6 +184,7 @@ export function toBoardCardFromCreated(
     },
     commentCount: 0,
     attachmentCount: 0,
+    labels: [],
   };
 }
 

@@ -79,6 +79,11 @@ export type Dictionary = {
     settings: string;
     settingsAria: string;
     closeSettings: string;
+    labels: string;
+    labelsAria: string;
+    closeLabels: string;
+    labelsEmpty: string;
+    labelRenameAria: string;
     newTaskLabel: string;
     newTaskAria: string;
     markAllRead: string;
@@ -128,6 +133,17 @@ export type Dictionary = {
     markUrgent: string;
     clearUrgent: string;
     urgentBadge: string;
+    labelsAria: string;
+    labelCreatePlaceholder: string;
+    labelCreateAria: string;
+    labelToggleAria: string;
+    labelColorAria: string;
+    labelColorsAria: string;
+    labelDeleteAria: string;
+    labelDeleteConfirm: string;
+    labelDeleteConfirmHint: string;
+    labelDeleteCancel: string;
+    labelDeleteYes: string;
     discussion: string;
     emptyThread: string;
     loadingThread: string;
@@ -277,6 +293,12 @@ export type Dictionary = {
     attachmentLimit: string;
     attachmentNotFound: string;
     deleteAttachment: string;
+    createLabel: string;
+    labelExists: string;
+    labelLimit: string;
+    labelNotFound: string;
+    updateLabel: string;
+    deleteLabel: string;
   };
 };
 
@@ -363,6 +385,11 @@ export const en: Dictionary = {
     settings: "Settings",
     settingsAria: "Board settings",
     closeSettings: "Close settings",
+    labels: "Labels",
+    labelsAria: "Board labels",
+    closeLabels: "Close labels",
+    labelsEmpty: "No labels yet.",
+    labelRenameAria: "Rename label {name}",
     newTaskLabel: "New",
     newTaskAria: "New task",
     markAllRead: "Mark all",
@@ -414,6 +441,18 @@ export const en: Dictionary = {
     markUrgent: "Mark as urgent",
     clearUrgent: "Remove urgency",
     urgentBadge: "Urgent",
+    labelsAria: "Labels",
+    labelCreatePlaceholder: "New label",
+    labelCreateAria: "Create a label",
+    labelToggleAria: "Toggle label {name}",
+    labelColorAria: "Change color of {name}",
+    labelColorsAria: "Color for {name}",
+    labelDeleteAria: "Delete label {name}",
+    labelDeleteConfirm: "Delete label {name}?",
+    labelDeleteConfirmHint:
+      "It will be removed from every task on this board. This cannot be undone.",
+    labelDeleteCancel: "Cancel",
+    labelDeleteYes: "Delete",
     discussion: "Discussion",
     emptyThread: "No replies yet. Write the first one.",
     loadingThread: "Loading messages…",
@@ -565,5 +604,11 @@ export const en: Dictionary = {
     attachmentLimit: "Too many files on this card",
     attachmentNotFound: "File not found",
     deleteAttachment: "Could not remove the file",
+    createLabel: "Could not create the label",
+    labelExists: "A label with this name already exists",
+    labelLimit: "This board already has 10 labels",
+    labelNotFound: "Label not found",
+    updateLabel: "Could not update the label",
+    deleteLabel: "Could not delete the label",
   },
 };

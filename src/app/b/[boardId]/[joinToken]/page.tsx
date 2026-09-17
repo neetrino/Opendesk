@@ -11,6 +11,7 @@ import {
 import { ensureOwnerParticipant } from "@/lib/board-access";
 import { getParticipantBoardDestination } from "@/lib/board-navigation";
 import { loadBoardCardPages } from "@/lib/board-cards";
+import { loadBoardLabels } from "@/lib/board-labels";
 import { OWNER_PARTICIPANT_NAME } from "@/lib/constants";
 import { buildJoinPath } from "@/lib/join-url";
 import { getOwnerSession } from "@/lib/owner-session";
@@ -96,7 +97,10 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
     board.participants = await loadBoardParticipantIdentities(board.id);
   }
 
-  const cardPages = await loadBoardCardPages(board.id);
+  const [cardPages, boardLabels] = await Promise.all([
+    loadBoardCardPages(board.id),
+    loadBoardLabels(board.id),
+  ]);
 
   const canonicalPath = buildJoinPath(board.slug, board.joinToken);
   if (canonicalPath !== requestedPath) {
@@ -152,6 +156,7 @@ export default async function BoardBySlugPage({ params }: BoardBySlugPageProps) 
           ...board,
           cards: cardPages.cards,
           columnPages: cardPages.columns,
+          labels: boardLabels,
         }}
         locale={locale}
         t={t}
