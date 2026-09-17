@@ -83,7 +83,9 @@ export function CardLabelMenu({
       <button
         type="button"
         className={triggerClass}
-        ref={refs.setReference}
+        ref={(node) => {
+          refs.setReference(node);
+        }}
         aria-label={t.cardPage.labelsAria}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -103,7 +105,9 @@ export function CardLabelMenu({
         <FloatingPortal>
           <div
             className="card-label-menu"
-            ref={refs.setFloating}
+            ref={(node) => {
+              refs.setFloating(node);
+            }}
             style={floatingStyles}
             {...getFloatingProps({
               onClick: (event) => {

@@ -52,7 +52,9 @@ export function LabelColorPicker({
           open ? "label-color-trigger is-open" : "label-color-trigger"
         }
         data-color={value}
-        ref={refs.setReference}
+        ref={(node) => {
+          refs.setReference(node);
+        }}
         aria-label={t.cardPage.labelColorAria.replace("{name}", name)}
         aria-expanded={open}
         aria-haspopup="true"
@@ -63,7 +65,9 @@ export function LabelColorPicker({
         <FloatingPortal>
           <div
             className="label-color-picker"
-            ref={refs.setFloating}
+            ref={(node) => {
+              refs.setFloating(node);
+            }}
             style={floatingStyles}
             role="radiogroup"
             aria-label={t.cardPage.labelColorsAria.replace("{name}", name)}

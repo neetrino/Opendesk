@@ -210,10 +210,10 @@ function BoardLabelsSheet({
   );
 }
 
-function noopApply(_labels: readonly BoardLabelView[]): void {
+function noopApply(): void {
   return undefined;
 }
 
-function noopError(_error: string): void {
+function noopError(): void {
   return undefined;
 }

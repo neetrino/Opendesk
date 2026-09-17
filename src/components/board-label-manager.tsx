@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   createBoardLabel,
   deleteBoardLabel,
@@ -36,10 +36,10 @@ export function BoardLabelManager({
   onError,
 }: BoardLabelManagerProps) {
   const { t } = useI18n();
+  const suggestedColor = nextLabelColor(labels.map((label) => label.color));
   const [draftName, setDraftName] = useState("");
-  const [draftColor, setDraftColor] = useState<LabelColorKey>(() =>
-    nextLabelColor(labels.map((label) => label.color)),
-  );
+  const [draftColor, setDraftColor] = useState(suggestedColor);
+  const [colorSource, setColorSource] = useState(labels);
   const [pendingDelete, setPendingDelete] = useState<BoardLabelView | null>(
     null,
   );
@@ -47,9 +47,10 @@ export function BoardLabelManager({
   const catalog = sortBoardLabels(labels);
   const canCreate = labels.length < MAX_BOARD_LABELS;
 
-  useEffect(() => {
-    setDraftColor(nextLabelColor(labels.map((label) => label.color)));
-  }, [labels]);
+  if (labels !== colorSource) {
+    setColorSource(labels);
+    setDraftColor(suggestedColor);
+  }
 
   return (
     <>
@@ -133,10 +134,12 @@ function ManageLabelRow({
 }) {
   const { t } = useI18n();
   const [draftName, setDraftName] = useState(label.name);
+  const [nameSource, setNameSource] = useState(label.name);
 
-  useEffect(() => {
+  if (label.name !== nameSource) {
+    setNameSource(label.name);
     setDraftName(label.name);
-  }, [label.name]);
+  }
 
   return (
     <li className="board-label-edit">
