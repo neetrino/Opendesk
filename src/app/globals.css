@@ -4248,6 +4248,11 @@ button.card-label-chip {
   overscroll-behavior-x: none;
 }
 
+.media-lightbox.is-image {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 .media-lightbox-backdrop {
   position: absolute;
   inset: 0;
@@ -4256,11 +4261,16 @@ button.card-label-chip {
   pointer-events: none;
 }
 
-.media-lightbox-close {
+.media-lightbox-tools {
   position: absolute;
   top: max(0.85rem, env(safe-area-inset-top));
   right: max(0.85rem, env(safe-area-inset-right));
   z-index: 2;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.media-lightbox-tool {
   width: 2.75rem;
   height: 2.75rem;
   display: inline-flex;
@@ -4276,8 +4286,13 @@ button.card-label-chip {
   box-shadow: var(--shadow);
 }
 
-.media-lightbox-close:hover {
+.media-lightbox-tool:hover:not(:disabled) {
   background: #fff;
+}
+
+.media-lightbox-tool:disabled {
+  opacity: 0.38;
+  cursor: default;
 }
 
 .media-lightbox-frame {
@@ -4299,10 +4314,63 @@ button.card-label-chip {
   background: #000;
 }
 
-.media-lightbox-frame p {
+.media-lightbox-frame p,
+.media-lightbox-caption {
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.82rem;
+}
+
+.media-lightbox-caption {
+  position: absolute;
+  bottom: max(0.85rem, env(safe-area-inset-bottom));
+  z-index: 2;
+  pointer-events: none;
+}
+
+.media-lightbox-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.media-lightbox-zoom {
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.media-lightbox-zoom.is-framed {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.media-lightbox-zoom img {
+  max-width: min(920px, calc(100vw - 2.5rem));
+  max-height: 78vh;
+  display: block;
+  border-radius: 16px;
+  background: #000;
+  user-select: none;
+  -webkit-user-drag: none;
+  cursor: zoom-in;
+}
+
+.media-lightbox-stage.is-zoomed {
+  cursor: grab;
+}
+
+.media-lightbox-stage.is-zoomed .media-lightbox-zoom img {
+  cursor: grab;
+}
+
+.media-lightbox-stage.is-zoomed:active,
+.media-lightbox-stage.is-zoomed:active .media-lightbox-zoom img {
+  cursor: grabbing;
 }
 
 .media-lightbox-link {

@@ -1,5 +1,6 @@
 import {
   LABEL_COLOR_KEYS,
+  MAX_BOARD_LABELS,
   MAX_LABEL_NAME_LENGTH,
 } from "@/lib/constants";
 
@@ -11,6 +12,23 @@ export type BoardLabelView = {
   color: LabelColorKey;
   position: number;
 };
+
+export const OPTIMISTIC_LABEL_ID_PREFIX = "optimistic-label-";
+
+export type LabelCatalogChange = (
+  next:
+    | readonly BoardLabelView[]
+    | ((current: readonly BoardLabelView[]) => readonly BoardLabelView[]),
+) => void;
+
+export function isOptimisticLabelId(labelId: string): boolean {
+  return labelId.startsWith(OPTIMISTIC_LABEL_ID_PREFIX);
+}
+
+/** Accent-insensitive name compare used for duplicate label checks. */
+export function namesMatch(left: string, right: string): boolean {
+  return left.localeCompare(right, undefined, { sensitivity: "accent" }) === 0;
+}
 
 export function isLabelColorKey(value: string): value is LabelColorKey {
   return (LABEL_COLOR_KEYS as readonly string[]).includes(value);
@@ -81,6 +99,58 @@ export function replaceBoardLabel(
   return sortBoardLabels(
     labels.map((label) => (label.id === next.id ? next : label)),
   );
+}
+
+/** Returns the catalog with `label` appended, or null when it would exceed the limit or duplicate a name. */
+export function addOptimisticBoardLabel(
+  labels: readonly BoardLabelView[],
+  label: BoardLabelView,
+): BoardLabelView[] | null {
+  if (labels.length >= MAX_BOARD_LABELS) {
+    return null;
+  }
+  if (labels.some((item) => namesMatch(item.name, label.name))) {
+    return null;
+  }
+  return sortBoardLabels([...labels, label]);
+}
+
+/** Replaces a temp label id with the saved row while keeping any local name/color edits. */
+export function confirmOptimisticLabel(
+  labels: readonly BoardLabelView[],
+  tempId: string,
+  saved: BoardLabelView,
+): BoardLabelView[] {
+  return sortBoardLabels(
+    labels.map((label) =>
+      label.id === tempId
+        ? { ...saved, name: label.name, color: label.color }
+        : label,
+    ),
+  );
+}
+
+export function optimisticLabelIdRemap(
+  previous: readonly BoardLabelView[],
+  next: readonly BoardLabelView[],
+): Map<string, string> {
+  const nextIds = new Set(next.map((label) => label.id));
+  const previousIds = new Set(previous.map((label) => label.id));
+  const removed = previous.filter(
+    (label) => isOptimisticLabelId(label.id) && !nextIds.has(label.id),
+  );
+  const added = next.filter(
+    (label) => !isOptimisticLabelId(label.id) && !previousIds.has(label.id),
+  );
+  const remap = new Map<string, string>();
+  if (removed.length === 1 && added.length === 1) {
+    const from = removed[0];
+    const to = added[0];
+    if (from && to) {
+      remap.set(from.id, to.id);
+    }
+  }
+  return remap;
 }
 
 /** Joins card assignments to the current board catalog (name, color, dropped ids). */

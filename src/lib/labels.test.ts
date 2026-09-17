@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  addOptimisticBoardLabel,
+  confirmOptimisticLabel,
   cycleLabelColor,
   isLabelColorKey,
+  isOptimisticLabelId,
+  namesMatch,
   nextLabelColor,
   normalizeLabelName,
+  optimisticLabelIdRemap,
   parseLabelColor,
   replaceBoardLabel,
   resolveCardLabels,
@@ -115,5 +120,48 @@ describe("labels", () => {
         [{ ...design, name: "New", color: "rose" }],
       ),
     ).toEqual([{ ...design, name: "New", color: "rose" }]);
+  });
+
+  it("matches label names without case differences", () => {
+    expect(namesMatch("Finance", "finance")).toBe(true);
+    expect(namesMatch("Export", "Import")).toBe(false);
+  });
+
+  it("adds an optimistic label and keeps local edits on confirm", () => {
+    const design = {
+      id: "1",
+      name: "Design",
+      color: "teal" as const,
+      position: 0,
+    };
+    const optimistic = {
+      id: "optimistic-label-temp",
+      name: "Export",
+      color: "amber" as const,
+      position: 1,
+    };
+    const added = addOptimisticBoardLabel([design], optimistic);
+    expect(added?.map((label) => label.id)).toEqual(["1", optimistic.id]);
+    expect(addOptimisticBoardLabel([design, optimistic], optimistic)).toBeNull();
+    expect(isOptimisticLabelId(optimistic.id)).toBe(true);
+
+    const saved = {
+      id: "real",
+      name: "Export",
+      color: "amber" as const,
+      position: 1,
+    };
+    const edited = { ...optimistic, name: "Exports", color: "rose" as const };
+    expect(confirmOptimisticLabel([design, edited], optimistic.id, saved)).toEqual(
+      [
+        design,
+        { ...saved, name: "Exports", color: "rose" },
+      ],
+    );
+    expect(
+      optimisticLabelIdRemap([design, optimistic], [design, saved]).get(
+        optimistic.id,
+      ),
+    ).toBe("real");
   });
 });

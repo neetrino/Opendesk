@@ -1,7 +1,11 @@
 "use client";
 
 import { setCardLabelAction } from "@/lib/label-actions";
-import { toggleCardLabels, type BoardLabelView } from "@/lib/labels";
+import {
+  isOptimisticLabelId,
+  toggleCardLabels,
+  type BoardLabelView,
+} from "@/lib/labels";
 import { isLocalCardId } from "@/lib/local-cards";
 
 export type CardLabelEditorProps = {
@@ -19,7 +23,11 @@ export function useCardLabelActions(props: CardLabelEditorProps) {
     label: BoardLabelView,
     assigned: boolean,
   ): Promise<boolean> {
-    if (!props.persist || isLocalCardId(props.cardId)) {
+    if (
+      !props.persist ||
+      isLocalCardId(props.cardId) ||
+      isOptimisticLabelId(label.id)
+    ) {
       return true;
     }
     const formData = new FormData();

@@ -6,6 +6,7 @@ import { MAX_BOARD_LABELS } from "@/lib/constants";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
 import {
   isUniqueConstraintError,
+  namesMatch,
   nextLabelColor,
   normalizeLabelName,
   parseLabelColor,
@@ -22,10 +23,6 @@ import {
   setCardLabelSchema,
 } from "@/lib/validation";
 import type { ActionResult } from "@/types/actions";
-
-function namesMatch(left: string, right: string): boolean {
-  return left.localeCompare(right, undefined, { sensitivity: "accent" }) === 0;
-}
 
 /**
  * Creates a board label.

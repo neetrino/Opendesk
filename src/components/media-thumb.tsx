@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
+import { LightboxStage, LightboxToolbar } from "@/components/lightbox-image";
 import { VoiceNotePlayer } from "@/components/voice-note-player";
 import { canPreviewInline } from "@/lib/attachments";
 import { useHistoryTrap } from "@/lib/use-history-trap";
+import { useLightboxZoom } from "@/lib/use-lightbox-zoom";
 
 export type MediaItem = {
   id: string;
@@ -81,11 +83,25 @@ export function MediaThumb({
 type MediaLightboxProps = {
   item: MediaItem;
   closeLabel: string;
+  zoomInLabel: string;
+  zoomOutLabel: string;
   onClose: () => void;
 };
 
-export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps) {
+export function MediaLightbox({
+  item,
+  closeLabel,
+  zoomInLabel,
+  zoomOutLabel,
+  onClose,
+}: MediaLightboxProps) {
   const preview = useInlinePreview(item);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const isImage = preview.ready && item.kind === "image";
+  const zoom = useLightboxZoom({
+    stageRef,
+    enabled: isImage,
+  });
 
   useHistoryTrap({
     id: "media",
@@ -104,39 +120,87 @@ export function MediaLightbox({ item, closeLabel, onClose }: MediaLightboxProps)
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [onClose]);
 
-  function keepOpen(event: MouseEvent<HTMLElement>): void {
-    event.stopPropagation();
-  }
+  return (
+    <MediaLightboxDialog
+      item={item}
+      isImage={isImage}
+      previewable={preview.ready}
+      closeLabel={closeLabel}
+      zoomInLabel={zoomInLabel}
+      zoomOutLabel={zoomOutLabel}
+      stageRef={stageRef}
+      zoom={zoom}
+      onError={preview.fail}
+      onClose={onClose}
+    />
+  );
+}
 
+function keepLightboxOpen(event: MouseEvent<HTMLElement>): void {
+  event.stopPropagation();
+}
+
+function MediaLightboxDialog({
+  item,
+  isImage,
+  previewable,
+  closeLabel,
+  zoomInLabel,
+  zoomOutLabel,
+  stageRef,
+  zoom,
+  onError,
+  onClose,
+}: {
+  item: MediaItem;
+  isImage: boolean;
+  previewable: boolean;
+  closeLabel: string;
+  zoomInLabel: string;
+  zoomOutLabel: string;
+  stageRef: RefObject<HTMLDivElement | null>;
+  zoom: ReturnType<typeof useLightboxZoom>;
+  onError: () => void;
+  onClose: () => void;
+}) {
   return (
     <div
-      className="media-lightbox"
+      className={isImage ? "media-lightbox is-image" : "media-lightbox"}
       role="dialog"
       aria-modal="true"
       aria-label={item.filename}
       onClick={onClose}
     >
       <div className="media-lightbox-backdrop" aria-hidden="true" />
-      <button
-        type="button"
-        className="media-lightbox-close"
-        aria-label={closeLabel}
-        onClick={(event) => {
-          event.stopPropagation();
-          onClose();
-        }}
-      >
-        ×
-      </button>
-      <div className="media-lightbox-frame">
-        <LightboxMedia
-          item={item}
-          previewable={preview.ready}
-          onError={preview.fail}
-          onKeepOpen={keepOpen}
-        />
-        <p onClick={keepOpen}>{item.filename}</p>
-      </div>
+      <LightboxToolbar
+        closeLabel={closeLabel}
+        onClose={onClose}
+        zoom={isImage ? zoom : null}
+        zoomInLabel={zoomInLabel}
+        zoomOutLabel={zoomOutLabel}
+      />
+      {isImage ? (
+        <>
+          <LightboxStage
+            src={item.src}
+            filename={item.filename}
+            stageRef={stageRef}
+            zoom={zoom}
+            onError={onError}
+          />
+          <p className="media-lightbox-caption">{item.filename}</p>
+        </>
+      ) : (
+        <div className="media-lightbox-frame">
+          <LightboxMedia
+            item={item}
+            previewable={previewable}
+            onError={onError}
+            onKeepOpen={keepLightboxOpen}
+          />
+          <p onClick={keepLightboxOpen}>{item.filename}</p>
+        </div>
+      )}
     </div>
   );
 }

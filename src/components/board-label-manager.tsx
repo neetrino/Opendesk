@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   createBoardLabel,
   deleteBoardLabel,
@@ -16,16 +16,19 @@ import {
 import { useI18n } from "@/i18n/provider";
 import { MAX_BOARD_LABELS, MAX_LABEL_NAME_LENGTH } from "@/lib/constants";
 import {
+  namesMatch,
   nextLabelColor,
+  normalizeLabelName,
   sortBoardLabels,
   type BoardLabelView,
+  type LabelCatalogChange,
   type LabelColorKey,
 } from "@/lib/labels";
 
 type BoardLabelManagerProps = {
   boardId: string;
   labels: readonly BoardLabelView[];
-  onLabelsChange: (labels: readonly BoardLabelView[]) => void;
+  onLabelsChange: LabelCatalogChange;
   onError: (error: string) => void;
 };
 
@@ -43,7 +46,6 @@ export function BoardLabelManager({
   const [pendingDelete, setPendingDelete] = useState<BoardLabelView | null>(
     null,
   );
-  const createBusyRef = useRef(false);
   const catalog = sortBoardLabels(labels);
   const canCreate = labels.length < MAX_BOARD_LABELS;
 
@@ -60,7 +62,6 @@ export function BoardLabelManager({
             key={label.id}
             boardId={boardId}
             label={label}
-            labels={labels}
             onLabelsChange={onLabelsChange}
             onError={onError}
             onAskDelete={() => setPendingDelete(label)}
@@ -73,14 +74,17 @@ export function BoardLabelManager({
             onColorChange={setDraftColor}
             onChange={setDraftName}
             onSubmit={() => {
+              const name = normalizeLabelName(draftName);
+              if (labels.some((label) => namesMatch(label.name, name))) {
+                onError(t.errors.labelExists);
+                return;
+              }
               void createBoardLabel(
                 boardId,
                 draftName,
                 draftColor,
-                labels,
-                createBusyRef,
-                setDraftName,
                 onLabelsChange,
+                setDraftName,
                 onError,
               );
             }}
@@ -104,13 +108,7 @@ export function BoardLabelManager({
           }
           const target = pendingDelete;
           setPendingDelete(null);
-          void deleteBoardLabel(
-            boardId,
-            target,
-            labels,
-            onLabelsChange,
-            onError,
-          );
+          void deleteBoardLabel(boardId, target, onLabelsChange, onError);
         }}
       />
     </>
@@ -120,15 +118,13 @@ export function BoardLabelManager({
 function ManageLabelRow({
   boardId,
   label,
-  labels,
   onLabelsChange,
   onError,
   onAskDelete,
 }: {
   boardId: string;
   label: BoardLabelView;
-  labels: readonly BoardLabelView[];
-  onLabelsChange: (labels: readonly BoardLabelView[]) => void;
+  onLabelsChange: LabelCatalogChange;
   onError: (error: string) => void;
   onAskDelete: () => void;
 }) {
@@ -152,7 +148,6 @@ function ManageLabelRow({
               boardId,
               label,
               color,
-              labels,
               onLabelsChange,
               onError,
             );
@@ -181,7 +176,6 @@ function ManageLabelRow({
               boardId,
               label,
               draftName,
-              labels,
               onLabelsChange,
               onError,
               setDraftName,

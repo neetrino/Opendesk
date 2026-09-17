@@ -172,6 +172,8 @@ export const hy: Dictionary = {
     attachmentsUnavailable: "Ֆայլերի պահեստը կարգավորված չէ",
     attachmentsLocalCard: "Սպասեք, որ քարտը պահպանվի, ապա կցեք ֆայլեր",
     attachmentClosePreview: "Փակել նախադիտումը",
+    attachmentZoomIn: "Խոշորացնել",
+    attachmentZoomOut: "Փոքրացնել",
     openCommentLink: "Բացել հղումը",
     figmaLabel: "Figma",
     figmaOpenAria: "Բացել Figma ֆայլը {title}",
