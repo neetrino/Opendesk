@@ -104,16 +104,6 @@ export function DeleteActionIcon({ size }: IconProps) {
   );
 }
 
-export function FaceActionIcon({ size }: IconProps) {
-  return (
-    <IconFrame size={size}>
-      <path {...strokeProps()} d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
-      <path {...strokeProps()} d="M8.8 13.8c.6 1.2 1.8 2 3.2 2s2.6-.8 3.2-2" />
-      <path {...strokeProps()} d="M9 10h.01M15 10h.01" />
-    </IconFrame>
-  );
-}
-
 export function DotsActionIcon({ size }: IconProps) {
   return (
     <IconFrame size={size}>

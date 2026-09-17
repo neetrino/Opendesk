@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  useTransition,
   type FocusEvent,
   type PointerEvent,
 } from "react";
@@ -14,7 +13,6 @@ import { CardDeleteControl } from "@/components/card-delete-control";
 import { CardThreadPane } from "@/components/card-thread-pane";
 import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
-import { PencilIcon } from "@/components/pencil-icon";
 import type { ThreadReplyTo } from "@/lib/card-comment-view";
 import type { MentionParticipant } from "@/lib/comment-mentions";
 import {
@@ -80,7 +78,6 @@ export function CardSheet({
   onCreatedCard,
 }: CardSheetProps) {
   const { t } = useI18n();
-  const [isPending, startTransition] = useTransition();
   const [cardId, setCardId] = useState(card.id);
   const [title, setTitle] = useState(card.title);
   const [draftUrgent, setDraftUrgent] = useState(card.urgent);
@@ -88,18 +85,22 @@ export function CardSheet({
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<ThreadReplyTo | null>(null);
+  const [titleEditing, setTitleEditing] = useState(isDraft);
   const threadEnabled = !isDraft && !isLocalCardId(card.id);
   const thread = useCardThread(boardId, card.id, threadEnabled);
   const threadRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const stageMenuRef = useRef<HTMLDivElement>(null);
   const createConfirmRef = useRef<HTMLButtonElement>(null);
   const dismissIntentRef = useRef(false);
   const skipCommitRef = useRef(false);
   const commitInFlightRef = useRef(false);
+  const urgentRequestRef = useRef(0);
+  const statusRequestRef = useRef(0);
   const urgent = isDraft ? draftUrgent : card.urgent;
   const titleReady = title.trim().length >= MIN_CARD_TITLE_LENGTH;
-  const titleAtLimit = title.length >= MAX_TITLE_LENGTH;
+  const titleRemaining = MAX_TITLE_LENGTH - title.length;
+  const titleAtLimit = titleRemaining <= 0;
   const titleLimitHintId = `card-title-limit-${card.id}`;
   const canDelete =
     isOwner && !isDraft && !isLocalCardId(card.id);
@@ -132,6 +133,7 @@ export function CardSheet({
     setLeaveConfirm(false);
     setError(null);
     setReplyTo(null);
+    setTitleEditing(isDraft);
   }
 
   useEffect(() => {
@@ -244,14 +246,16 @@ export function CardSheet({
 
     const nextUrgent = !card.urgent;
     setError(null);
+    onUrgentChange(card.id, nextUrgent);
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
     formData.set("urgent", nextUrgent ? "true" : "false");
-
-    startTransition(async () => {
-      onUrgentChange(card.id, nextUrgent);
-      const response = await setCardUrgentAction(formData);
+    const requestId = ++urgentRequestRef.current;
+    void setCardUrgentAction(formData).then((response) => {
+      if (requestId !== urgentRequestRef.current) {
+        return;
+      }
       if (!response.ok) {
         onUrgentChange(card.id, !nextUrgent);
         setError(response.error);
@@ -271,14 +275,16 @@ export function CardSheet({
     const previousStatus = card.status;
     const previousPosition = card.position;
     setError(null);
+    onStatusChange(card.id, nextStatus);
     const formData = new FormData();
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
     formData.set("status", nextStatus);
-
-    startTransition(async () => {
-      onStatusChange(card.id, nextStatus);
-      const response = await moveCardAction(formData);
+    const requestId = ++statusRequestRef.current;
+    void moveCardAction(formData).then((response) => {
+      if (requestId !== statusRequestRef.current) {
+        return;
+      }
       if (!response.ok) {
         onStatusChange(card.id, previousStatus, previousPosition);
         setError(response.error);
@@ -303,15 +309,14 @@ export function CardSheet({
     formData.set("boardId", boardId);
     formData.set("cardId", card.id);
     formData.set("title", nextTitle);
-    startTransition(async () => {
-      const response = await updateCardContentAction(formData);
+    void updateCardContentAction(formData).then((response) => {
       if (!response.ok) {
         setError(response.error);
       }
     });
   }
 
-  function onTitleBlur(event: FocusEvent<HTMLInputElement>): void {
+  function onTitleBlur(event: FocusEvent<HTMLTextAreaElement>): void {
     if (dismissIntentRef.current || skipCommitRef.current || leaveConfirm) {
       dismissIntentRef.current = false;
       skipCommitRef.current = false;
@@ -363,12 +368,51 @@ export function CardSheet({
         onPointerDown={markDismissIntent}
         onClick={requestClose}
       />
-      <aside
-        className={`card-sheet${urgent ? " is-urgent" : ""}`}
+      <div
+        className="sheet-frame"
         role="dialog"
         aria-modal="true"
         aria-labelledby={`card-sheet-title-${card.id}`}
       >
+        <div className="sheet-edge-actions">
+          <button
+            type="button"
+            className="sheet-icon-btn sheet-close"
+            data-sheet-dismiss=""
+            onPointerDown={markDismissIntent}
+            onClick={requestClose}
+            aria-label={t.cardPage.close}
+          >
+            ×
+          </button>
+          <div className="sheet-edge-meta">
+            {canDelete ? (
+              <CardDeleteControl
+                boardId={boardId}
+                cardId={card.id}
+                onDeleted={() => onDeleted(card.id)}
+                onError={setError}
+              />
+            ) : null}
+            {titleEditing ? (
+              <span
+                className={
+                  titleAtLimit
+                    ? "sheet-title-remaining is-limit"
+                    : "sheet-title-remaining"
+                }
+                aria-live="polite"
+                aria-label={t.cardPage.titleRemainingAria.replace(
+                  "{n}",
+                  String(titleRemaining),
+                )}
+              >
+                {titleRemaining}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <aside className={`card-sheet${urgent ? " is-urgent" : ""}`}>
         <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
           <div className="sheet-title-block">
@@ -376,32 +420,42 @@ export function CardSheet({
               className={isDraft ? "sheet-title-bar is-draft" : "sheet-title-bar"}
             >
               <span className="visually-hidden">{t.cardPage.editTitle}</span>
-              <input
+              <textarea
                 ref={titleRef}
                 id={`card-sheet-title-${card.id}`}
                 className="sheet-title-input"
                 value={title}
+                rows={1}
                 maxLength={MAX_TITLE_LENGTH}
                 placeholder={isDraft ? t.cardPage.titlePlaceholder : undefined}
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
                 autoFocus={isDraft}
+                wrap="soft"
                 aria-describedby={titleAtLimit ? titleLimitHintId : undefined}
                 onChange={(event) => {
-                  setTitle(event.target.value.slice(0, MAX_TITLE_LENGTH));
+                  setTitle(
+                    event.target.value.replace(/[\r\n]/g, "").slice(0, MAX_TITLE_LENGTH),
+                  );
                   if (leaveConfirm) {
                     setLeaveConfirm(false);
                   }
                 }}
-                onBlur={onTitleBlur}
+                onFocus={() => {
+                  setTitleEditing(true);
+                }}
+                onBlur={(event) => {
+                  setTitleEditing(false);
+                  onTitleBlur(event);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
+                    event.preventDefault();
                     event.currentTarget.blur();
                   }
                 }}
               />
-              <PencilIcon className="sheet-title-edit" size={16} />
             </label>
             {titleAtLimit ? (
               <p
@@ -414,15 +468,6 @@ export function CardSheet({
             ) : null}
           </div>
           <div className="sheet-actions">
-            {canDelete ? (
-              <CardDeleteControl
-                boardId={boardId}
-                cardId={card.id}
-                disabled={isPending}
-                onDeleted={() => onDeleted(card.id)}
-                onError={setError}
-              />
-            ) : null}
             <button
               type="button"
               className={
@@ -431,7 +476,7 @@ export function CardSheet({
                   : "sheet-icon-btn sheet-urgent"
               }
               onClick={toggleUrgent}
-              disabled={isPending || (!isDraft && isLocalCardId(card.id))}
+              disabled={isDraft || isLocalCardId(card.id)}
               aria-pressed={urgent}
               aria-label={
                 urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
@@ -440,24 +485,14 @@ export function CardSheet({
                 urgent ? t.cardPage.clearUrgent : t.cardPage.markUrgent
               }
             >
-              <FireIcon size={18} />
-            </button>
-            <button
-              type="button"
-              className="sheet-icon-btn sheet-close"
-              data-sheet-dismiss=""
-              onPointerDown={markDismissIntent}
-              onClick={requestClose}
-              aria-label={t.cardPage.close}
-            >
-              ×
+              <FireIcon size={28} />
             </button>
           </div>
         </header>
         <div className="sheet-stage-anchor">
           <div
             ref={stageMenuRef}
-            className={`sheet-stage-control stage-${card.status}${isPending ? " is-pending" : ""}`}
+            className={`sheet-stage-control stage-${card.status}`}
             onPointerDown={(event) => {
               event.stopPropagation();
             }}
@@ -465,7 +500,7 @@ export function CardSheet({
             <button
               type="button"
               className="sheet-stage-trigger"
-              disabled={isPending || isDraft || isLocalCardId(card.id)}
+              disabled={isDraft || isLocalCardId(card.id)}
               aria-label={t.common.stageAria}
               aria-haspopup="listbox"
               aria-expanded={stageMenuOpen}
@@ -573,6 +608,9 @@ export function CardSheet({
                     );
                     onCommentSend();
                   }}
+                  onOptimisticConfirm={(tempId, commentId) => {
+                    thread.confirmOptimistic(tempId, commentId);
+                  }}
                   onOptimisticRollback={(tempId) => {
                     thread.rollbackOptimistic(tempId);
                     onCommentRollback();
@@ -583,6 +621,7 @@ export function CardSheet({
           </div>
         </div>
       </aside>
+      </div>
     </div>
   );
 }

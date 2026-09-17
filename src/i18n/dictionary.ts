@@ -134,6 +134,7 @@ export type Dictionary = {
     editTitle: string;
     titlePlaceholder: string;
     titleLimitHint: string;
+    titleRemainingAria: string;
     draftLeavePrompt: string;
     draftLeaveCreate: string;
     draftLeaveDiscard: string;
@@ -419,6 +420,7 @@ export const en: Dictionary = {
     editTitle: "Title",
     titlePlaceholder: "Task title",
     titleLimitHint: "Write the task description in the chat",
+    titleRemainingAria: "{n} characters left",
     draftLeavePrompt: "This task is not created yet. Create it?",
     draftLeaveCreate: "Create",
     draftLeaveDiscard: "Don't create",

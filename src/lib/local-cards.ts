@@ -1,6 +1,11 @@
 import type { Card, CardStatus, Participant } from "@prisma/client";
 
 export const LOCAL_CARD_ID_PREFIX = "local-";
+export const OPTIMISTIC_COMMENT_ID_PREFIX = "optimistic-";
+
+export function isOptimisticCommentId(commentId: string): boolean {
+  return commentId.startsWith(OPTIMISTIC_COMMENT_ID_PREFIX);
+}
 
 export type BoardAttachment = {
   id: string;
@@ -70,7 +75,13 @@ export function pruneConfirmedLocalCards<T extends { id: string }>(
 }
 
 export function pruneConfirmedHeldCards<
-  T extends { id: string; status: unknown; position: number },
+  T extends {
+    id: string;
+    status: unknown;
+    position: number;
+    urgent?: boolean;
+    commentCount?: number;
+  },
 >(serverCards: T[], heldCards: T[]): T[] {
   if (heldCards.length === 0) {
     return heldCards;
@@ -82,7 +93,12 @@ export function pruneConfirmedHeldCards<
     if (!server) {
       return true;
     }
-    return server.status !== held.status || server.position !== held.position;
+    return (
+      server.status !== held.status ||
+      server.position !== held.position ||
+      server.urgent !== held.urgent ||
+      server.commentCount !== held.commentCount
+    );
   });
   return next.length === heldCards.length ? heldCards : next;
 }

@@ -130,9 +130,24 @@ type OptimisticUpdate =
       cardId: string;
       status: CardStatus;
       position?: number;
-    }
-  | { kind: "urgent"; cardId: string; urgent: boolean }
-  | { kind: "comment-count"; cardId: string; delta: number };
+    };
+
+function replaceHeldCard(current: BoardCard[], next: BoardCard): BoardCard[] {
+  return [...current.filter((card) => card.id !== next.id), next];
+}
+
+function patchHeldCard(
+  current: BoardCard[],
+  cardId: string,
+  fallback: BoardCard | undefined,
+  patch: Partial<BoardCard>,
+): BoardCard[] {
+  const source = current.find((card) => card.id === cardId) ?? fallback;
+  if (!source) {
+    return current;
+  }
+  return replaceHeldCard(current, { ...source, ...patch });
+}
 
 export function KanbanBoard({
   boardId,
@@ -228,22 +243,7 @@ export function KanbanBoard({
         );
       }
 
-      if (update.kind === "urgent") {
-        return current.map((card) =>
-          card.id === update.cardId
-            ? { ...card, urgent: update.urgent }
-            : card,
-        );
-      }
-
-      return current.map((card) =>
-        card.id === update.cardId
-          ? {
-              ...card,
-              commentCount: Math.max(0, card.commentCount + update.delta),
-            }
-          : card,
-      );
+      return current;
     },
   );
 
@@ -474,6 +474,7 @@ export function KanbanBoard({
     }
 
     setBoardError(null);
+    setHeldCards((current) => replaceHeldCard(current, nextMoved));
     startTransition(async () => {
       setOptimisticCards({ kind: "move", cardId, status, placement });
       const formData = new FormData();
@@ -483,6 +484,7 @@ export function KanbanBoard({
       writeMovePlacement(formData, placement);
       const result = await moveCardAction(formData);
       if (!result.ok) {
+        setHeldCards((current) => replaceHeldCard(current, moved));
         setOptimisticCards({
           kind: "status",
           cardId,
@@ -490,13 +492,7 @@ export function KanbanBoard({
           position: moved.position,
         });
         setBoardError(result.error);
-        return;
       }
-
-      setHeldCards((current) => [
-        ...current.filter((card) => card.id !== cardId),
-        nextMoved,
-      ]);
     });
   }
 
@@ -788,12 +784,6 @@ export function KanbanBoard({
           }}
           onStatusChange={(cardId, status, position) => {
             if (position === undefined) {
-              setOptimisticCards({
-                kind: "move",
-                cardId,
-                status,
-                placement: { kind: "start" },
-              });
               const nextCards = applyCardMove(optimisticCards, {
                 cardId,
                 toStatus: status,
@@ -801,38 +791,48 @@ export function KanbanBoard({
               });
               const moved = nextCards.find((card) => card.id === cardId);
               if (moved) {
-                setHeldCards((current) => [
-                  ...current.filter((card) => card.id !== cardId),
-                  moved,
-                ]);
+                setHeldCards((current) => replaceHeldCard(current, moved));
               }
               return;
             }
 
-            setOptimisticCards({ kind: "status", cardId, status, position });
             const moved = optimisticCards.find((card) => card.id === cardId);
             if (moved) {
-              setHeldCards((current) => [
-                ...current.filter((card) => card.id !== cardId),
-                { ...moved, status, position },
-              ]);
+              setHeldCards((current) =>
+                replaceHeldCard(current, { ...moved, status, position }),
+              );
             }
           }}
           onUrgentChange={(cardId, urgent) => {
-            setOptimisticCards({ kind: "urgent", cardId, urgent });
+            setHeldCards((current) =>
+              patchHeldCard(
+                current,
+                cardId,
+                optimisticCards.find((card) => card.id === cardId),
+                { urgent },
+              ),
+            );
           }}
           onCommentSend={() => {
-            setOptimisticCards({
-              kind: "comment-count",
-              cardId: selectedCard.id,
-              delta: 1,
+            setHeldCards((current) => {
+              const source =
+                current.find((card) => card.id === selectedCard.id) ??
+                selectedCard;
+              return replaceHeldCard(current, {
+                ...source,
+                commentCount: source.commentCount + 1,
+              });
             });
           }}
           onCommentRollback={() => {
-            setOptimisticCards({
-              kind: "comment-count",
-              cardId: selectedCard.id,
-              delta: -1,
+            setHeldCards((current) => {
+              const source =
+                current.find((card) => card.id === selectedCard.id) ??
+                selectedCard;
+              return replaceHeldCard(current, {
+                ...source,
+                commentCount: Math.max(0, source.commentCount - 1),
+              });
             });
           }}
         />

@@ -544,7 +544,7 @@ function parseCommentAttachments(raw: FormDataEntryValue | null): unknown {
 
 export async function addCommentAction(
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult<{ commentId: string }>> {
   const errors = await tErrors();
   const attachments = parseCommentAttachments(formData.get("attachments"));
   if (attachments === null) {
@@ -607,7 +607,7 @@ export async function addCommentAction(
       select: { id: true, displayName: true },
     });
 
-    await prisma.$transaction(async (tx) => {
+    const commentId = await prisma.$transaction(async (tx) => {
       const created = await tx.comment.create({
         data: {
           cardId: card.id,
@@ -636,10 +636,12 @@ export async function addCommentAction(
           db: tx,
         });
       }
+
+      return created.id;
     });
 
     await revalidateBoardPath(parsed.data.boardId);
-    return { ok: true, data: undefined };
+    return { ok: true, data: { commentId } };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return { ok: false, error: errors.unauthorized };

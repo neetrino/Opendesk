@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ThreadActionPopover } from "@/components/thread-action-popover";
-import { DotsActionIcon, FaceActionIcon } from "@/components/thread-action-icons";
+import { DotsActionIcon } from "@/components/thread-action-icons";
 import type {
   CommentReactionEmoji,
   ThreadReactionCount,
@@ -118,7 +118,6 @@ function ThreadHoverChip({
       aria-haspopup="menu"
       onClick={onOpen}
     >
-      <FaceActionIcon size={16} />
       <DotsActionIcon size={16} />
     </button>
   );
