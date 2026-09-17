@@ -26,6 +26,7 @@ const card: LocalBoardCard = {
   updatedAt: new Date("2026-09-12T10:00:00.000Z"),
   commentCount: 4,
   attachmentCount: 1,
+  labels: [],
   author: {
     id: authorId,
     boardId,

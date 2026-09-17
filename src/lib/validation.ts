@@ -2,11 +2,14 @@ import { z } from "zod";
 import { ATTACHMENT_CONTENT_TYPES } from "@/lib/attachments";
 import {
   COMMENT_REACTION_EMOJIS,
+  LABEL_COLOR_KEYS,
   MAX_ATTACHMENT_BYTES,
   MAX_ATTACHMENT_FILENAME_LENGTH,
+  MAX_BOARD_LABELS,
   MAX_COMMENT_ATTACHMENTS,
   MAX_COMMENT_LENGTH,
   MAX_DISPLAY_NAME_LENGTH,
+  MAX_LABEL_NAME_LENGTH,
   MAX_TITLE_LENGTH,
 } from "@/lib/constants";
 
@@ -42,6 +45,16 @@ export const createCardSchema = z.object({
     .union([z.literal("on"), z.literal("true"), z.literal("false"), z.boolean()])
     .optional()
     .transform((value) => value === true || value === "on" || value === "true"),
+  labelIds: z
+    .string()
+    .default("")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0),
+    )
+    .pipe(z.array(z.string().cuid()).max(MAX_BOARD_LABELS)),
 });
 
 const optionalCuid = z
@@ -188,4 +201,45 @@ export const createCardFromCommentSchema = z.object({
     .trim()
     .min(2, "cardTitleShort")
     .max(MAX_TITLE_LENGTH),
+});
+
+export const createBoardLabelSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: optionalCuid,
+  name: z
+    .string()
+    .trim()
+    .min(1, "validation")
+    .max(MAX_LABEL_NAME_LENGTH),
+  color: z.enum(LABEL_COLOR_KEYS).optional(),
+});
+
+export const setCardLabelSchema = z.object({
+  boardId: z.string().cuid(),
+  cardId: z.string().cuid(),
+  labelId: z.string().cuid(),
+  assigned: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .transform((value) => value === true || value === "true"),
+});
+
+export const setBoardLabelColorSchema = z.object({
+  boardId: z.string().cuid(),
+  labelId: z.string().cuid(),
+  color: z.enum(LABEL_COLOR_KEYS),
+});
+
+export const renameBoardLabelSchema = z.object({
+  boardId: z.string().cuid(),
+  labelId: z.string().cuid(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "validation")
+    .max(MAX_LABEL_NAME_LENGTH),
+});
+
+export const deleteBoardLabelSchema = z.object({
+  boardId: z.string().cuid(),
+  labelId: z.string().cuid(),
 });

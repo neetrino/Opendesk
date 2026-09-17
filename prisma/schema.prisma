@@ -33,6 +33,7 @@ model Board {
   participants Participant[]
   cards        Card[]
   attachments  Attachment[]
+  labels       BoardLabel[]
 }
 
 model Invite {
@@ -85,10 +86,37 @@ model Card {
   comments      Comment[]    @relation("CardComments")
   pinnedComment Comment?     @relation("CardPinnedComment", fields: [pinnedCommentId], references: [id], onDelete: SetNull)
   attachments   Attachment[]
+  labels        CardLabel[]
 
   @@index([boardId, status])
   @@index([boardId, status, position])
   @@index([pinnedCommentId])
+}
+
+model BoardLabel {
+  id        String   @id @default(cuid())
+  boardId   String
+  name      String
+  color     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  board Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards CardLabel[]
+
+  @@unique([boardId, name])
+  @@index([boardId, position])
+}
+
+model CardLabel {
+  cardId  String
+  labelId String
+
+  card  Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label BoardLabel @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
+  @@index([labelId])
 }
 
 model Comment {

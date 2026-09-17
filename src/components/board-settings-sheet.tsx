@@ -9,6 +9,7 @@ import {
   ParticipantsList,
   type BoardParticipant,
 } from "@/components/participants-panel";
+import { BoardLabelsSettingsSection } from "@/components/board-labels-control";
 import { SettingsIcon } from "@/components/settings-icon";
 import { useI18n } from "@/i18n/provider";
 import { MAX_BOARD_PARTICIPANTS } from "@/lib/constants";
@@ -55,6 +56,12 @@ export function BoardSettingsSheet({
 
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {
+        if (document.querySelector(".confirm-dialog-root")) {
+          return;
+        }
+        if (document.querySelector(".label-color-picker")) {
+          return;
+        }
         setOpen(false);
       }
     }
@@ -138,6 +145,7 @@ export function BoardSettingsSheet({
                     <div className="sheet-block">
                       <InviteButton slug={slug} joinToken={joinToken} />
                     </div>
+                    <BoardLabelsSettingsSection />
                     <div className="sheet-block">
                       <div className="sheet-badges">
                         <h3 className="settings-section-title">

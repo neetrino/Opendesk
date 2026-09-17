@@ -6,8 +6,13 @@ import {
   BoardInboxControlProvider,
   BoardMarkAllHeaderButton,
 } from "@/components/board-inbox-control";
+import {
+  BoardLabelsControlProvider,
+  BoardLabelsHeaderButton,
+} from "@/components/board-labels-control";
 import { KanbanBoard, type BoardCard } from "@/components/kanban-board";
 import type { BoardColumnPages } from "@/lib/board-card-view";
+import type { BoardLabelView } from "@/lib/labels";
 import { LogoutButton } from "@/components/logout-button";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import { ParticipantsPanel } from "@/components/participants-panel";
@@ -31,6 +36,7 @@ type BoardWorkspaceProps = {
     participants: BoardWorkspaceParticipant[];
     cards: BoardCard[];
     columnPages: BoardColumnPages;
+    labels: BoardLabelView[];
   };
   locale: Locale;
   t: Dictionary;
@@ -54,7 +60,8 @@ export function BoardWorkspace({
   return (
     <BoardSearchProvider>
       <BoardInboxControlProvider>
-        <section className="board-page">
+        <BoardLabelsControlProvider>
+          <section className="board-page">
           <header className="board-top">
             <h1 className="board-top-title">{board.title}</h1>
             <BoardSearchField />
@@ -71,6 +78,10 @@ export function BoardWorkspace({
                   <strong>{currentUser.displayName}</strong>
                 </span>
               </p>
+              <BoardLabelsHeaderButton
+                boardId={board.id}
+                labels={board.labels}
+              />
               <ParticipantsPanel
                 participants={board.participants}
                 locale={locale}
@@ -81,6 +92,7 @@ export function BoardWorkspace({
             </div>
           </header>
           <KanbanBoard
+            key={board.id}
             boardId={board.id}
             boardTitle={board.title}
             cards={board.cards}
@@ -92,8 +104,10 @@ export function BoardWorkspace({
             slug={board.slug}
             joinToken={board.joinToken}
             participants={board.participants}
+            labels={board.labels}
           />
-        </section>
+          </section>
+        </BoardLabelsControlProvider>
       </BoardInboxControlProvider>
     </BoardSearchProvider>
   );

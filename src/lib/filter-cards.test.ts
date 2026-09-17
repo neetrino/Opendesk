@@ -5,6 +5,11 @@ const cards = [
   { title: "Fix login timeout", author: { displayName: "Anna" } },
   { title: "Update sprint board", author: { displayName: "Owner" } },
   { title: "Հանդիպում", author: { displayName: "Արամ" } },
+  {
+    title: "Site visit",
+    author: { displayName: "Lina" },
+    labels: [{ name: "Client" }],
+  },
 ];
 
 describe("filterCardsByQuery", () => {
@@ -24,6 +29,10 @@ describe("filterCardsByQuery", () => {
 
   it("matches non-latin titles", () => {
     expect(filterCardsByQuery(cards, "հանդ")).toEqual([cards[2]]);
+  });
+
+  it("matches a label name", () => {
+    expect(filterCardsByQuery(cards, "client")).toEqual([cards[3]]);
   });
 
   it("returns an empty list when nothing matches", () => {

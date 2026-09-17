@@ -303,6 +303,7 @@ export async function createCardAction(
     status: formData.get("status") ?? "new",
     title: formData.get("title"),
     urgent: formData.get("urgent") ?? false,
+    labelIds: formData.get("labelIds") ?? "",
   });
 
   if (!parsed.success) {
@@ -329,6 +330,24 @@ export async function createCardAction(
         position: (maxPosition._max.position ?? -1) + 1,
       },
     });
+
+    if (parsed.data.labelIds.length > 0) {
+      const labels = await prisma.boardLabel.findMany({
+        where: {
+          boardId: parsed.data.boardId,
+          id: { in: parsed.data.labelIds },
+        },
+        select: { id: true },
+      });
+      if (labels.length > 0) {
+        await prisma.cardLabel.createMany({
+          data: labels.map((label) => ({
+            cardId: created.id,
+            labelId: label.id,
+          })),
+        });
+      }
+    }
 
     await revalidateBoardPath(parsed.data.boardId);
     return { ok: true, data: created };

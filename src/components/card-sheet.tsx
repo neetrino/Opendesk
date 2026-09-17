@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { Card, CardStatus } from "@prisma/client";
 import { CardDeleteControl } from "@/components/card-delete-control";
+import { CardLabelMenu } from "@/components/card-labels";
 import { CardThreadPane } from "@/components/card-thread-pane";
 import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
@@ -21,6 +22,7 @@ import {
   updateCardContentAction,
 } from "@/lib/actions";
 import { CARD_STATUSES, MAX_TITLE_LENGTH } from "@/lib/constants";
+import { resolveCardLabels, type BoardLabelView } from "@/lib/labels";
 import { isLocalCardId, type LocalBoardCard } from "@/lib/local-cards";
 import { useCardThread } from "@/lib/use-card-thread";
 import { useI18n } from "@/i18n/provider";
@@ -51,6 +53,8 @@ type CardSheetProps = {
     position?: number,
   ) => void;
   onUrgentChange: (cardId: string, urgent: boolean) => void;
+  boardLabels: BoardLabelView[];
+  onCardLabelsChange: (cardId: string, labels: readonly BoardLabelView[]) => void;
   onCommentSend: () => void;
   onCommentRollback: () => void;
   onCreatedCard: (card: Card) => void;
@@ -73,6 +77,8 @@ export function CardSheet({
   onDraftCommit,
   onStatusChange,
   onUrgentChange,
+  boardLabels,
+  onCardLabelsChange,
   onCommentSend,
   onCommentRollback,
   onCreatedCard,
@@ -153,6 +159,9 @@ export function CardSheet({
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {
         if (document.querySelector(".confirm-dialog-root")) {
+          return;
+        }
+        if (document.querySelector(".card-label-menu")) {
           return;
         }
         if (stageMenuOpen) {
@@ -394,6 +403,19 @@ export function CardSheet({
                 onError={setError}
               />
             ) : null}
+            <CardLabelMenu
+              boardId={boardId}
+              cardId={cardId}
+              boardLabels={boardLabels}
+              selectedLabels={resolveCardLabels(card.labels, boardLabels)}
+              persist={!isDraft && !isLocalCardId(card.id)}
+              placement="right-start"
+              variant="sheet"
+              onCardLabelsChange={(labels) => {
+                onCardLabelsChange(card.id, labels);
+              }}
+              onError={setError}
+            />
             {titleEditing ? (
               <span
                 className={

@@ -1,5 +1,6 @@
 import type { CardStatus } from "@prisma/client";
 import { z } from "zod";
+import { LABEL_COLOR_KEYS } from "@/lib/constants";
 import type { LocalBoardCard } from "@/lib/local-cards";
 import { toIsoDate } from "@/lib/pagination";
 
@@ -29,6 +30,16 @@ export const boardCardJsonSchema = z.object({
     avatarKey: z.string().nullable(),
     createdAt: z.string(),
   }),
+  labels: z
+    .array(
+      z.object({
+        id: z.string().cuid(),
+        name: z.string(),
+        color: z.enum(LABEL_COLOR_KEYS),
+        position: z.number().int(),
+      }),
+    )
+    .default([]),
 });
 
 export const boardCardsResponseSchema = z.object({
@@ -98,6 +109,7 @@ export function serializeBoardCard(card: LocalBoardCard): z.infer<
       avatarKey: card.author.avatarKey,
       createdAt: toIsoDate(card.author.createdAt),
     },
+    labels: card.labels,
   };
 }
 
@@ -117,6 +129,7 @@ export function parseBoardCard(raw: unknown): LocalBoardCard | null {
       ...card.author,
       createdAt: new Date(card.author.createdAt),
     },
+    labels: card.labels,
   };
 }
 
