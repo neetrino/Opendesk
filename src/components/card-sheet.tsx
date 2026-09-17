@@ -14,7 +14,6 @@ import { CardDeleteControl } from "@/components/card-delete-control";
 import { CardThreadPane } from "@/components/card-thread-pane";
 import { CommentForm } from "@/components/comment-form";
 import { FireIcon } from "@/components/fire-icon";
-import { PencilIcon } from "@/components/pencil-icon";
 import type { ThreadReplyTo } from "@/lib/card-comment-view";
 import type { MentionParticipant } from "@/lib/comment-mentions";
 import {
@@ -88,6 +87,7 @@ export function CardSheet({
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<ThreadReplyTo | null>(null);
+  const [titleEditing, setTitleEditing] = useState(isDraft);
   const threadEnabled = !isDraft && !isLocalCardId(card.id);
   const thread = useCardThread(boardId, card.id, threadEnabled);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -133,6 +133,7 @@ export function CardSheet({
     setLeaveConfirm(false);
     setError(null);
     setReplyTo(null);
+    setTitleEditing(isDraft);
   }
 
   useEffect(() => {
@@ -364,12 +365,52 @@ export function CardSheet({
         onPointerDown={markDismissIntent}
         onClick={requestClose}
       />
-      <aside
-        className={`card-sheet${urgent ? " is-urgent" : ""}`}
+      <div
+        className="sheet-frame"
         role="dialog"
         aria-modal="true"
         aria-labelledby={`card-sheet-title-${card.id}`}
       >
+        <div className="sheet-edge-actions">
+          <button
+            type="button"
+            className="sheet-icon-btn sheet-close"
+            data-sheet-dismiss=""
+            onPointerDown={markDismissIntent}
+            onClick={requestClose}
+            aria-label={t.cardPage.close}
+          >
+            ×
+          </button>
+          <div className="sheet-edge-meta">
+            {canDelete ? (
+              <CardDeleteControl
+                boardId={boardId}
+                cardId={card.id}
+                disabled={isPending}
+                onDeleted={() => onDeleted(card.id)}
+                onError={setError}
+              />
+            ) : null}
+            {titleEditing ? (
+              <span
+                className={
+                  titleAtLimit
+                    ? "sheet-title-remaining is-limit"
+                    : "sheet-title-remaining"
+                }
+                aria-live="polite"
+                aria-label={t.cardPage.titleRemainingAria.replace(
+                  "{n}",
+                  String(titleRemaining),
+                )}
+              >
+                {titleRemaining}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <aside className={`card-sheet${urgent ? " is-urgent" : ""}`}>
         <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
           <div className="sheet-title-block">
@@ -399,7 +440,13 @@ export function CardSheet({
                     setLeaveConfirm(false);
                   }
                 }}
-                onBlur={onTitleBlur}
+                onFocus={() => {
+                  setTitleEditing(true);
+                }}
+                onBlur={(event) => {
+                  setTitleEditing(false);
+                  onTitleBlur(event);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
@@ -407,21 +454,6 @@ export function CardSheet({
                   }
                 }}
               />
-              <span
-                className={
-                  titleAtLimit
-                    ? "sheet-title-remaining is-limit"
-                    : "sheet-title-remaining"
-                }
-                aria-live="polite"
-                aria-label={t.cardPage.titleRemainingAria.replace(
-                  "{n}",
-                  String(titleRemaining),
-                )}
-              >
-                {titleRemaining}
-              </span>
-              <PencilIcon className="sheet-title-edit" size={16} />
             </label>
             {titleAtLimit ? (
               <p
@@ -434,15 +466,6 @@ export function CardSheet({
             ) : null}
           </div>
           <div className="sheet-actions">
-            {canDelete ? (
-              <CardDeleteControl
-                boardId={boardId}
-                cardId={card.id}
-                disabled={isPending}
-                onDeleted={() => onDeleted(card.id)}
-                onError={setError}
-              />
-            ) : null}
             <button
               type="button"
               className={
@@ -461,16 +484,6 @@ export function CardSheet({
               }
             >
               <FireIcon size={18} />
-            </button>
-            <button
-              type="button"
-              className="sheet-icon-btn sheet-close"
-              data-sheet-dismiss=""
-              onPointerDown={markDismissIntent}
-              onClick={requestClose}
-              aria-label={t.cardPage.close}
-            >
-              ×
             </button>
           </div>
         </header>
@@ -603,6 +616,7 @@ export function CardSheet({
           </div>
         </div>
       </aside>
+      </div>
     </div>
   );
 }

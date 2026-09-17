@@ -1908,6 +1908,62 @@ textarea {
   cursor: pointer;
 }
 
+.sheet-frame {
+  position: absolute;
+  top: 5vh;
+  right: 1rem;
+  width: min(480px, calc(100vw - 4.5rem));
+  height: 90vh;
+  animation: sheet-in 220ms ease;
+}
+
+.sheet-edge-actions {
+  position: absolute;
+  right: 100%;
+  top: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-right: 0.45rem;
+  z-index: 2;
+}
+
+.sheet-edge-actions .sheet-icon-btn {
+  box-shadow: 0 8px 18px rgba(16, 24, 20, 0.18);
+}
+
+.sheet-edge-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.sheet-edge-actions .sheet-title-remaining {
+  min-width: 1.25rem;
+  margin: 0;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(16, 24, 20, 0.4);
+}
+
+.sheet-edge-actions .sheet-title-remaining.is-limit {
+  color: #ffd0d0;
+}
+
+.sheet-frame .card-sheet {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 100%;
+  height: 100%;
+  animation: none;
+}
+
 .card-sheet {
   position: absolute;
   top: 5vh;
@@ -1926,11 +1982,15 @@ textarea {
 
 .sheet-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.85rem 1rem 0.7rem;
+  padding: 0.5rem 1rem 0.2rem;
   border-bottom: 1px solid rgba(22, 35, 28, 0.08);
+}
+
+.sheet-frame .sheet-header {
+  border-bottom: none;
 }
 
 .sheet-title-block {
@@ -2261,7 +2321,7 @@ textarea {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0.55rem 1.05rem 0;
+  padding: 0.15rem 1.05rem 0;
 }
 
 .sheet-discussion h3 {
@@ -2287,7 +2347,7 @@ textarea {
 .sheet-title-bar .sheet-title-input {
   flex: 1 1 auto;
   min-width: 1.5rem;
-  max-width: calc(100% - 3.4rem);
+  max-width: 100%;
   width: auto;
   field-sizing: content;
   resize: none;
@@ -2299,49 +2359,23 @@ textarea {
   max-height: calc(1em * 1.2 * 2);
   border: none;
   background: transparent;
-  padding: 0.1rem 0;
+  padding: 0;
   border-radius: 0;
-}
-
-.sheet-title-remaining {
-  flex-shrink: 0;
-  min-width: 1.25rem;
-  margin: 0 0 0.12rem;
-  color: var(--ink-soft);
-  font-size: 0.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  text-align: right;
-}
-
-.sheet-title-remaining.is-limit {
-  color: var(--danger);
+  box-shadow: none;
 }
 
 .sheet-title-bar .sheet-title-input:focus {
+  outline: none;
   box-shadow: none;
   background: transparent;
   border-color: transparent;
-}
-
-.sheet-title-edit {
-  flex-shrink: 0;
-  color: var(--ink-soft);
-  opacity: 0;
-  transition: opacity 140ms ease;
-}
-
-.sheet-title-bar:hover .sheet-title-edit,
-.sheet-title-bar:focus-within .sheet-title-edit {
-  opacity: 0.7;
 }
 
 .sheet-title-bar.is-draft .sheet-title-input {
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
-  max-width: calc(100% - 3.4rem);
+  max-width: 100%;
 }
 
 .sheet-title-bar.is-draft .sheet-title-input::placeholder {
@@ -3966,6 +4000,32 @@ textarea {
     animation: sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  .sheet-frame {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(92dvh, 100%);
+    animation: sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .sheet-edge-actions {
+    position: absolute;
+    right: auto;
+    left: 0.85rem;
+    top: auto;
+    bottom: 100%;
+    flex-direction: row;
+    margin: 0 0 0.45rem;
+  }
+
+  .sheet-frame .card-sheet {
+    width: 100%;
+    height: 100%;
+    animation: none;
+  }
+
   .card-sheet.create-board-sheet {
     height: auto;
     max-height: min(92dvh, 100%);
@@ -3973,7 +4033,7 @@ textarea {
 
   .sheet-discussion {
     flex: 1 1 0;
-    padding: 0.55rem 0.9rem 0;
+    padding: 0.2rem 0.9rem 0;
   }
 
   .sheet-composer {
@@ -3991,7 +4051,8 @@ textarea {
   }
 
   .sheet-header {
-    padding-top: 0.55rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.15rem;
   }
 }
 
@@ -4352,7 +4413,7 @@ textarea {
   }
 
   .sheet-discussion {
-    padding: 0.65rem 0.9rem 0;
+    padding: 0.2rem 0.9rem 0;
     background: #fff;
   }
 
