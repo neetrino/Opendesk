@@ -175,6 +175,10 @@ export function attachmentPublicPath(id: string): string {
   return `/api/attachments/${id}`;
 }
 
+export function attachmentDownloadPath(id: string): string {
+  return `${attachmentPublicPath(id)}?download=1`;
+}
+
 export const ATTACHMENT_PUBLIC_SELECT = {
   id: true,
   filename: true,

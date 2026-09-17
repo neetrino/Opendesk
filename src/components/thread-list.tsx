@@ -108,6 +108,7 @@ export function ThreadList({
           zoomInLabel={t.cardPage.attachmentZoomIn}
           zoomOutLabel={t.cardPage.attachmentZoomOut}
           zoomSliderLabel={t.cardPage.attachmentZoomSlider}
+          downloadLabel={t.cardPage.attachmentDownload}
           onClose={() => setOpenItem(null)}
         />
       ) : null}

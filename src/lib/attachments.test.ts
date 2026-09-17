@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   applyAttachmentLimitCopy,
+  attachmentDownloadPath,
   attachmentKindFor,
   attachmentLimitFor,
+  attachmentPublicPath,
   buildObjectKey,
   canPreviewInline,
   isOwnedObjectKey,
@@ -41,6 +43,13 @@ describe("attachment helpers", () => {
     expect(attachmentKindFor("audio/webm")).toBe("audio");
     expect(resolveContentType("audio/webm;codecs=opus", "voice-note.webm")).toBe(
       "audio/webm",
+    );
+  });
+
+  it("points downloads at the attachment API with a download flag", () => {
+    expect(attachmentPublicPath("att1")).toBe("/api/attachments/att1");
+    expect(attachmentDownloadPath("att1")).toBe(
+      "/api/attachments/att1?download=1",
     );
   });
 

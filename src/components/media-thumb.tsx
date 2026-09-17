@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
-import { LightboxStage, LightboxToolbar, LightboxZoomRail } from "@/components/lightbox-image";
+import { LightboxCloseButton, LightboxFooter, LightboxStage, LightboxZoomRail } from "@/components/lightbox-image";
 import { VoiceNotePlayer } from "@/components/voice-note-player";
-import { canPreviewInline } from "@/lib/attachments";
+import { attachmentDownloadPath, canPreviewInline } from "@/lib/attachments";
 import { useHistoryTrap } from "@/lib/use-history-trap";
 import { useLightboxZoom } from "@/lib/use-lightbox-zoom";
 
@@ -86,6 +86,7 @@ type MediaLightboxProps = {
   zoomInLabel: string;
   zoomOutLabel: string;
   zoomSliderLabel: string;
+  downloadLabel: string;
   onClose: () => void;
 };
 
@@ -95,6 +96,7 @@ export function MediaLightbox({
   zoomInLabel,
   zoomOutLabel,
   zoomSliderLabel,
+  downloadLabel,
   onClose,
 }: MediaLightboxProps) {
   const preview = useInlinePreview(item);
@@ -131,6 +133,7 @@ export function MediaLightbox({
       zoomInLabel={zoomInLabel}
       zoomOutLabel={zoomOutLabel}
       zoomSliderLabel={zoomSliderLabel}
+      downloadLabel={downloadLabel}
       stageRef={stageRef}
       zoom={zoom}
       onError={preview.fail}
@@ -151,6 +154,7 @@ function MediaLightboxDialog({
   zoomInLabel,
   zoomOutLabel,
   zoomSliderLabel,
+  downloadLabel,
   stageRef,
   zoom,
   onError,
@@ -163,27 +167,38 @@ function MediaLightboxDialog({
   zoomInLabel: string;
   zoomOutLabel: string;
   zoomSliderLabel: string;
+  downloadLabel: string;
   stageRef: RefObject<HTMLDivElement | null>;
   zoom: ReturnType<typeof useLightboxZoom>;
   onError: () => void;
   onClose: () => void;
 }) {
+  const showFooter = isImage || item.kind === "video";
   return (
     <div
-      className={isImage ? "media-lightbox is-image" : "media-lightbox"}
+      className={[
+        "media-lightbox",
+        isImage ? "is-image" : "",
+        showFooter ? "has-footer" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="dialog"
       aria-modal="true"
       aria-label={item.filename}
       onClick={onClose}
     >
       <div className="media-lightbox-backdrop" aria-hidden="true" />
-      <LightboxToolbar
-        closeLabel={closeLabel}
-        onClose={onClose}
-        zoom={isImage ? zoom : null}
-        zoomInLabel={zoomInLabel}
-        zoomOutLabel={zoomOutLabel}
-      />
+      <LightboxCloseButton closeLabel={closeLabel} onClose={onClose} />
+      {showFooter ? (
+        <LightboxFooter
+          zoom={isImage ? zoom : null}
+          zoomInLabel={zoomInLabel}
+          zoomOutLabel={zoomOutLabel}
+          downloadHref={attachmentDownloadPath(item.id)}
+          downloadLabel={downloadLabel}
+        />
+      ) : null}
       {isImage ? (
         <>
           <LightboxZoomRail

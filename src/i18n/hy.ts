@@ -175,6 +175,7 @@ export const hy: Dictionary = {
     attachmentZoomIn: "Խոշորացնել",
     attachmentZoomOut: "Փոքրացնել",
     attachmentZoomSlider: "Մասշտաբ",
+    attachmentDownload: "Ներբեռնել",
     openCommentLink: "Բացել հղումը",
     figmaLabel: "Figma",
     figmaOpenAria: "Բացել Figma ֆայլը {title}",

@@ -100,6 +100,7 @@ export async function createAttachmentDownloadUrl(
   objectKey: string,
   filename: string,
   contentType: string,
+  disposition: "inline" | "attachment" = "inline",
 ): Promise<string> {
   const safeName = filename.replace(/[\r\n"]/g, "_");
   return getSignedUrl(
@@ -108,7 +109,7 @@ export async function createAttachmentDownloadUrl(
       Bucket: bucketName(),
       Key: objectKey,
       ResponseContentType: contentType,
-      ResponseContentDisposition: `inline; filename="${safeName}"`,
+      ResponseContentDisposition: `${disposition}; filename="${safeName}"`,
     }),
     { expiresIn: ATTACHMENT_DOWNLOAD_URL_TTL_SECONDS },
   );

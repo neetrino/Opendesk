@@ -175,6 +175,7 @@ export const ru: Dictionary = {
     attachmentZoomIn: "Увеличить",
     attachmentZoomOut: "Уменьшить",
     attachmentZoomSlider: "Масштаб",
+    attachmentDownload: "Скачать",
     openCommentLink: "Открыть ссылку",
     figmaLabel: "Figma",
     figmaOpenAria: "Открыть файл Figma {title}",

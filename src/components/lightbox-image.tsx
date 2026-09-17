@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type PointerEvent, type RefObject } from "react";
+import { DownloadIcon } from "@/components/download-icon";
 import type { useLightboxZoom } from "@/lib/use-lightbox-zoom";
 
 type ZoomControls = ReturnType<typeof useLightboxZoom>;
@@ -212,22 +213,46 @@ function LightboxZoomTools({
   );
 }
 
-export function LightboxToolbar({
+export function LightboxCloseButton({
   closeLabel,
   onClose,
-  zoom,
-  zoomInLabel,
-  zoomOutLabel,
 }: {
   closeLabel: string;
   onClose: () => void;
-  zoom: ZoomControls | null;
-  zoomInLabel: string;
-  zoomOutLabel: string;
 }) {
   return (
     <div
       className="media-lightbox-tools"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="media-lightbox-tool"
+        aria-label={closeLabel}
+        onClick={onClose}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+export function LightboxFooter({
+  zoom,
+  zoomInLabel,
+  zoomOutLabel,
+  downloadHref,
+  downloadLabel,
+}: {
+  zoom: ZoomControls | null;
+  zoomInLabel: string;
+  zoomOutLabel: string;
+  downloadHref: string;
+  downloadLabel: string;
+}) {
+  return (
+    <div
+      className="media-lightbox-footer"
       onClick={(event) => event.stopPropagation()}
     >
       {zoom ? (
@@ -240,14 +265,16 @@ export function LightboxToolbar({
           onZoomOut={zoom.zoomOut}
         />
       ) : null}
-      <button
-        type="button"
+      <a
         className="media-lightbox-tool"
-        aria-label={closeLabel}
-        onClick={onClose}
+        href={downloadHref}
+        download
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={downloadLabel}
       >
-        ×
-      </button>
+        <DownloadIcon />
+      </a>
     </div>
   );
 }

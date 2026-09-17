@@ -4263,6 +4263,15 @@ button.card-label-chip {
 
 .media-lightbox-tools {
   position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 2;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.media-lightbox-footer {
+  position: absolute;
   left: 50%;
   bottom: max(0.85rem, env(safe-area-inset-bottom));
   z-index: 2;
@@ -4283,6 +4292,7 @@ button.card-label-chip {
   color: var(--ink);
   font-size: 1.7rem;
   line-height: 1;
+  text-decoration: none;
   cursor: pointer;
   box-shadow: var(--shadow);
 }
@@ -4305,6 +4315,10 @@ button.card-label-chip {
   display: grid;
   gap: 0.55rem;
   justify-items: center;
+}
+
+.media-lightbox.has-footer .media-lightbox-frame {
+  margin-bottom: 4.25rem;
 }
 
 .media-lightbox-frame img,
@@ -4561,7 +4575,15 @@ button.card-label-chip {
     top: auto;
     bottom: 100%;
     flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
     margin: 0 0 0.45rem;
+  }
+
+  .sheet-edge-meta {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
   .sheet-frame .card-sheet {
