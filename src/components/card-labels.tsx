@@ -86,6 +86,7 @@ export function CardLabelMenu({
         ref={(node) => {
           refs.setReference(node);
         }}
+        data-sheet-labels=""
         aria-label={t.cardPage.labelsAria}
         aria-expanded={open}
         aria-haspopup="menu"

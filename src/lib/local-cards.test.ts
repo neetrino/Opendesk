@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLocalBoardCard,
   createLocalCardId,
+  dropHeldCardById,
   isLocalCardId,
   mergeLocalCards,
   mergeVisibleCards,
@@ -106,6 +107,19 @@ describe("local cards", () => {
       { id: "held-1" },
       { id: "local-1" },
     ]);
+  });
+
+  it("drops a held local card so a persisted copy does not appear twice", () => {
+    const server = [{ id: "server-1" }];
+    const heldLocal = [{ id: "local-abc" }];
+
+    expect(mergeVisibleCards(server, [], heldLocal, [])).toEqual([
+      { id: "server-1" },
+      { id: "local-abc" },
+    ]);
+    expect(
+      mergeVisibleCards(server, [], dropHeldCardById(heldLocal, "local-abc"), []),
+    ).toEqual([{ id: "server-1" }]);
   });
 
   it("lets a held move replace the stale server copy of the same card", () => {
