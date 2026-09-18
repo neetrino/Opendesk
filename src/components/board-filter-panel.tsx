@@ -56,16 +56,10 @@ export function BoardFilterPanel({
           {t.board.filterUnlabeled}
         </ChipToggle>
         {catalog.map((label) => (
-          <button
+          <ChipToggle
             key={label.id}
-            type="button"
-            className={
-              filters.labelIds.includes(label.id)
-                ? "card-label-chip is-on"
-                : "card-label-chip"
-            }
-            data-color={label.color}
-            aria-pressed={filters.labelIds.includes(label.id)}
+            pressed={filters.labelIds.includes(label.id)}
+            color={label.color}
             onClick={() =>
               onChange({
                 ...filters,
@@ -74,7 +68,7 @@ export function BoardFilterPanel({
             }
           >
             {label.name}
-          </button>
+          </ChipToggle>
         ))}
       </FilterGroup>
 
@@ -232,20 +226,54 @@ function ChipToggle({
   pressed,
   onClick,
   children,
+  color,
 }: {
   pressed: boolean;
   onClick: () => void;
   children: ReactNode;
+  color?: string;
 }) {
+  const className = color
+    ? pressed
+      ? "board-filter-label-chip is-on"
+      : "board-filter-label-chip"
+    : pressed
+      ? "chip chip-active"
+      : "chip";
+
   return (
     <button
       type="button"
-      className={pressed ? "chip chip-active" : "chip"}
+      className={className}
+      data-color={color}
       aria-pressed={pressed}
       onClick={onClick}
     >
+      {pressed ? <FilterCheckIcon /> : null}
       {children}
     </button>
+  );
+}
+
+function FilterCheckIcon() {
+  return (
+    <svg
+      className="board-filter-check"
+      viewBox="0 0 24 24"
+      width="11"
+      height="11"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M5 12.5 9.5 17 19 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
