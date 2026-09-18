@@ -6,45 +6,104 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { SearchIcon } from "@/components/search-icon";
 import { useI18n } from "@/i18n/provider";
+import {
+  boardFiltersAreEmpty,
+  cloneBoardFilters,
+  EMPTY_BOARD_FILTERS,
+  type BoardCardFilters,
+} from "@/lib/card-query";
+import type { BoardLabelView } from "@/lib/labels";
+
+export type BoardSearchParticipant = {
+  id: string;
+  displayName: string;
+  avatarKey: string | null;
+};
+
+type BoardSearchCatalog = {
+  labels: BoardLabelView[];
+  participants: BoardSearchParticipant[];
+};
 
 type BoardSearchContextValue = {
   query: string;
   setQuery: (query: string) => void;
+  filters: BoardCardFilters;
+  applyFilters: (filters: BoardCardFilters) => void;
+  resetFilters: () => void;
   mobileOpen: boolean;
   closeMobile: () => void;
   toggleMobile: () => void;
+  catalog: BoardSearchCatalog;
+  setCatalog: (catalog: BoardSearchCatalog) => void;
 };
 
 const BoardSearchContext = createContext<BoardSearchContextValue | null>(null);
 
+const EMPTY_CATALOG: BoardSearchCatalog = {
+  labels: [],
+  participants: [],
+};
+
 export function BoardSearchProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<BoardCardFilters>(EMPTY_BOARD_FILTERS);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [catalog, setCatalog] = useState<BoardSearchCatalog>(EMPTY_CATALOG);
+
+  const resetFilters = useCallback(() => {
+    setFilters(cloneBoardFilters(EMPTY_BOARD_FILTERS));
+  }, []);
 
   const closeMobile = useCallback(() => {
     setMobileOpen(false);
     setQuery("");
+    setFilters(cloneBoardFilters(EMPTY_BOARD_FILTERS));
   }, []);
 
   const toggleMobile = useCallback(() => {
     setMobileOpen((current) => {
       if (current) {
         setQuery("");
+        setFilters(cloneBoardFilters(EMPTY_BOARD_FILTERS));
         return false;
       }
       return true;
     });
   }, []);
 
+  const applyFilters = useCallback((next: BoardCardFilters) => {
+    setFilters(cloneBoardFilters(next));
+  }, []);
+
   const value = useMemo(
-    () => ({ query, setQuery, mobileOpen, closeMobile, toggleMobile }),
-    [query, mobileOpen, closeMobile, toggleMobile],
+    () => ({
+      query,
+      setQuery,
+      filters,
+      applyFilters,
+      resetFilters,
+      mobileOpen,
+      closeMobile,
+      toggleMobile,
+      catalog,
+      setCatalog,
+    }),
+    [
+      applyFilters,
+      catalog,
+      closeMobile,
+      filters,
+      mobileOpen,
+      query,
+      resetFilters,
+      toggleMobile,
+    ],
   );
 
   return (
@@ -62,34 +121,27 @@ export function useBoardSearch(): BoardSearchContextValue {
   return context;
 }
 
-export function BoardSearchField() {
-  const { t } = useI18n();
-  const { query, setQuery } = useBoardSearch();
+export function useRegisterBoardSearchCatalog(
+  labels: readonly BoardLabelView[],
+  participants: readonly BoardSearchParticipant[],
+): void {
+  const { setCatalog } = useBoardSearch();
+  const labelKey = labels.map((label) => label.id).join(",");
+  const peopleKey = participants.map((person) => person.id).join(",");
 
-  return (
-    <div className="board-search" role="search">
-      <SearchIcon className="board-search-icon" size={15} />
-      <label className="visually-hidden" htmlFor="board-card-search">
-        {t.board.searchLabel}
-      </label>
-      <input
-        id="board-card-search"
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t.board.searchPlaceholder}
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-      />
-    </div>
-  );
+  useEffect(() => {
+    setCatalog({
+      labels: [...labels],
+      participants: [...participants],
+    });
+  }, [labelKey, labels, peopleKey, participants, setCatalog]);
 }
 
 export function BoardSearchDockButton() {
   const { t } = useI18n();
-  const { query, mobileOpen, toggleMobile } = useBoardSearch();
-  const active = mobileOpen || query.trim().length > 0;
+  const { query, filters, mobileOpen, toggleMobile } = useBoardSearch();
+  const active =
+    mobileOpen || query.trim().length > 0 || !boardFiltersAreEmpty(filters);
 
   return (
     <button
@@ -102,56 +154,5 @@ export function BoardSearchDockButton() {
     >
       <SearchIcon size={18} />
     </button>
-  );
-}
-
-export function BoardSearchMobileBar() {
-  const { t } = useI18n();
-  const { query, setQuery, mobileOpen, closeMobile } = useBoardSearch();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const visible = mobileOpen;
-
-  useEffect(() => {
-    if (mobileOpen) {
-      inputRef.current?.focus();
-    }
-  }, [mobileOpen]);
-
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    function onKeyDown(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        closeMobile();
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [closeMobile, visible]);
-
-  if (!visible) {
-    return null;
-  }
-
-  return (
-    <div className="board-search-mobile" role="search">
-      <label className="visually-hidden" htmlFor="board-card-search-mobile">
-        {t.board.searchLabel}
-      </label>
-      <input
-        ref={inputRef}
-        id="board-card-search-mobile"
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t.board.searchPlaceholder}
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-      />
-    </div>
   );
 }

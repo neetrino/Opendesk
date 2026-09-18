@@ -74,6 +74,24 @@ export type Dictionary = {
     searchEmpty: string;
     searchOpen: string;
     searchClose: string;
+    filterApply: string;
+    filterReset: string;
+    filterPanelAria: string;
+    filterLabel: string;
+    filterAuthor: string;
+    filterUnlabeled: string;
+    filterPeriod: string;
+    filterAnyTime: string;
+    filterToday: string;
+    filterLast5Days: string;
+    filterCustom: string;
+    filterFrom: string;
+    filterTo: string;
+    filterInbox: string;
+    filterUnread: string;
+    filterNew: string;
+    filterUrgent: string;
+    filterHasFile: string;
     dockAria: string;
     newCard: string;
     settings: string;
@@ -384,6 +402,24 @@ export const en: Dictionary = {
     searchEmpty: "No tasks match this search.",
     searchOpen: "Search",
     searchClose: "Close search",
+    filterApply: "Apply",
+    filterReset: "Reset",
+    filterPanelAria: "Filter tasks",
+    filterLabel: "Label",
+    filterAuthor: "Author",
+    filterUnlabeled: "No label",
+    filterPeriod: "Period",
+    filterAnyTime: "Any time",
+    filterToday: "Today",
+    filterLast5Days: "Last 5 days",
+    filterCustom: "Custom",
+    filterFrom: "From",
+    filterTo: "To",
+    filterInbox: "Inbox",
+    filterUnread: "Unread",
+    filterNew: "New",
+    filterUrgent: "Urgent",
+    filterHasFile: "Has file",
     dockAria: "Board actions",
     newCard: "New task",
     settings: "Settings",

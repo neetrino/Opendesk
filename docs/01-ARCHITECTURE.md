@@ -3,7 +3,7 @@
 > Kanban-доска: участники по постоянной join-ссылке; один owner из env создаёт доски и видит все.
 
 **Размер проекта.** A  
-**Обновлено.** 2026-09-17
+**Обновлено.** 2026-09-18
 
 ---
 
@@ -137,7 +137,10 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 2. RSC загружает по 10 карточек на колонку (название, автор, счётчики) без тел чата.
    Повторный переход `/boards` ↔ доска берётся из Client Router Cache (~30s),
    а не из нового loading-скелетона
-3. Скролл колонки: GET `/api/boards/{boardId}/cards?status&cursor` — следующие 10
+3. Скролл колонки: GET `/api/boards/{boardId}/cards?status&cursor` — следующие 10.
+   Поиск и фильтры (метка, автор, период, inbox, срочность, файл) идут тем же
+   endpoint с `q` / `label` / `author` / `createdFrom` / `createdTo` / `cardId`:
+   сервер ищет по всей доске, ответ всё равно страницами по 10
 4. Открытие карточки: GET `/api/boards/{boardId}/cards/{cardId}/comments` —
    последние 20; скролл вверх — более старые; `q` ищет по всей ленте
 5. Actions: createCard, moveCard, addComment, edit/delete/react/pin comment,

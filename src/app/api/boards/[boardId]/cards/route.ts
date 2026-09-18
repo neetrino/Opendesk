@@ -6,6 +6,7 @@ import {
   serializeBoardCard,
 } from "@/lib/board-card-view";
 import { loadColumnCardPage } from "@/lib/board-cards";
+import { parseCardListQuery } from "@/lib/card-query-where";
 import { logger } from "@/lib/logger";
 
 const boardIdSchema = z.string().cuid();
@@ -42,6 +43,11 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const query = parseCardListQuery(url.searchParams);
+  if (!query) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     await requireBoardAccess(parsedId.data);
   } catch {
@@ -53,12 +59,15 @@ export async function GET(
       boardId: parsedId.data,
       status: parsedStatus.data,
       cursor,
+      query,
+      includeCount: !cursor,
     });
 
     return NextResponse.json(
       {
         cards: page.cards.map(serializeBoardCard),
         nextCursor: page.nextCursor,
+        totalCount: page.totalCount,
       },
       {
         headers: {

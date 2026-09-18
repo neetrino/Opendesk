@@ -1,7 +1,5 @@
-import {
-  BoardSearchField,
-  BoardSearchProvider,
-} from "@/components/board-search";
+import { BoardSearchProvider } from "@/components/board-search";
+import { BoardSearchField } from "@/components/board-search-field";
 import {
   BoardInboxControlProvider,
   BoardMarkAllHeaderButton,

@@ -1008,6 +1008,34 @@ textarea {
   max-width: 16rem;
 }
 
+@media (min-width: 1100px) {
+  .board-search {
+    flex: 1 1 20rem;
+    max-width: 32rem;
+  }
+}
+
+.board-search-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  min-height: 2.15rem;
+  padding: 0.2rem 0.55rem 0.2rem 2.05rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  overflow-x: auto;
+  cursor: text;
+}
+
+.board-search-control.is-active,
+.board-search-control:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .board-search-icon {
   position: absolute;
   top: 50%;
@@ -1017,17 +1045,146 @@ textarea {
   transform: translateY(-50%);
 }
 
-.board-search input[type="search"],
-.board-search-mobile input[type="search"] {
-  appearance: none;
-  height: 2.15rem;
-  padding: 0.35rem 0.85rem;
+.board-search-chip {
+  flex: 0 0 auto;
+  padding: 0.12rem 0.45rem;
   border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.board-search-control input[type="search"] {
+  appearance: none;
+  flex: 1 1 6rem;
+  min-width: 4.5rem;
+  width: auto;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   font-size: 0.85rem;
 }
 
-.board-search input[type="search"] {
-  padding-left: 2.05rem;
+.board-search-control input[type="search"]:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.board-filter-pop {
+  z-index: 70;
+  width: min(28rem, calc(100vw - 1.25rem));
+}
+
+.board-filter-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem 0.85rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--paper-raised) 94%, transparent);
+  box-shadow: 0 16px 34px rgba(16, 24, 20, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.board-filter-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.board-filter-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.board-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.board-filter-chips .chip,
+.board-filter-label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.board-filter-chips .chip:hover:not(.chip-active) {
+  background: var(--paper-raised);
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+}
+
+.board-filter-chips .chip-active,
+.board-filter-chips .chip-active:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.board-filter-label-chip {
+  margin: 0;
+  padding: 0.22rem 0.55rem 0.22rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--label-color) 32%, var(--line));
+  border-radius: 999px;
+  background: var(--paper-raised);
+  color: var(--label-color);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.board-filter-label-chip.is-on,
+.board-filter-label-chip.is-on:hover {
+  background: var(--label-color);
+  border-color: var(--label-color);
+  color: #fff;
+}
+
+.board-filter-check {
+  flex-shrink: 0;
+}
+
+.board-filter-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.board-filter-dates label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.board-filter-dates input {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+.board-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.board-filter-actions .button-save,
+.board-filter-actions .button-cancel {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
 }
 
 .board-top-mark-read {
@@ -1913,6 +2070,7 @@ textarea {
 .card-label-swatch,
 .card-label-name,
 .board-label-name,
+.board-filter-label-chip,
 .label-color-dot,
 .label-color-trigger {
   --label-color: var(--label-teal);
@@ -4513,9 +4671,9 @@ button.card-label-chip {
   }
 
   .board-search {
-    flex-basis: 12rem;
+    flex-basis: 16rem;
     min-width: 8rem;
-    max-width: 14rem;
+    max-width: 22rem;
   }
 
   .board-top .board-identity {
@@ -4802,6 +4960,10 @@ button.card-label-chip {
     display: block;
     flex-shrink: 0;
     margin-bottom: 0.65rem;
+  }
+
+  .board-search-mobile .board-search-control {
+    width: 100%;
   }
 
   .board-dock-search {
