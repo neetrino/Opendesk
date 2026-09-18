@@ -3,11 +3,15 @@ import "server-only";
 import type { CardStatus } from "@prisma/client";
 import { mapBoardLabelRow } from "@/lib/board-labels";
 import {
-  afterCardCursor,
   emptyColumnPages,
   encodeCardCursor,
   type BoardColumnPages,
 } from "@/lib/board-card-view";
+import {
+  emptyCardListQuery,
+  type CardListQuery,
+} from "@/lib/card-query";
+import { cardListWhere } from "@/lib/card-query-where";
 import { CARD_STATUSES, COLUMN_PAGE_SIZE } from "@/lib/constants";
 import type { LocalBoardCard } from "@/lib/local-cards";
 import { sliceLoadedPage } from "@/lib/pagination";
@@ -118,20 +122,32 @@ export async function loadColumnCardPage(input: {
   boardId: string;
   status: CardStatus;
   cursor?: { position: number; id: string } | null;
+  query?: CardListQuery;
+  includeCount?: boolean;
 }): Promise<{
   cards: LocalBoardCard[];
   nextCursor: string | null;
+  totalCount: number | null;
 }> {
-  const rows = await prisma.card.findMany({
-    where: {
-      boardId: input.boardId,
-      status: input.status,
-      ...(input.cursor ? afterCardCursor(input.cursor) : {}),
-    },
-    orderBy: [{ position: "asc" }, { id: "asc" }],
-    take: COLUMN_PAGE_SIZE + 1,
-    select: boardCardListSelect,
-  });
+  const query = input.query ?? emptyCardListQuery();
+  const where = cardListWhere(
+    input.boardId,
+    input.status,
+    query,
+    input.cursor,
+  );
+  const countWhere = cardListWhere(input.boardId, input.status, query);
+  const [rows, totalCount] = await Promise.all([
+    prisma.card.findMany({
+      where,
+      orderBy: [{ position: "asc" }, { id: "asc" }],
+      take: COLUMN_PAGE_SIZE + 1,
+      select: boardCardListSelect,
+    }),
+    input.includeCount
+      ? prisma.card.count({ where: countWhere })
+      : Promise.resolve(null),
+  ]);
 
   const { items, hasMore } = sliceLoadedPage(rows, COLUMN_PAGE_SIZE);
   const cards = items.map(mapBoardCardRow);
@@ -140,6 +156,7 @@ export async function loadColumnCardPage(input: {
   return {
     cards,
     nextCursor: hasMore && last ? encodeCardCursor(last) : null,
+    totalCount,
   };
 }
 

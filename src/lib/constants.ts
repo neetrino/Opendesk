@@ -56,6 +56,11 @@ export const LABEL_COLOR_KEYS = [
 ] as const;
 /** First paint per column; the rest load when that column is scrolled. */
 export const COLUMN_PAGE_SIZE = 10;
+/** Board search field and `q` on column pages. */
+export const CARD_SEARCH_MAX_LENGTH = 80;
+export const CARD_SEARCH_DEBOUNCE_MS = 300;
+/** Inbox filter sends matching ids; keeps the query string bounded. */
+export const CARD_QUERY_MAX_IDS = 500;
 /** Newest messages when a card chat opens; older pages load on scroll up. */
 export const COMMENT_PAGE_SIZE = 20;
 export const COMMENT_REACTION_EMOJIS = [

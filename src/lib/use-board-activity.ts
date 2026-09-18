@@ -10,9 +10,13 @@ import {
   type BoardActivityMap,
 } from "@/lib/board-activity";
 
-export function useBoardActivity(boardId: string): BoardActivityMap {
+export function useBoardActivity(boardId: string): {
+  activity: BoardActivityMap;
+  ready: boolean;
+} {
   const router = useRouter();
   const [activity, setActivity] = useState<BoardActivityMap>({});
+  const [readyBoardId, setReadyBoardId] = useState<string | null>(null);
   const signatureRef = useRef<string>("");
 
   useEffect(() => {
@@ -44,6 +48,7 @@ export function useBoardActivity(boardId: string): BoardActivityMap {
         }
         signatureRef.current = signature;
         setActivity(toBoardActivityMap(parsed.data.cards));
+        setReadyBoardId(boardId);
       } catch {
         // Next poll retries. Do not surface a board-wide error for a miss.
       }
@@ -69,5 +74,5 @@ export function useBoardActivity(boardId: string): BoardActivityMap {
     };
   }, [boardId, router]);
 
-  return activity;
+  return { activity, ready: readyBoardId === boardId };
 }

@@ -45,6 +45,7 @@ export const boardCardJsonSchema = z.object({
 export const boardCardsResponseSchema = z.object({
   cards: z.array(boardCardJsonSchema),
   nextCursor: z.string().nullable(),
+  totalCount: z.number().int().nonnegative().nullable().optional(),
 });
 
 export function encodeCardCursor(card: {

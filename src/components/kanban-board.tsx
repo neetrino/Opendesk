@@ -14,7 +14,11 @@ import type { CardStatus } from "@prisma/client";
 import { BoardDock } from "@/components/board-dock";
 import { useRegisterBoardInboxControl } from "@/components/board-inbox-control";
 import { useRegisterBoardLabelsControl } from "@/components/board-labels-control";
-import { BoardSearchMobileBar, useBoardSearch } from "@/components/board-search";
+import {
+  useBoardSearch,
+  useRegisterBoardSearchCatalog,
+} from "@/components/board-search";
+import { BoardSearchMobileBar } from "@/components/board-search-field";
 import { CardSheet } from "@/components/card-sheet";
 import { CardLabelChips, CardLabelMenu } from "@/components/card-labels";
 import { FireIcon } from "@/components/fire-icon";
@@ -24,6 +28,7 @@ import type { BoardParticipant } from "@/components/participants-panel";
 import { createCardAction, moveCardAction } from "@/lib/actions";
 import {
   columnDisplayCount,
+  emptyColumnPages,
   type BoardColumnPages,
 } from "@/lib/board-card-view";
 import {
@@ -47,7 +52,15 @@ import {
 import { useBoardActivity } from "@/lib/use-board-activity";
 import { useCardReads } from "@/lib/use-card-reads";
 import { useColumnPages } from "@/lib/use-column-pages";
-import { filterCardsByQuery } from "@/lib/filter-cards";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { matchingAttentionCardIds } from "@/lib/attention-card-ids";
+import {
+  boardFiltersAreEmpty,
+  buildCardListQuery,
+  cardListQueryIsActive,
+} from "@/lib/card-query";
+import { cardMatchesListQuery } from "@/lib/card-query-where";
+import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/constants";
 import { optimisticLabelIdRemap, resolveCardLabels, type BoardLabelView, type LabelCatalogChange } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
 
@@ -168,7 +181,7 @@ export function KanbanBoard({
   labels,
 }: KanbanBoardProps) {
   const { t } = useI18n();
-  const { query } = useBoardSearch();
+  const { query, filters } = useBoardSearch();
   const [isPending, startTransition] = useTransition();
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -185,11 +198,68 @@ export function KanbanBoard({
   const boardLabelsRef = useRef(boardLabels);
   const dragPayload = useRef<DragPayload | null>(null);
   const suppressClick = useRef(false);
-  const { extraCards, hasMore, loadMore } = useColumnPages(
-    boardId,
-    columnPages,
+  useRegisterBoardSearchCatalog(boardLabels, participants);
+  const searchText = useDebouncedValue(query.trim(), CARD_SEARCH_DEBOUNCE_MS);
+  const { activity, ready: activityReady } = useBoardActivity(boardId);
+  const readSeedIds = useMemo(
+    () => [
+      ...new Set([
+        ...cards.map((card) => card.id),
+        ...Object.keys(activity),
+      ]),
+    ],
+    [activity, cards],
   );
-  const knownServerCards = mergeVisibleCards(cards, extraCards, [], []);
+  const { reads, seededAt, markCardRead, markAllRead } = useCardReads(
+    boardId,
+    currentUser.participantId,
+    readSeedIds,
+  );
+  const attentionPending = filters.attention.length > 0 && !activityReady;
+  const attentionIds = useMemo(() => {
+    if (filters.attention.length === 0) {
+      return null;
+    }
+    if (!activityReady) {
+      return [];
+    }
+    return matchingAttentionCardIds(
+      activity,
+      reads,
+      seededAt,
+      currentUser.participantId,
+      filters.attention,
+    );
+  }, [
+    activity,
+    activityReady,
+    currentUser.participantId,
+    filters.attention,
+    reads,
+    seededAt,
+  ]);
+  const listQuery = useMemo(
+    () => buildCardListQuery(searchText, filters, attentionIds),
+    [attentionIds, filters, searchText],
+  );
+  const {
+    extraCards,
+    queriedCards,
+    queriedColumns,
+    hasMore,
+    loadMore,
+    isQueryLoading,
+  } = useColumnPages(boardId, columnPages, listQuery, attentionPending);
+  const filtering =
+    cardListQueryIsActive(listQuery) ||
+    attentionPending ||
+    !boardFiltersAreEmpty(filters) ||
+    searchText.length > 0;
+  const pageCards = filtering ? (queriedCards ?? []) : cards;
+  const pageColumns = filtering
+    ? (queriedColumns ?? emptyColumnPages())
+    : columnPages;
+  const knownServerCards = mergeVisibleCards(pageCards, extraCards, [], []);
   const pendingLocalCards = pruneConfirmedLocalCards(
     knownServerCards,
     localCards,
@@ -198,12 +268,6 @@ export function KanbanBoard({
     knownServerCards,
     heldCards,
   );
-  const { reads, seededAt, markCardRead, markAllRead } = useCardReads(
-    boardId,
-    currentUser.participantId,
-    knownServerCards.map((card) => card.id),
-  );
-  const activity = useBoardActivity(boardId);
   const inboxCardIdsRef = useRef<string[]>([]);
   useEffect(() => {
     inboxCardIdsRef.current = [
@@ -216,7 +280,7 @@ export function KanbanBoard({
   );
 
   const mergedCards = mergeVisibleCards(
-    cards,
+    pageCards,
     extraCards,
     pendingHeldCards,
     pendingLocalCards,
@@ -254,11 +318,18 @@ export function KanbanBoard({
     },
   );
 
-  const isSearching = query.trim().length > 0;
-  const visibleCards = useMemo(
-    () => filterCardsByQuery(optimisticCards, query),
-    [optimisticCards, query],
-  );
+  const isSearching = filtering;
+  const visibleCards = useMemo(() => {
+    if (!filtering) {
+      return optimisticCards;
+    }
+    return optimisticCards.filter(
+      (card) =>
+        isLocalCardId(card.id) ||
+        card.id === selectedCardId ||
+        cardMatchesListQuery(card, listQuery),
+    );
+  }, [filtering, listQuery, optimisticCards, selectedCardId]);
   const selectedCard =
     selectedCardId === null
       ? null
@@ -610,11 +681,9 @@ export function KanbanBoard({
           const columnCards = visibleCards
             .filter((card) => card.status === status)
             .sort(compareCardsByPosition);
-          const columnCount = isSearching
-            ? columnCards.length
-            : columnDisplayCount(
+          const columnCount = columnDisplayCount(
                 status,
-                columnPages[status].totalCount,
+                pageColumns[status].totalCount,
                 sourceById,
                 optimisticCards,
               );
@@ -650,11 +719,9 @@ export function KanbanBoard({
           const columnCards = visibleCards
             .filter((card) => card.status === status)
             .sort(compareCardsByPosition);
-          const columnCount = isSearching
-            ? columnCards.length
-            : columnDisplayCount(
+          const columnCount = columnDisplayCount(
                 status,
-                columnPages[status].totalCount,
+                pageColumns[status].totalCount,
                 sourceById,
                 optimisticCards,
               );
@@ -701,7 +768,7 @@ export function KanbanBoard({
                 dropTarget.placement.kind === "start" ? (
                   <div className="card-drop-line" aria-hidden="true" />
                 ) : null}
-                {columnCards.length === 0 ? (
+                {columnCards.length === 0 && !isQueryLoading ? (
                   <p className="column-empty">
                     {isSearching ? t.board.searchEmpty : t.board.emptyColumn}
                   </p>
