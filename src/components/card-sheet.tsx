@@ -32,6 +32,16 @@ export type SheetCard = LocalBoardCard;
 
 const MIN_CARD_TITLE_LENGTH = 2;
 
+function isDraftTitleCommitExempt(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.closest("[data-sheet-dismiss]") !== null ||
+      target.closest(".sheet-urgent") !== null ||
+      target.closest("[data-sheet-labels]") !== null ||
+      target.closest(".card-label-menu") !== null)
+  );
+}
+
 type CardSheetProps = {
   boardId: string;
   card: SheetCard;
@@ -331,11 +341,11 @@ export function CardSheet({
       skipCommitRef.current = false;
       return;
     }
+    if (document.querySelector(".card-label-menu")) {
+      return;
+    }
     const next = event.relatedTarget;
-    if (
-      next instanceof HTMLElement &&
-      (next.closest("[data-sheet-dismiss]") || next.closest(".sheet-urgent"))
-    ) {
+    if (isDraftTitleCommitExempt(next)) {
       return;
     }
     if (isDraft) {
@@ -403,19 +413,27 @@ export function CardSheet({
                 onError={setError}
               />
             ) : null}
-            <CardLabelMenu
-              boardId={boardId}
-              cardId={cardId}
-              boardLabels={boardLabels}
-              selectedLabels={resolveCardLabels(card.labels, boardLabels)}
-              persist={!isDraft && !isLocalCardId(card.id)}
-              placement="right-start"
-              variant="sheet"
-              onCardLabelsChange={(labels) => {
-                onCardLabelsChange(card.id, labels);
+            <div
+              onPointerDownCapture={() => {
+                if (isDraft) {
+                  skipCommitRef.current = true;
+                }
               }}
-              onError={setError}
-            />
+            >
+              <CardLabelMenu
+                boardId={boardId}
+                cardId={cardId}
+                boardLabels={boardLabels}
+                selectedLabels={resolveCardLabels(card.labels, boardLabels)}
+                persist={!isDraft && !isLocalCardId(card.id)}
+                placement="right-start"
+                variant="sheet"
+                onCardLabelsChange={(labels) => {
+                  onCardLabelsChange(card.id, labels);
+                }}
+                onError={setError}
+              />
+            </div>
             {titleEditing ? (
               <span
                 className={

@@ -61,6 +61,15 @@ export function isLocalCardId(cardId: string): boolean {
   return cardId.startsWith(LOCAL_CARD_ID_PREFIX);
 }
 
+/** Drops held copies that still use a local id after the card is persisted. */
+export function dropHeldCardById<T extends { id: string }>(
+  heldCards: T[],
+  cardId: string,
+): T[] {
+  const next = heldCards.filter((card) => card.id !== cardId);
+  return next.length === heldCards.length ? heldCards : next;
+}
+
 export function mergeLocalCards<T extends { id: string }>(
   serverCards: T[],
   localCards: T[],

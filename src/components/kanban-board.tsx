@@ -42,6 +42,7 @@ import { CARD_STATUSES } from "@/lib/constants";
 import { BoardAvatar } from "@/components/board-avatar";
 import {
   buildLocalBoardCard,
+  dropHeldCardById,
   isLocalCardId,
   mergeVisibleCards,
   pruneConfirmedHeldCards,
@@ -151,6 +152,25 @@ type OptimisticUpdate =
 
 function replaceHeldCard(current: BoardCard[], next: BoardCard): BoardCard[] {
   return [...current.filter((card) => card.id !== next.id), next];
+}
+
+function buildCreateCardFormData(
+  card: BoardCard,
+  title: string,
+  urgent: boolean,
+): FormData {
+  const formData = new FormData();
+  formData.set("boardId", card.boardId);
+  formData.set("status", card.status);
+  formData.set("title", title);
+  formData.set("urgent", urgent ? "true" : "false");
+  if (card.labels.length > 0) {
+    formData.set(
+      "labelIds",
+      card.labels.map((label) => label.id).join(","),
+    );
+  }
+  return formData;
 }
 
 function patchHeldCard(
@@ -378,17 +398,20 @@ export function KanbanBoard({
       setDraftCard({ ...draftCard, labels });
       return;
     }
+    setLocalCards((current) =>
+      current.map((card) =>
+        card.id === cardId ? { ...card, labels } : card,
+      ),
+    );
+    if (isLocalCardId(cardId)) {
+      return;
+    }
     setHeldCards((current) =>
       patchHeldCard(
         current,
         cardId,
         optimisticCards.find((card) => card.id === cardId),
         { labels },
-      ),
-    );
-    setLocalCards((current) =>
-      current.map((card) =>
-        card.id === cardId ? { ...card, labels } : card,
       ),
     );
   }
@@ -485,19 +508,9 @@ export function KanbanBoard({
     setLocalCards((current) => [...current, localCard]);
     setDraftCard(null);
 
-    const formData = new FormData();
-    formData.set("boardId", boardId);
-    formData.set("status", localCard.status);
-    formData.set("title", title);
-    formData.set("urgent", urgent ? "true" : "false");
-    if (localCard.labels.length > 0) {
-      formData.set(
-        "labelIds",
-        localCard.labels.map((label) => label.id).join(","),
-      );
-    }
-
-    const response = await createCardAction(formData);
+    const response = await createCardAction(
+      buildCreateCardFormData(localCard, title, urgent),
+    );
     if (!response.ok) {
       setLocalCards((current) =>
         current.filter((item) => item.id !== localCard.id),
@@ -512,8 +525,13 @@ export function KanbanBoard({
       labels: localCard.labels,
     };
     setLocalCards((current) =>
-      current.map((item) => (item.id === localCard.id ? confirmed : item)),
+      current.map((item) =>
+        item.id === localCard.id
+          ? { ...confirmed, labels: item.labels }
+          : item,
+      ),
     );
+    setHeldCards((current) => dropHeldCardById(current, localCard.id));
     setSelectedCardId((current) =>
       current === localCard.id ? confirmed.id : current,
     );
