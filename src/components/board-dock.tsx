@@ -7,6 +7,7 @@ import type { BoardParticipant } from "@/components/participants-panel";
 import { useI18n } from "@/i18n/provider";
 
 type BoardDockProps = {
+  boardId: string;
   boardTitle: string;
   slug: string;
   joinToken: string;
@@ -39,6 +40,7 @@ function PlusIcon() {
 }
 
 export function BoardDock({
+  boardId,
   boardTitle,
   slug,
   joinToken,
@@ -56,6 +58,7 @@ export function BoardDock({
     <div className="board-dock" role="toolbar" aria-label={t.board.dockAria}>
       <div className="board-dock-actions">
         <BoardSettingsSheet
+          boardId={boardId}
           slug={slug}
           joinToken={joinToken}
           boardTitle={boardTitle}

@@ -1221,7 +1221,8 @@ textarea {
   flex-shrink: 0;
 }
 
-.board-logout-btn {
+.board-logout-btn,
+.board-settings-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1239,12 +1240,14 @@ textarea {
   transition: opacity 140ms ease, color 140ms ease, border-color 140ms ease;
 }
 
-.board-logout-btn:hover {
+.board-logout-btn:hover,
+.board-settings-btn:hover {
   opacity: 1;
   color: var(--ink);
 }
 
-.board-logout-btn.is-icon {
+.board-logout-btn.is-icon,
+.board-settings-btn {
   width: 2.15rem;
   height: 2.15rem;
   padding: 0;
@@ -1402,7 +1405,8 @@ textarea {
 }
 
 .settings-sheet .button-invite,
-.participants-sheet .button-invite {
+.participants-sheet .button-invite,
+.settings-sheet .button-secondary {
   width: 100%;
 }
 

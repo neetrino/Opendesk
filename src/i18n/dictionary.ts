@@ -109,6 +109,12 @@ export type Dictionary = {
     markAllReadConfirmHint: string;
     markAllReadCancel: string;
     markAllReadYes: string;
+    exportForAgent: string;
+    exportForAgentHint: string;
+    exporting: string;
+    exportCopied: string;
+    exportDownloaded: string;
+    exportFailed: string;
   };
   columns: {
     new: string;
@@ -438,6 +444,13 @@ export const en: Dictionary = {
       "New labels and unread message badges on this board will be cleared.",
     markAllReadCancel: "Cancel",
     markAllReadYes: "Yes",
+    exportForAgent: "Export for agent",
+    exportForAgentHint:
+      "Copies every task, status, label, and chat. Paste it into Cursor or another agent.",
+    exporting: "Exporting…",
+    exportCopied: "Copied — paste it into the agent",
+    exportDownloaded: "Downloaded — the clipboard was blocked",
+    exportFailed: "Could not export this board",
   },
   columns: {
     new: "New",

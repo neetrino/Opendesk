@@ -88,6 +88,7 @@
 - `Attachment` — id, boardId, cardId, commentId?, authorId, objectKey, filename, contentType, byteSize, kind (`image` \| `video` \| `audio`)
 - Last-read непрочитанных ответов и новых задач — `localStorage` на устройстве участника, не таблица БД. Пока доска открыта, `GET /api/boards/{boardId}/activity` отдаёт курсоры карточек (создание + чужие комментарии). Список `/boards` читает `GET /api/owner/boards-activity` и показывает компактные счётчики новых задач и сообщений.
 - Список доски: первые 10 карточек в каждой колонке без истории чата; дальше по скроллу колонки. Чат карточки: последние 20 сообщений при открытии, старше — по скроллу вверх; поиск по `q` (`GET /api/boards/{boardId}/cards`, `GET /api/boards/{boardId}/cards/{cardId}/comments`)
+- Экспорт для агента: владелец в настройках доски копирует Markdown со всеми задачами, статусами, метками и чатами (`GET /api/boards/{boardId}/export`, только owner-сессия; до 1000 сообщений на задачу)
 
 **Колонки:** `new` → `in_progress` → `answered` → `done`
 

@@ -11,6 +11,7 @@ import {
 import { KanbanBoard, type BoardCard } from "@/components/kanban-board";
 import type { BoardColumnPages } from "@/lib/board-card-view";
 import type { BoardLabelView } from "@/lib/labels";
+import { BoardSettingsMenu } from "@/components/board-settings-menu";
 import { LogoutButton } from "@/components/logout-button";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import { ParticipantsPanel } from "@/components/participants-panel";
@@ -86,6 +87,7 @@ export function BoardWorkspace({
                 slug={board.slug}
                 joinToken={board.joinToken}
               />
+              {isOwner ? <BoardSettingsMenu boardId={board.id} /> : null}
               {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
             </div>
           </header>

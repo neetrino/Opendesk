@@ -114,6 +114,13 @@ export const ru: Dictionary = {
       "Метки «Новая» и значки непрочитанных сообщений на этой доске исчезнут.",
     markAllReadCancel: "Отменить",
     markAllReadYes: "Да",
+    exportForAgent: "Экспорт для агента",
+    exportForAgentHint:
+      "Копирует все задачи, статусы, метки и чаты. Вставьте текст в Cursor или другого агента.",
+    exporting: "Экспорт…",
+    exportCopied: "Скопировано — вставьте агенту",
+    exportDownloaded: "Файл скачан — буфер обмена недоступен",
+    exportFailed: "Не удалось экспортировать доску",
   },
   columns: {
     new: "Новое",
