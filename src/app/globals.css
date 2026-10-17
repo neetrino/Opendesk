@@ -1406,8 +1406,14 @@ textarea {
 
 .settings-sheet .button-invite,
 .participants-sheet .button-invite,
-.settings-sheet .button-secondary {
+.settings-sheet .button-secondary,
+.settings-sheet .invite-actions .button {
   width: 100%;
+}
+
+.settings-sheet .invite-actions .button,
+.settings-sheet .invite-actions .button:hover {
+  color: #fff;
 }
 
 .settings-sheet .invite-hint,

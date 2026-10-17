@@ -116,10 +116,9 @@ export const ru: Dictionary = {
     markAllReadYes: "Да",
     exportForAgent: "Экспорт для агента",
     exportForAgentHint:
-      "Копирует все задачи, статусы, метки и чаты. Вставьте текст в Cursor или другого агента.",
+      "Скачивает Markdown-файл со всеми задачами, статусами, метками и чатами. Отдайте этот файл агенту.",
     exporting: "Экспорт…",
-    exportCopied: "Скопировано — вставьте агенту",
-    exportDownloaded: "Файл скачан — буфер обмена недоступен",
+    exportDownloaded: "Файл Markdown скачан",
     exportFailed: "Не удалось экспортировать доску",
   },
   columns: {

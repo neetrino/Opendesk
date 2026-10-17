@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  boardExportFilename,
   formatBoardExport,
   type BoardExportSnapshot,
 } from "@/lib/board-export-format";
@@ -42,6 +43,13 @@ function snapshot(
     ...overrides,
   };
 }
+
+describe("boardExportFilename", () => {
+  it("keeps a readable markdown name for the agent", () => {
+    expect(boardExportFilename("xRad / Sprint")).toBe("xRad-Sprint.md");
+    expect(boardExportFilename("   ")).toBe("opendesk-board.md");
+  });
+});
 
 describe("formatBoardExport", () => {
   it("writes statuses, labels, and the chat for an agent", () => {

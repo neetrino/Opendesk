@@ -20,12 +20,13 @@ export function ExportBoardButton({ boardId }: ExportBoardButtonProps) {
     setPending(true);
     setMessage(null);
     try {
-      const text = await fetchExport(boardId);
-      if (!text) {
+      const file = await fetchExport(boardId);
+      if (!file) {
         setMessage(t.board.exportFailed);
         return;
       }
-      setMessage(await copyOrDownload(text, boardId, t.board));
+      downloadMarkdown(file.filename, file.text);
+      setMessage(t.board.exportDownloaded);
     } catch {
       setMessage(t.board.exportFailed);
     } finally {
@@ -45,7 +46,7 @@ export function ExportBoardButton({ boardId }: ExportBoardButtonProps) {
     <div className="invite-actions">
       <button
         type="button"
-        className="button button-secondary"
+        className="button"
         disabled={pending}
         onClick={() => {
           void onExport();
@@ -58,7 +59,9 @@ export function ExportBoardButton({ boardId }: ExportBoardButtonProps) {
   );
 }
 
-async function fetchExport(boardId: string): Promise<string | null> {
+async function fetchExport(
+  boardId: string,
+): Promise<{ text: string; filename: string } | null> {
   const response = await fetch(`/api/boards/${boardId}/export`, {
     credentials: "same-origin",
     cache: "no-store",
@@ -66,23 +69,20 @@ async function fetchExport(boardId: string): Promise<string | null> {
   if (!response.ok) {
     return null;
   }
-  return response.text();
+  const text = await response.text();
+  return { text, filename: filenameFromDisposition(response.headers) };
 }
 
-async function copyOrDownload(
-  text: string,
-  boardId: string,
-  labels: {
-    exportCopied: string;
-    exportDownloaded: string;
-  },
-): Promise<string> {
+function filenameFromDisposition(headers: Headers): string {
+  const header = headers.get("Content-Disposition") ?? "";
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header)?.[1];
+  if (!encoded) {
+    return "opendesk-board.md";
+  }
   try {
-    await navigator.clipboard.writeText(text);
-    return labels.exportCopied;
+    return decodeURIComponent(encoded);
   } catch {
-    downloadMarkdown(`opendesk-${boardId}.md`, text);
-    return labels.exportDownloaded;
+    return "opendesk-board.md";
   }
 }
 
@@ -93,6 +93,8 @@ function downloadMarkdown(filename: string, text: string): void {
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { loadBoardExport } from "@/lib/board-export";
-import { formatBoardExport } from "@/lib/board-export-format";
+import {
+  boardExportFilename,
+  formatBoardExport,
+} from "@/lib/board-export-format";
 import { requireBoardAccess } from "@/lib/board-access";
 import { logger } from "@/lib/logger";
 
@@ -46,11 +49,18 @@ export async function GET(
       headers: {
         "Content-Type": "text/markdown; charset=utf-8",
         "Cache-Control": "private, no-store",
-        "Content-Disposition": `attachment; filename="opendesk-${parsedId.data}.md"`,
+        "Content-Disposition": contentDisposition(
+          boardExportFilename(snapshot.title),
+        ),
       },
     });
   } catch (error) {
     logger.error("board export failed", error);
     return NextResponse.json({ error: "Unavailable" }, { status: 500 });
   }
+}
+
+function contentDisposition(filename: string): string {
+  const encoded = encodeURIComponent(filename);
+  return `attachment; filename="opendesk-board.md"; filename*=UTF-8''${encoded}`;
 }

@@ -112,7 +112,6 @@ export type Dictionary = {
     exportForAgent: string;
     exportForAgentHint: string;
     exporting: string;
-    exportCopied: string;
     exportDownloaded: string;
     exportFailed: string;
   };
@@ -446,10 +445,9 @@ export const en: Dictionary = {
     markAllReadYes: "Yes",
     exportForAgent: "Export for agent",
     exportForAgentHint:
-      "Copies every task, status, label, and chat. Paste it into Cursor or another agent.",
+      "Downloads a Markdown file with every task, status, label, and chat. Give that file to the agent.",
     exporting: "Exporting…",
-    exportCopied: "Copied — paste it into the agent",
-    exportDownloaded: "Downloaded — the clipboard was blocked",
+    exportDownloaded: "Markdown file downloaded",
     exportFailed: "Could not export this board",
   },
   columns: {

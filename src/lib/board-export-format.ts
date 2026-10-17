@@ -152,6 +152,16 @@ function formatComment(comment: BoardExportComment): string {
   return lines.join("\n");
 }
 
+/** Safe download name. The file body stays Markdown so an agent can read tasks and chats. */
+export function boardExportFilename(title: string): string {
+  const base = title
+    .trim()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  return `${base.length > 0 ? base : "opendesk-board"}.md`;
+}
+
 function oneLine(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
