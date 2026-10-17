@@ -8,11 +8,8 @@ import {
   nextBoardAvatarKey,
 } from "@/lib/assign-board-avatars";
 import { requireBoardAccess } from "@/lib/board-access";
-import {
-  computeMovedCardPosition,
-  planDestinationShift,
-  resolveMovePlacement,
-} from "@/lib/card-position";
+import { resolveMovePlacement } from "@/lib/card-position";
+import { moveBoardCard } from "@/lib/move-board-card";
 import {
   activeParticipantWhere,
   decideJoinParticipantSlot,
@@ -410,71 +407,15 @@ export async function moveCardAction(
   try {
     await requireBoardAccess(parsed.data.boardId);
 
-    const card = await prisma.card.findFirst({
-      where: { id: parsed.data.cardId, boardId: parsed.data.boardId },
-    });
-
-    if (!card) {
-      return { ok: false, error: errors.cardNotFound };
-    }
-
-    const destination = await prisma.card.findMany({
-      where: {
-        boardId: parsed.data.boardId,
-        OR: [{ status: parsed.data.status }, { id: card.id }],
-      },
-      select: { id: true, status: true, position: true },
-    });
-    const targetPosition = computeMovedCardPosition({
-      moving: card,
-      destination,
-      toStatus: parsed.data.status,
+    const moved = await moveBoardCard({
+      boardId: parsed.data.boardId,
+      cardId: parsed.data.cardId,
+      status: parsed.data.status,
       placement: resolveMovePlacement(parsed.data),
     });
-    const shift = planDestinationShift(
-      card,
-      parsed.data.status,
-      targetPosition,
-    );
-
-    await prisma.$transaction(async (tx) => {
-      if (shift.kind === "increment") {
-        await tx.card.updateMany({
-          where: {
-            boardId: parsed.data.boardId,
-            status: parsed.data.status,
-            id: { not: card.id },
-            position: {
-              gte: shift.from,
-              ...(shift.toExclusive === undefined
-                ? {}
-                : { lt: shift.toExclusive }),
-            },
-          },
-          data: { position: { increment: 1 } },
-        });
-      }
-
-      if (shift.kind === "decrement") {
-        await tx.card.updateMany({
-          where: {
-            boardId: parsed.data.boardId,
-            status: parsed.data.status,
-            id: { not: card.id },
-            position: { gt: shift.fromExclusive, lte: shift.to },
-          },
-          data: { position: { decrement: 1 } },
-        });
-      }
-
-      await tx.card.update({
-        where: { id: card.id },
-        data: {
-          status: parsed.data.status,
-          position: targetPosition,
-        },
-      });
-    });
+    if (moved === "not_found") {
+      return { ok: false, error: errors.cardNotFound };
+    }
 
     await revalidateBoardPath(parsed.data.boardId);
     return { ok: true, data: undefined };

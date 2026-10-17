@@ -912,6 +912,7 @@ export function KanbanBoard({
       </div>
 
       <BoardDock
+        boardId={boardId}
         boardTitle={boardTitle}
         slug={slug}
         joinToken={joinToken}

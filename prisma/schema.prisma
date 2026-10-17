@@ -34,6 +34,17 @@ model Board {
   cards        Card[]
   attachments  Attachment[]
   labels       BoardLabel[]
+  agentAccess  BoardAgentAccess?
+}
+
+model BoardAgentAccess {
+  id        String   @id @default(cuid())
+  boardId   String   @unique
+  keyHash   String   @unique
+  keyPrefix String
+  createdAt DateTime @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
 }
 
 model Invite {

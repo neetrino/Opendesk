@@ -13,6 +13,7 @@ export const OWNER_COOKIE_NAME = "opendesk_owner";
 export const LAST_BOARD_COOKIE_NAME = "opendesk_last_board";
 export const OWNER_LAST_BOARD_API_PATH = "/api/owner/last-board";
 export const OWNER_BOARDS_ACTIVITY_API_PATH = "/api/owner/boards-activity";
+export const MCP_API_PATH = "/api/mcp";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 /** Stable display name for the env owner on each board (FK author). */

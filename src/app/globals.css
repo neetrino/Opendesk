@@ -143,6 +143,22 @@ a {
   gap: 1rem;
 }
 
+.site-header-end {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.site-header-slot {
+  display: flex;
+  align-items: center;
+}
+
+.site-header-slot:empty {
+  display: none;
+}
+
 .install-banner {
   flex-shrink: 0;
   width: min(1480px, calc(100% - 1.25rem));
@@ -1221,7 +1237,8 @@ textarea {
   flex-shrink: 0;
 }
 
-.board-logout-btn {
+.board-logout-btn,
+.board-settings-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1239,12 +1256,14 @@ textarea {
   transition: opacity 140ms ease, color 140ms ease, border-color 140ms ease;
 }
 
-.board-logout-btn:hover {
+.board-logout-btn:hover,
+.board-settings-btn:hover {
   opacity: 1;
   color: var(--ink);
 }
 
-.board-logout-btn.is-icon {
+.board-logout-btn.is-icon,
+.board-settings-btn {
   width: 2.15rem;
   height: 2.15rem;
   padding: 0;
@@ -1402,14 +1421,38 @@ textarea {
 }
 
 .settings-sheet .button-invite,
-.participants-sheet .button-invite {
+.participants-sheet .button-invite,
+.settings-sheet .button-secondary,
+.settings-sheet .invite-actions .button {
   width: 100%;
+}
+
+.settings-sheet .invite-actions .button,
+.settings-sheet .invite-actions .button:hover {
+  color: #fff;
 }
 
 .settings-sheet .invite-hint,
 .participants-sheet .invite-hint {
   margin: 0;
   max-width: none;
+}
+
+.agent-access-on {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.agent-access-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.settings-sheet .agent-access-row .button-secondary,
+.settings-sheet .agent-access-row .button-ghost {
+  width: 100%;
 }
 
 .participants-list {
@@ -5046,7 +5089,6 @@ button.card-label-chip {
   }
 
   .board-top .board-identity,
-  .board-top .board-logout,
   .board-top .board-top-actions,
   .board-top-mark-read {
     display: none;

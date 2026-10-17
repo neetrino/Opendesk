@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { BoardAgentAccess } from "@/components/board-agent-access";
+import { BoardSettingsSections } from "@/components/board-settings-sections";
 import { InviteButton } from "@/components/invite-button";
 import { LogoutButton } from "@/components/logout-button";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
@@ -24,6 +26,7 @@ function formatSettingsDockTitle(title: string): string {
 }
 
 type BoardSettingsSheetProps = {
+  boardId: string;
   slug: string;
   joinToken: string;
   boardTitle: string;
@@ -35,6 +38,7 @@ type BoardSettingsSheetProps = {
 };
 
 export function BoardSettingsSheet({
+  boardId,
   slug,
   joinToken,
   boardTitle,
@@ -145,6 +149,8 @@ export function BoardSettingsSheet({
                     <div className="sheet-block">
                       <InviteButton slug={slug} joinToken={joinToken} />
                     </div>
+                    <BoardSettingsSections boardId={boardId} isOwner={isOwner} />
+                    {isOwner ? <BoardAgentAccess boardId={boardId} /> : null}
                     <BoardLabelsSettingsSection />
                     <div className="sheet-block">
                       <div className="sheet-badges">

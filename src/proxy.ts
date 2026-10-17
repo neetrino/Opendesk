@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
+  MCP_API_PATH,
   OWNER_BOARDS_ACTIVITY_API_PATH,
   OWNER_LAST_BOARD_API_PATH,
 } from "@/lib/constants";
@@ -70,6 +71,9 @@ export function proxy(request: NextRequest) {
   const isBoardActivityGet =
     request.method === "GET" &&
     /^\/api\/boards\/[^/]+\/activity$/.test(path);
+  const isBoardExportGet =
+    request.method === "GET" &&
+    /^\/api\/boards\/[^/]+\/export$/.test(path);
   const isBoardCardsGet =
     request.method === "GET" &&
     /^\/api\/boards\/[^/]+\/cards$/.test(path);
@@ -78,6 +82,14 @@ export function proxy(request: NextRequest) {
     /^\/api\/boards\/[^/]+\/cards\/[^/]+\/comments$/.test(path);
   if (isBoardActivityGet) {
     const result = checkRateLimit(`activity:${ip}`, 120, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+  if (isBoardExportGet) {
+    const result = checkRateLimit(`board-export:${ip}`, 10, MUTATION_WINDOW_MS);
     if (!result.allowed) {
       return new NextResponse("Too many requests. Try again in a minute.", {
         status: 429,
@@ -97,6 +109,16 @@ export function proxy(request: NextRequest) {
     request.method === "POST" && path === OWNER_LAST_BOARD_API_PATH;
   if (isLastBoardPost) {
     const result = checkRateLimit(`last-board:${ip}`, 60, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+
+  const isMcpPost = request.method === "POST" && path === MCP_API_PATH;
+  if (isMcpPost) {
+    const result = checkRateLimit(`board-mcp:${ip}`, 60, MUTATION_WINDOW_MS);
     if (!result.allowed) {
       return new NextResponse("Too many requests. Try again in a minute.", {
         status: 429,
@@ -128,5 +150,6 @@ export const config = {
     "/api/boards/:path*",
     "/api/owner/last-board",
     "/api/owner/boards-activity",
+    "/api/mcp",
   ],
 };

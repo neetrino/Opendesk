@@ -109,6 +109,30 @@ export type Dictionary = {
     markAllReadConfirmHint: string;
     markAllReadCancel: string;
     markAllReadYes: string;
+    exportForAgent: string;
+    exportForAgentHint: string;
+    exporting: string;
+    exportDownloaded: string;
+    exportFailed: string;
+    agentAccessTitle: string;
+    agentAccessHint: string;
+    agentAccessPasteHint: string;
+    agentAccessEnable: string;
+    agentAccessEnabling: string;
+    agentAccessEnabled: string;
+    agentAccessCopy: string;
+    agentAccessCopied: string;
+    agentAccessCopyFailed: string;
+    agentAccessRotate: string;
+    agentAccessRotateConfirm: string;
+    agentAccessRotateHint: string;
+    agentAccessRotateYes: string;
+    agentAccessDisable: string;
+    agentAccessDisableConfirm: string;
+    agentAccessDisableHint: string;
+    agentAccessDisableYes: string;
+    agentAccessDisabled: string;
+    agentAccessCancel: string;
   };
   columns: {
     new: string;
@@ -298,6 +322,7 @@ export type Dictionary = {
     loadComments: string;
     joinFailed: string;
     invalidCredentials: string;
+    agentAccess: string;
     titleShort: string;
     titleLong: string;
     nameRequired: string;
@@ -438,6 +463,35 @@ export const en: Dictionary = {
       "New labels and unread message badges on this board will be cleared.",
     markAllReadCancel: "Cancel",
     markAllReadYes: "Yes",
+    exportForAgent: "Export for agent",
+    exportForAgentHint:
+      "Downloads a Markdown file with every task, status, label, and chat. Give that file to the agent.",
+    exporting: "Exporting…",
+    exportDownloaded: "Markdown file downloaded",
+    exportFailed: "Could not export this board",
+    agentAccessTitle: "Agent",
+    agentAccessHint:
+      "Lets Cursor or another agent read this board and set In progress or Answered.",
+    agentAccessPasteHint:
+      "Paste the copied text into .cursor/mcp.json in the project where the agent works.",
+    agentAccessEnable: "Turn on",
+    agentAccessEnabling: "Turning on…",
+    agentAccessEnabled: "Access is on",
+    agentAccessCopy: "Copy access",
+    agentAccessCopied: "Copied — paste it into .cursor/mcp.json",
+    agentAccessCopyFailed: "Could not copy",
+    agentAccessRotate: "Issue new",
+    agentAccessRotateConfirm: "Issue a new key?",
+    agentAccessRotateHint:
+      "The old key stops working. Copy the new access after this.",
+    agentAccessRotateYes: "Issue new",
+    agentAccessDisable: "Turn off",
+    agentAccessDisableConfirm: "Turn off agent access?",
+    agentAccessDisableHint:
+      "The key stops working. You can turn it on again later.",
+    agentAccessDisableYes: "Turn off",
+    agentAccessDisabled: "Agent access is off",
+    agentAccessCancel: "Cancel",
   },
   columns: {
     new: "New",
@@ -630,6 +684,7 @@ export const en: Dictionary = {
     loadComments: "Could not load messages",
     joinFailed: "Could not join",
     invalidCredentials: "Invalid login or password",
+    agentAccess: "Could not update agent access",
     titleShort: "Name is too short",
     titleLong: "Name is too long",
     nameRequired: "Enter your name",

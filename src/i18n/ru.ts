@@ -114,6 +114,35 @@ export const ru: Dictionary = {
       "Метки «Новая» и значки непрочитанных сообщений на этой доске исчезнут.",
     markAllReadCancel: "Отменить",
     markAllReadYes: "Да",
+    exportForAgent: "Экспорт для агента",
+    exportForAgentHint:
+      "Скачивает Markdown-файл со всеми задачами, статусами, метками и чатами. Отдайте этот файл агенту.",
+    exporting: "Экспорт…",
+    exportDownloaded: "Файл Markdown скачан",
+    exportFailed: "Не удалось экспортировать доску",
+    agentAccessTitle: "Агент",
+    agentAccessHint:
+      "Cursor или другой агент видит эту доску и ставит «В процессе» или «Ответ дан».",
+    agentAccessPasteHint:
+      "Вставьте скопированный текст в .cursor/mcp.json в проекте, где работает агент.",
+    agentAccessEnable: "Включить",
+    agentAccessEnabling: "Включаем…",
+    agentAccessEnabled: "Доступ включён",
+    agentAccessCopy: "Скопировать доступ",
+    agentAccessCopied: "Скопировано — вставьте в .cursor/mcp.json",
+    agentAccessCopyFailed: "Не удалось скопировать",
+    agentAccessRotate: "Выпустить новый",
+    agentAccessRotateConfirm: "Выпустить новый ключ?",
+    agentAccessRotateHint:
+      "Старый ключ перестанет работать. После этого скопируйте новый доступ.",
+    agentAccessRotateYes: "Выпустить",
+    agentAccessDisable: "Выключить",
+    agentAccessDisableConfirm: "Выключить доступ агента?",
+    agentAccessDisableHint:
+      "Ключ перестанет работать. Потом можно включить снова.",
+    agentAccessDisableYes: "Выключить",
+    agentAccessDisabled: "Доступ агента выключен",
+    agentAccessCancel: "Отменить",
   },
   columns: {
     new: "Новое",
@@ -307,6 +336,7 @@ export const ru: Dictionary = {
     loadComments: "Не удалось загрузить сообщения",
     joinFailed: "Не удалось войти",
     invalidCredentials: "Неверный логин или пароль",
+    agentAccess: "Не удалось обновить доступ агента",
     titleShort: "Название слишком короткое",
     titleLong: "Название слишком длинное",
     nameRequired: "Укажите имя",

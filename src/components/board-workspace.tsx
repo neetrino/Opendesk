@@ -11,8 +11,10 @@ import {
 import { KanbanBoard, type BoardCard } from "@/components/kanban-board";
 import type { BoardColumnPages } from "@/lib/board-card-view";
 import type { BoardLabelView } from "@/lib/labels";
+import { BoardSettingsMenu } from "@/components/board-settings-menu";
 import { LogoutButton } from "@/components/logout-button";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
+import { SiteHeaderSlot } from "@/components/site-header-slot";
 import { ParticipantsPanel } from "@/components/participants-panel";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionary";
@@ -86,8 +88,11 @@ export function BoardWorkspace({
                 slug={board.slug}
                 joinToken={board.joinToken}
               />
-              {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
+              {isOwner ? <BoardSettingsMenu boardId={board.id} /> : null}
             </div>
+            <SiteHeaderSlot>
+              {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
+            </SiteHeaderSlot>
           </header>
           <KanbanBoard
             key={board.id}
