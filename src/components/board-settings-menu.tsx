@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { BoardAgentAccess } from "@/components/board-agent-access";
 import { BoardSettingsSections } from "@/components/board-settings-sections";
 import { SettingsIcon } from "@/components/settings-icon";
 import { useI18n } from "@/i18n/provider";
@@ -92,6 +93,7 @@ function SettingsSheet({
         <div className="sheet-body">
           <div className="sheet-details">
             <BoardSettingsSections boardId={boardId} isOwner />
+            <BoardAgentAccess boardId={boardId} />
           </div>
         </div>
       </aside>

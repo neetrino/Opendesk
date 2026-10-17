@@ -1438,6 +1438,23 @@ textarea {
   max-width: none;
 }
 
+.agent-access-on {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.agent-access-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.settings-sheet .agent-access-row .button-secondary,
+.settings-sheet .agent-access-row .button-ghost {
+  width: 100%;
+}
+
 .participants-list {
   list-style: none;
   margin: 0;

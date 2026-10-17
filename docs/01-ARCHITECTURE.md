@@ -158,6 +158,12 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
    меток и чатов (`GET /api/boards/{boardId}/export`). На узком экране тот
    же блок лежит в листе нижней панели. Новые настройки доски добавляются
    в `BoardSettingsSections`.
+10. Доступ агента (только owner): шестерёнка в шапке, а на узком экране —
+    лист нижней панели. Включение не заменяет уже выданный ключ.
+    Копирует JSON для `.cursor/mcp.json`. Агент ходит на
+    `POST /api/mcp` с `Authorization: Bearer od_…` и видит только эту
+    доску. Инструменты: `list_tasks`, `get_task`, `set_status`
+    (`in_progress` или `answered`).
 ```
 
 ---
@@ -176,12 +182,14 @@ Legacy: `GET /b/:cuid` редиректит на canonical slug URL при на�
 | CommentReaction | Рабочая реакция на сообщение |
 | CommentMention | @упоминание участника в сообщении |
 | Attachment | Фото/видео карточки или комментария (R2) |
+| BoardAgentAccess | Ключ агента одной доски (hash + prefix); секрет показывается один раз |
 
 ```
 Board 1──* Invite
 Board 1──* Participant
 Board 1──* Card
 Board 1──* BoardLabel
+Board 0──1 BoardAgentAccess
 BoardLabel *──* Card (CardLabel)
 Participant 1──* Card (author)
 Card 1──* Comment

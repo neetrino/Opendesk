@@ -67,6 +67,28 @@ export async function loadBoardExport(
   };
 }
 
+/** One task and its chat, for an agent that already has the board id. */
+export async function loadCardExport(
+  boardId: string,
+  cardId: string,
+): Promise<{ title: string; card: BoardExportCard } | null> {
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+    select: { title: true },
+  });
+  if (!board) {
+    return null;
+  }
+  const card = await prisma.card.findFirst({
+    where: { id: cardId, boardId },
+    select: exportCardSelect,
+  });
+  if (!card) {
+    return null;
+  }
+  return { title: board.title, card: toExportCard(card) };
+}
+
 const exportCardSelect = {
   id: true,
   title: true,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { BoardAgentAccess } from "@/components/board-agent-access";
 import { BoardSettingsSections } from "@/components/board-settings-sections";
 import { InviteButton } from "@/components/invite-button";
 import { LogoutButton } from "@/components/logout-button";
@@ -149,6 +150,7 @@ export function BoardSettingsSheet({
                       <InviteButton slug={slug} joinToken={joinToken} />
                     </div>
                     <BoardSettingsSections boardId={boardId} isOwner={isOwner} />
+                    {isOwner ? <BoardAgentAccess boardId={boardId} /> : null}
                     <BoardLabelsSettingsSection />
                     <div className="sheet-block">
                       <div className="sheet-badges">

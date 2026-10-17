@@ -120,6 +120,29 @@ export const hy: Dictionary = {
     exporting: "Արտահանում…",
     exportDownloaded: "Markdown ֆայլը ներբեռնված է",
     exportFailed: "Տախտակը արտահանել չհաջողվեց",
+    agentAccessTitle: "Գործակալ",
+    agentAccessHint:
+      "Cursor-ը կամ այլ գործակալը տեսնում է այս տախտակը և դնում է «Ընթացքում» կամ «Պատասխանված».",
+    agentAccessPasteHint:
+      "Տեղադրեք պատճենված տեքստը .cursor/mcp.json ֆայլում՝ այն նախագծում, որտեղ աշխատում է գործակալը։",
+    agentAccessEnable: "Միացնել",
+    agentAccessEnabling: "Միացնում ենք…",
+    agentAccessEnabled: "Մուտքը միացված է",
+    agentAccessCopy: "Պատճենել մուտքը",
+    agentAccessCopied: "Պատճենված է — տեղադրեք .cursor/mcp.json-ում",
+    agentAccessCopyFailed: "Պատճենել չհաջողվեց",
+    agentAccessRotate: "Նոր բանալի",
+    agentAccessRotateConfirm: "Թողարկե՞լ նոր բանալի։",
+    agentAccessRotateHint:
+      "Հին բանալին այլևս չի աշխատի։ Դրանից հետո պատճենեք նոր մուտքը։",
+    agentAccessRotateYes: "Թողարկել",
+    agentAccessDisable: "Անջատել",
+    agentAccessDisableConfirm: "Անջատե՞լ գործակալի մուտքը։",
+    agentAccessDisableHint:
+      "Բանալին այլևս չի աշխատի։ Կարող եք նորից միացնել։",
+    agentAccessDisableYes: "Անջատել",
+    agentAccessDisabled: "Գործակալի մուտքն անջատված է",
+    agentAccessCancel: "Չեղարկել",
   },
   columns: {
     new: "Նոր",
@@ -313,6 +336,7 @@ export const hy: Dictionary = {
     loadComments: "Չհաջողվեց բեռնել հաղորդագրությունները",
     joinFailed: "Չհաջողվեց մտնել",
     invalidCredentials: "Սխալ լոգին կամ գաղտնաբառ",
+    agentAccess: "Գործակալի մուտքը թարմացնել չհաջողվեց",
     titleShort: "Անունը չափազանց կարճ է",
     titleLong: "Անունը չափազանց երկար է",
     nameRequired: "Նշեք անունը",

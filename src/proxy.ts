@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
+  MCP_API_PATH,
   OWNER_BOARDS_ACTIVITY_API_PATH,
   OWNER_LAST_BOARD_API_PATH,
 } from "@/lib/constants";
@@ -115,6 +116,16 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  const isMcpPost = request.method === "POST" && path === MCP_API_PATH;
+  if (isMcpPost) {
+    const result = checkRateLimit(`board-mcp:${ip}`, 60, MUTATION_WINDOW_MS);
+    if (!result.allowed) {
+      return new NextResponse("Too many requests. Try again in a minute.", {
+        status: 429,
+      });
+    }
+  }
+
   const isOwnerBoardsActivityGet =
     request.method === "GET" && path === OWNER_BOARDS_ACTIVITY_API_PATH;
   if (isOwnerBoardsActivityGet) {
@@ -139,5 +150,6 @@ export const config = {
     "/api/boards/:path*",
     "/api/owner/last-board",
     "/api/owner/boards-activity",
+    "/api/mcp",
   ],
 };
