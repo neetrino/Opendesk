@@ -143,6 +143,22 @@ a {
   gap: 1rem;
 }
 
+.site-header-end {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.site-header-slot {
+  display: flex;
+  align-items: center;
+}
+
+.site-header-slot:empty {
+  display: none;
+}
+
 .install-banner {
   flex-shrink: 0;
   width: min(1480px, calc(100% - 1.25rem));
@@ -5056,7 +5072,6 @@ button.card-label-chip {
   }
 
   .board-top .board-identity,
-  .board-top .board-logout,
   .board-top .board-top-actions,
   .board-top-mark-read {
     display: none;

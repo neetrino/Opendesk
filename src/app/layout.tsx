@@ -104,7 +104,10 @@ export default async function RootLayout({
                       <span className="brand-credit">{dictionary.common.credit}</span>
                     </span>
                   </BrandLink>
-                  <LanguageSwitcher />
+                  <div className="site-header-end">
+                    <LanguageSwitcher />
+                    <div id="site-header-slot" className="site-header-slot" />
+                  </div>
                 </div>
               </header>
               <InstallAppBanner />

@@ -14,6 +14,7 @@ import type { BoardLabelView } from "@/lib/labels";
 import { BoardSettingsMenu } from "@/components/board-settings-menu";
 import { LogoutButton } from "@/components/logout-button";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
+import { SiteHeaderSlot } from "@/components/site-header-slot";
 import { ParticipantsPanel } from "@/components/participants-panel";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionary";
@@ -88,8 +89,10 @@ export function BoardWorkspace({
                 joinToken={board.joinToken}
               />
               {isOwner ? <BoardSettingsMenu boardId={board.id} /> : null}
-              {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
             </div>
+            <SiteHeaderSlot>
+              {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
+            </SiteHeaderSlot>
           </header>
           <KanbanBoard
             key={board.id}
