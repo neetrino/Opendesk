@@ -102,10 +102,16 @@ export async function getAccount(): Promise<AccountContext | null> {
       displayName: true,
       role: true,
       disabledAt: true,
+      emailVerifiedAt: true,
       sessionVersion: true,
     },
   });
-  if (!user || user.disabledAt || user.sessionVersion !== payload.sessionVersion) {
+  if (
+    !user ||
+    user.disabledAt ||
+    !user.emailVerifiedAt ||
+    user.sessionVersion !== payload.sessionVersion
+  ) {
     return null;
   }
 

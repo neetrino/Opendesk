@@ -206,6 +206,11 @@ enum UserRole {
   platform_admin
 }
 
+enum AuthEmailPurpose {
+  verify_email
+  reset_password
+}
+
 model User {
   id               String    @id @default(cuid())
   email            String    @unique
@@ -220,11 +225,25 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  ownedBoards  Board[]
-  participants Participant[]
-  auditEvents  AdminAudit[]
+  ownedBoards     Board[]
+  participants    Participant[]
+  auditEvents     AdminAudit[]
+  authEmailTokens AuthEmailToken[]
 
   @@index([role])
+}
+
+model AuthEmailToken {
+  id        String           @id @default(cuid())
+  userId    String
+  purpose   AuthEmailPurpose
+  tokenHash String           @unique
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
 }
 
 model AdminAudit {

@@ -95,11 +95,15 @@ docs/
 ### Аккаунт
 
 ```
-1. GET /login или /register → почта и пароль
-2. Cookie opendesk_account { userId, sessionVersion }
-3. GET /boards → свои доски и доски, куда пригласили
-4. Open /b/:slug/:joinToken → своё место на доске, либо форма имени, если места ещё нет
-5. PWA запускает `/` → последняя доска аккаунта, либо `/boards`
+1. POST /register → аккаунт без входа, приветственное письмо, /check-email
+2. Кнопка в письме → /verify-email → подтверждение → cookie → /email-confirmed
+3. GET /login → почта и пароль. Неподтверждённая почта не входит; можно выслать письмо снова
+4. POST /forgot-password → один и тот же ответ, письмо только если аккаунт есть и не отключён
+5. Кнопка в письме → /reset-password → новый пароль, sessionVersion + 1, письмо что пароль сменён
+6. Cookie opendesk_account { userId, sessionVersion }
+7. GET /boards → свои доски и доски, куда пригласили
+8. Open /b/:slug/:joinToken → своё место на доске, либо форма имени, если места ещё нет
+9. PWA запускает `/` → последняя доска аккаунта, либо `/boards`
 ```
 
 Роль `platform_admin` дополнительно открывает `/admin`.
@@ -214,9 +218,10 @@ Participant 1──* Attachment (author)
 - Join link: многоразовый; имя (case-insensitive) привязывает к participant
 - Cookie: httpOnly, secure (prod), signed HMAC (`opendesk_session` / `opendesk_account`)
 - Доступ к доске: участник этой доски. Настройки и удаление задач — у владельца доски (`ownerId`), не у роли платформы
-- Пароли аккаунтов: argon2id. Первый админ — seed из `ADMIN_EMAIL` / `ADMIN_PASSWORD`, дальше вход только по базе
+- Пароли аккаунтов: argon2id. Первый админ — seed из `ADMIN_EMAIL` / `ADMIN_PASSWORD`, дальше вход только по базе. Новый аккаунт входит только после подтверждения почты
+- Письма: Resend. В HTML только кнопка. В базе SHA-256 токена. Сброс пароля не говорит, есть ли такой адрес
 - Zod на всех входах
-- Базовый rate limit на join / login / register / mutations / downloads
+- Базовый rate limit на join / login / register / forgot-password / reset / verify / mutations / downloads
 - Вложения: allowlist MIME, 200 MB, ключи сервера, presigned PUT/GET, доступ только с доски
 - Имя гостя не является секретом, пока место не привязано к аккаунту. После привязки вход только паролем
 

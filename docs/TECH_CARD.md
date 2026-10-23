@@ -89,7 +89,8 @@
 - Last-read непрочитанных ответов и новых задач — `localStorage` на устройстве участника, не таблица БД. Пока доска открыта, `GET /api/boards/{boardId}/activity` отдаёт курсоры карточек (создание + чужие комментарии). Список `/boards` читает `GET /api/owner/boards-activity` и показывает компактные счётчики новых задач и сообщений.
 - Список доски: первые 10 карточек в каждой колонке без истории чата; дальше по скроллу колонки. Чат карточки: последние 20 сообщений при открытии, старше — по скроллу вверх; поиск по `q` (`GET /api/boards/{boardId}/cards`, `GET /api/boards/{boardId}/cards/{cardId}/comments`)
 - Экспорт для агента: владелец доски (`Board.ownerId`) скачивает Markdown (`GET /api/boards/{boardId}/export`; до 1000 сообщений на задачу)
-- `User` — email, argon2id `passwordHash`, `role` (`member` | `platform_admin`), `sessionVersion`, `failedLoginCount`, `lockedUntil`, `disabledAt`, `emailVerifiedAt` (письма пока не отправляются)
+- `User` — email, argon2id `passwordHash`, `role` (`member` | `platform_admin`), `sessionVersion`, `failedLoginCount`, `lockedUntil`, `disabledAt`, `emailVerifiedAt`
+- `AuthEmailToken` — одноразовый SHA-256 токен письма (`verify_email` 24 часа, `reset_password` 1 час). В письме только кнопка, сырой токен в базе не хранится
 - `Board.ownerId` — владелец-аккаунт (nullable, пока seed не проставил); `Board.disabledAt` закрывает доску для всех
 - `Participant.userId` — необязательная связь с аккаунтом. Гость без `userId` входит по имени. Привязанное имя по имени больше не занять
 - `AdminAudit` — кто отключил пользователя или доску и кто сменил роль
@@ -107,8 +108,8 @@
 | 5.2 | Провайдеры | — | ➖ | |
 | 5.3 | Сессии | HTTP-only signed cookies | ✅ | `opendesk_account` (`userId`, `sessionVersion`) + `opendesk_session`; `opendesk_last_board` только навигация |
 | 5.4 | RBAC | роль платформы и владелец доски | ✅ | доски создаёт любой аккаунт; настройки, удаление задач, ключ агента и экспорт — у `Board.ownerId`; `/admin` — у `platform_admin` |
-| 5.5 | Email verify | поле есть, писем нет | ➖ | `emailVerifiedAt` пустое, пока нет почтового сервиса |
-| 5.6 | Password reset | не сейчас | ➖ | без писем сброс небезопасен; 10 ошибок запирают вход на 15 минут |
+| 5.5 | Email verify | Resend, подтверждение до входа | ✅ | приветственное письмо с кнопкой; старые аккаунты помечены подтверждёнными миграцией |
+| 5.6 | Password reset | письмо со ссылкой-кнопкой | ✅ | один ответ для известной и неизвестной почты; смена пароля гасит сессии и шлёт подтверждение |
 
 ---
 

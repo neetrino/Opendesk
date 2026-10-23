@@ -9,7 +9,8 @@ import { moveBoardCard } from "@/lib/move-board-card";
 import {
   visibleParticipantFilter,
 } from "@/lib/participant-activity";
-import { getAccount, requireAccount, setAccountCookie } from "@/lib/account-session";
+import { finishNewAccount } from "@/lib/account-mail";
+import { getAccount, requireAccount } from "@/lib/account-session";
 import { normalizeEmail } from "@/lib/account-link";
 import { allocateBoardSlug } from "@/lib/allocate-board-slug";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
@@ -238,10 +239,12 @@ export async function joinBoardByTokenAction(
     displayName: participant.displayName,
   });
   if (linkedUser) {
-    await setAccountCookie({
+    const sent = await finishNewAccount({
       userId: linkedUser.id,
-      sessionVersion: linkedUser.sessionVersion,
+      email,
+      displayName: participant.displayName,
     });
+    redirect(sent ? "/check-email" : "/check-email?notice=delayed");
   }
 
   redirect(buildJoinPath(board.slug, board.joinToken));

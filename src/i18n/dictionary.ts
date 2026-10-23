@@ -18,6 +18,10 @@ export type Dictionary = {
     submitting: string;
     noAccount: string;
     registerCta: string;
+    forgot: string;
+    resend: string;
+    resending: string;
+    resent: string;
   };
   registerPage: {
     eyebrow: string;
@@ -30,6 +34,60 @@ export type Dictionary = {
     submitting: string;
     hasAccount: string;
     loginCta: string;
+  };
+  forgotPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    emailLabel: string;
+    submit: string;
+    submitting: string;
+    sentTitle: string;
+    sent: string;
+    back: string;
+  };
+  resetPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    passwordLabel: string;
+    submit: string;
+    submitting: string;
+    invalidTitle: string;
+    invalid: string;
+    back: string;
+  };
+  checkEmailPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    delayed: string;
+    resend: string;
+    resending: string;
+    resent: string;
+    back: string;
+  };
+  confirmEmailPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    submit: string;
+    submitting: string;
+    invalidTitle: string;
+    invalid: string;
+    back: string;
+  };
+  emailConfirmedPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    cta: string;
+  };
+  passwordUpdatedPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    cta: string;
   };
   boardsPage: {
     eyebrow: string;
@@ -404,6 +462,48 @@ export type Dictionary = {
     boardClosed: string;
     lastAdmin: string;
     roleChangeDenied: string;
+    emailUnverified: string;
+    resetInvalid: string;
+    mailFailed: string;
+  };
+  emails: {
+    welcome: {
+      subject: string;
+      preheader: string;
+      eyebrow: string;
+      title: string;
+      body: string;
+      button: string;
+      note: string;
+    };
+    confirm: {
+      subject: string;
+      preheader: string;
+      eyebrow: string;
+      title: string;
+      body: string;
+      button: string;
+      note: string;
+    };
+    reset: {
+      subject: string;
+      preheader: string;
+      eyebrow: string;
+      title: string;
+      body: string;
+      button: string;
+      note: string;
+    };
+    passwordChanged: {
+      subject: string;
+      preheader: string;
+      eyebrow: string;
+      title: string;
+      body: string;
+      button: string;
+      secondary: string;
+      note: string;
+    };
   };
 };
 
@@ -427,6 +527,10 @@ export const en: Dictionary = {
     submitting: "Signing in…",
     noAccount: "No account yet?",
     registerCta: "Create one",
+    forgot: "Forgot password?",
+    resend: "Send the letter again",
+    resending: "Sending…",
+    resent: "The letter is on its way.",
   },
   registerPage: {
     eyebrow: "Account",
@@ -439,6 +543,60 @@ export const en: Dictionary = {
     submitting: "Creating…",
     hasAccount: "Already have an account?",
     loginCta: "Sign in",
+  },
+  forgotPage: {
+    eyebrow: "Account",
+    title: "Forgot password",
+    lede: "Enter the email on the account. If it is registered, a letter arrives with a button to choose a new password.",
+    emailLabel: "Email",
+    submit: "Send the letter",
+    submitting: "Sending…",
+    sentTitle: "Check your inbox",
+    sent: "If this address has an account, the letter is already on its way. The button inside works for one hour.",
+    back: "Back to sign in",
+  },
+  resetPage: {
+    eyebrow: "Account",
+    title: "New password",
+    lede: "Choose a password of at least 10 characters. This page opened from your letter.",
+    passwordLabel: "New password",
+    submit: "Save password",
+    submitting: "Saving…",
+    invalidTitle: "This link has expired",
+    invalid: "Ask for a new letter from the sign-in page. This one can no longer change the password.",
+    back: "Request a new letter",
+  },
+  checkEmailPage: {
+    eyebrow: "You're registered",
+    title: "Check your inbox",
+    lede: "A welcome letter is waiting. Open it and use the button to confirm the address. Until then, sign-in stays closed.",
+    delayed: "The letter did not go out. Send it again in a moment.",
+    resend: "Send the letter again",
+    resending: "Sending…",
+    resent: "Another letter is on its way.",
+    back: "Back to sign in",
+  },
+  confirmEmailPage: {
+    eyebrow: "Account",
+    title: "Confirm your email",
+    lede: "This page opened from your letter. The button below finishes the account.",
+    submit: "Confirm email",
+    submitting: "Confirming…",
+    invalidTitle: "This link has expired",
+    invalid: "Ask for a new letter. This one can no longer confirm the address.",
+    back: "Send a new letter",
+  },
+  emailConfirmedPage: {
+    eyebrow: "Account",
+    title: "Email confirmed",
+    lede: "The account is ready. Your boards and invitations stay with this sign-in.",
+    cta: "Open your boards",
+  },
+  passwordUpdatedPage: {
+    eyebrow: "Account",
+    title: "Password updated",
+    lede: "You're signed in with the new password. Other devices were signed out, and a confirmation letter is on its way.",
+    cta: "Open your boards",
   },
   boardsPage: {
     eyebrow: "Account",
@@ -825,5 +983,47 @@ export const en: Dictionary = {
     boardClosed: "This board is closed",
     lastAdmin: "The last admin cannot be removed or disabled",
     roleChangeDenied: "This role change is not allowed",
+    emailUnverified: "Confirm your email before signing in. The letter has a button for that.",
+    resetInvalid: "This link can no longer be used. Ask for a new letter.",
+    mailFailed: "The letter could not be sent. Try again in a minute.",
+  },
+  emails: {
+    welcome: {
+      subject: "Welcome to OpenDesk",
+      preheader: "Your account is ready. Confirm the address with the button inside.",
+      eyebrow: "Welcome",
+      title: "You're in, {name}",
+      body: "The account is created. Confirm this email and OpenDesk will keep your boards, the ones you were invited to, and this sign-in.",
+      button: "Confirm email",
+      note: "If you didn't register, ignore this letter. The account stays closed until the address is confirmed.",
+    },
+    confirm: {
+      subject: "Confirm your OpenDesk email",
+      preheader: "The button finishes your account.",
+      eyebrow: "Account",
+      title: "Confirm your email",
+      body: "Use the button to open your account. It works for 24 hours, and a newer letter replaces this one.",
+      button: "Confirm email",
+      note: "If you didn't ask for this letter, you can ignore it.",
+    },
+    reset: {
+      subject: "Reset your OpenDesk password",
+      preheader: "Choose a new password from the button in this letter.",
+      eyebrow: "Account",
+      title: "Reset your password",
+      body: "A new password was requested for this account. The button opens a private page and works for one hour.",
+      button: "Choose a new password",
+      note: "If you didn't ask for this, ignore the letter. The current password stays as it is.",
+    },
+    passwordChanged: {
+      subject: "Your OpenDesk password was changed",
+      preheader: "This letter confirms the change.",
+      eyebrow: "Account",
+      title: "Password updated",
+      body: "The password for {email} was just changed, and other signed-in devices were signed out.",
+      button: "Sign in",
+      secondary: "This wasn't me",
+      note: "If you changed it, nothing else is required. If you didn't, use the second button and choose a new password.",
+    },
   },
 };

@@ -26,7 +26,12 @@ export function proxy(request: NextRequest) {
     request.method === "POST" && path.startsWith("/b/");
   const isCredentialPost =
     request.method === "POST" &&
-    (path === "/login" || path === "/register");
+    (path === "/login" ||
+      path === "/register" ||
+      path === "/forgot-password" ||
+      path === "/reset-password" ||
+      path === "/verify-email" ||
+      path === "/check-email");
 
   if (isCredentialPost) {
     const result = checkRateLimit(`owner-login:${ip}`, 10, JOIN_WINDOW_MS);
@@ -149,6 +154,10 @@ export const config = {
     "/b/:path*",
     "/login",
     "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+    "/check-email",
     "/api/attachments/:path*",
     "/api/boards/:path*",
     "/api/owner/last-board",
