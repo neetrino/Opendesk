@@ -110,6 +110,8 @@ export type Dictionary = {
     owned: string;
     invited: string;
     admin: string;
+    account: string;
+    nav: string;
     newTasksAria: string;
     newMessagesAria: string;
   };
@@ -404,6 +406,71 @@ export type Dictionary = {
     emptyBoards: string;
     emptyAudit: string;
     back: string;
+    navDashboard: string;
+    navUsers: string;
+    navBoards: string;
+    navAudit: string;
+    dashboardTitle: string;
+    dashboardLede: string;
+    statAccounts: string;
+    statActive: string;
+    statDisabled: string;
+    statAdmins: string;
+    statUnconfirmed: string;
+    statBoards: string;
+    statClosedBoards: string;
+    statSeats: string;
+    statNewAccounts: string;
+    statNewBoards: string;
+    recentUsers: string;
+    recentAudit: string;
+    verified: string;
+    unverified: string;
+    created: string;
+    auditUserDisable: string;
+    auditUserEnable: string;
+    auditGrantAdmin: string;
+    auditRevokeAdmin: string;
+    auditBoardDisable: string;
+    auditBoardEnable: string;
+    searchLabel: string;
+    searchPeople: string;
+    searchBoards: string;
+    searchAudit: string;
+    searchEmpty: string;
+    confirmCancel: string;
+    confirmDisableUser: string;
+    confirmDisableUserHint: string;
+    confirmEnableUser: string;
+    confirmEnableUserHint: string;
+    confirmMakeAdmin: string;
+    confirmMakeAdminHint: string;
+    confirmRemoveAdmin: string;
+    confirmRemoveAdminHint: string;
+    confirmDisableBoard: string;
+    confirmDisableBoardHint: string;
+    confirmEnableBoard: string;
+    confirmEnableBoardHint: string;
+  };
+  accountPage: {
+    nav: string;
+    eyebrow: string;
+    title: string;
+    lede: string;
+    profileTitle: string;
+    nameLabel: string;
+    emailLabel: string;
+    emailHint: string;
+    save: string;
+    saving: string;
+    saved: string;
+    passwordTitle: string;
+    currentLabel: string;
+    nextLabel: string;
+    confirmLabel: string;
+    change: string;
+    changing: string;
+    changed: string;
   };
   errors: {
     validation: string;
@@ -465,6 +532,9 @@ export type Dictionary = {
     emailUnverified: string;
     resetInvalid: string;
     mailFailed: string;
+    passwordMismatch: string;
+    currentPasswordWrong: string;
+    passwordSame: string;
   };
   emails: {
     welcome: {
@@ -619,6 +689,8 @@ export const en: Dictionary = {
     owned: "Yours",
     invited: "Invited",
     admin: "Admin",
+    account: "Account",
+    nav: "Boards",
     newTasksAria: "{n} new tasks",
     newMessagesAria: "{n} with new messages",
   },
@@ -924,6 +996,75 @@ export const en: Dictionary = {
     emptyBoards: "No boards yet.",
     emptyAudit: "No admin actions yet.",
     back: "Back to boards",
+    navDashboard: "Overview",
+    navUsers: "People",
+    navBoards: "Boards",
+    navAudit: "Activity",
+    dashboardTitle: "Overview",
+    dashboardLede: "Accounts, boards, and what changed recently.",
+    statAccounts: "Accounts",
+    statActive: "Active",
+    statDisabled: "Disabled",
+    statAdmins: "Admins",
+    statUnconfirmed: "Unconfirmed",
+    statBoards: "Boards",
+    statClosedBoards: "Closed boards",
+    statSeats: "Seats",
+    statNewAccounts: "New accounts, 7 days",
+    statNewBoards: "New boards, 7 days",
+    recentUsers: "Latest accounts",
+    recentAudit: "Latest activity",
+    verified: "Confirmed",
+    unverified: "Not confirmed",
+    created: "Joined",
+    auditUserDisable: "Disabled an account",
+    auditUserEnable: "Enabled an account",
+    auditGrantAdmin: "Made an admin",
+    auditRevokeAdmin: "Removed an admin",
+    auditBoardDisable: "Closed a board",
+    auditBoardEnable: "Opened a board",
+    searchLabel: "Search",
+    searchPeople: "Name or email",
+    searchBoards: "Board or owner",
+    searchAudit: "Action or person",
+    searchEmpty: "Nothing matches.",
+    confirmCancel: "Cancel",
+    confirmDisableUser: "Disable {name}?",
+    confirmDisableUserHint:
+      "They are signed out and cannot sign in until you enable the account.",
+    confirmEnableUser: "Enable {name}?",
+    confirmEnableUserHint: "They can sign in again.",
+    confirmMakeAdmin: "Make {name} an admin?",
+    confirmMakeAdminHint:
+      "They will be able to manage every account and board on OpenDesk.",
+    confirmRemoveAdmin: "Remove admin from {name}?",
+    confirmRemoveAdminHint:
+      "The account stays. They will no longer manage the platform.",
+    confirmDisableBoard: "Close {name}?",
+    confirmDisableBoardHint:
+      "Nobody can open this board until you enable it.",
+    confirmEnableBoard: "Open {name} again?",
+    confirmEnableBoardHint: "People with the link can open it.",
+  },
+  accountPage: {
+    nav: "My account",
+    eyebrow: "Account",
+    title: "My account",
+    lede: "Your name is what people see. The email is the sign-in address.",
+    profileTitle: "Your details",
+    nameLabel: "Name",
+    emailLabel: "Email",
+    emailHint: "The sign-in address stays as it is.",
+    save: "Save",
+    saving: "Saving…",
+    saved: "Saved.",
+    passwordTitle: "Password",
+    currentLabel: "Current password",
+    nextLabel: "New password",
+    confirmLabel: "Repeat the new password",
+    change: "Change password",
+    changing: "Changing…",
+    changed: "Password updated. Other devices were signed out.",
   },
   errors: {
     validation: "Validation error",
@@ -986,6 +1127,9 @@ export const en: Dictionary = {
     emailUnverified: "Confirm your email before signing in. The letter has a button for that.",
     resetInvalid: "This link can no longer be used. Ask for a new letter.",
     mailFailed: "The letter could not be sent. Try again in a minute.",
+    passwordMismatch: "The new passwords do not match.",
+    currentPasswordWrong: "The current password is wrong.",
+    passwordSame: "Choose a password that is different from the current one.",
   },
   emails: {
     welcome: {

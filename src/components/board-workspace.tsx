@@ -13,7 +13,6 @@ import type { BoardColumnPages } from "@/lib/board-card-view";
 import type { BoardLabelView } from "@/lib/labels";
 import { BoardSettingsMenu } from "@/components/board-settings-menu";
 import { LogoutButton } from "@/components/logout-button";
-import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import { SaveAccountForm } from "@/components/save-account-form";
 import { SiteHeaderSlot } from "@/components/site-header-slot";
 import { ParticipantsPanel } from "@/components/participants-panel";
@@ -94,13 +93,11 @@ export function BoardWorkspace({
               {showSaveAccount ? <SaveAccountForm /> : null}
               {isOwner ? <BoardSettingsMenu boardId={board.id} /> : null}
             </div>
-            <SiteHeaderSlot>
-              {isOwner || !showSaveAccount ? (
-                <OwnerLogoutButton iconOnly />
-              ) : (
+            {showSaveAccount ? (
+              <SiteHeaderSlot>
                 <LogoutButton iconOnly />
-              )}
-            </SiteHeaderSlot>
+              </SiteHeaderSlot>
+            ) : null}
           </header>
           <KanbanBoard
             key={board.id}

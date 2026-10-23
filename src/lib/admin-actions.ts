@@ -34,9 +34,13 @@ async function requireAdmin(permission: "admin.users.disable" | "admin.users.set
   return account;
 }
 
-function adminRedirect(notice?: string): never {
+function adminRedirect(
+  path: "/admin/users" | "/admin/boards",
+  notice?: string,
+): never {
   revalidatePath("/admin");
-  redirect(notice ? `/admin?notice=${notice}` : "/admin");
+  revalidatePath(path);
+  redirect(notice ? `${path}?notice=${notice}` : path);
 }
 
 export async function setUserDisabledAction(formData: FormData): Promise<void> {
@@ -46,7 +50,7 @@ export async function setUserDisabledAction(formData: FormData): Promise<void> {
     disabled: formData.get("disabled"),
   });
   if (!parsed.success) {
-    adminRedirect("invalid");
+    adminRedirect("/admin/users", "invalid");
   }
 
   const disable = parsed.data.disabled === "true";
@@ -55,7 +59,7 @@ export async function setUserDisabledAction(formData: FormData): Promise<void> {
     select: { id: true, role: true, disabledAt: true },
   });
   if (!target) {
-    adminRedirect("invalid");
+    adminRedirect("/admin/users", "invalid");
   }
 
   const otherActiveAdminCount = await prisma.user.count({
@@ -71,7 +75,7 @@ export async function setUserDisabledAction(formData: FormData): Promise<void> {
     otherActiveAdminCount,
   });
   if (decision === "last_admin") {
-    adminRedirect("lastAdmin");
+    adminRedirect("/admin/users", "lastAdmin");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -91,7 +95,7 @@ export async function setUserDisabledAction(formData: FormData): Promise<void> {
     });
   });
 
-  adminRedirect();
+  adminRedirect("/admin/users");
 }
 
 export async function setUserRoleAction(formData: FormData): Promise<void> {
@@ -101,7 +105,7 @@ export async function setUserRoleAction(formData: FormData): Promise<void> {
     role: formData.get("role"),
   });
   if (!parsed.success) {
-    adminRedirect("invalid");
+    adminRedirect("/admin/users", "invalid");
   }
 
   const nextRole = parsed.data.role as UserRole;
@@ -110,7 +114,7 @@ export async function setUserRoleAction(formData: FormData): Promise<void> {
     select: { id: true, role: true, disabledAt: true },
   });
   if (!target || target.role === nextRole) {
-    adminRedirect(target ? undefined : "invalid");
+    adminRedirect("/admin/users", target ? undefined : "invalid");
   }
 
   const otherActiveAdminCount = await prisma.user.count({
@@ -129,7 +133,10 @@ export async function setUserRoleAction(formData: FormData): Promise<void> {
     otherActiveAdminCount,
   });
   if (decision !== "ok") {
-    adminRedirect(decision === "last_admin" ? "lastAdmin" : "roleDenied");
+    adminRedirect(
+      "/admin/users",
+      decision === "last_admin" ? "lastAdmin" : "roleDenied",
+    );
   }
 
   await prisma.$transaction(async (tx) => {
@@ -158,12 +165,12 @@ export async function setUserRoleAction(formData: FormData): Promise<void> {
     });
   }).catch((error: unknown) => {
     if (error instanceof Error && error.message === "LAST_ADMIN") {
-      adminRedirect("lastAdmin");
+      adminRedirect("/admin/users", "lastAdmin");
     }
     throw error;
   });
 
-  adminRedirect();
+  adminRedirect("/admin/users");
 }
 
 export async function setBoardDisabledAction(formData: FormData): Promise<void> {
@@ -173,7 +180,7 @@ export async function setBoardDisabledAction(formData: FormData): Promise<void> 
     disabled: formData.get("disabled"),
   });
   if (!parsed.success) {
-    adminRedirect("invalid");
+    adminRedirect("/admin/boards", "invalid");
   }
 
   const disable = parsed.data.disabled === "true";
@@ -182,7 +189,7 @@ export async function setBoardDisabledAction(formData: FormData): Promise<void> 
     select: { id: true },
   });
   if (!board) {
-    adminRedirect("invalid");
+    adminRedirect("/admin/boards", "invalid");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -200,5 +207,5 @@ export async function setBoardDisabledAction(formData: FormData): Promise<void> 
     });
   });
 
-  adminRedirect();
+  adminRedirect("/admin/boards");
 }

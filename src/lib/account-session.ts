@@ -2,6 +2,7 @@ import "server-only";
 
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import type { UserRole } from "@prisma/client";
 import {
   ACCOUNT_COOKIE_NAME,
@@ -83,7 +84,7 @@ export async function clearAccountCookie(): Promise<void> {
  * Live account. Role, disable, and sessionVersion are read from the database
  * so an admin change applies before the cookie expires.
  */
-export async function getAccount(): Promise<AccountContext | null> {
+export const getAccount = cache(async function getAccount(): Promise<AccountContext | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(ACCOUNT_COOKIE_NAME)?.value;
   if (!token) {
@@ -122,7 +123,7 @@ export async function getAccount(): Promise<AccountContext | null> {
     role: user.role,
     sessionVersion: user.sessionVersion,
   };
-}
+});
 
 export async function requireAccount(): Promise<AccountContext> {
   const account = await getAccount();

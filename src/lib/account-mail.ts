@@ -291,20 +291,25 @@ export async function resetPasswordWithToken(
     return null;
   }
 
-  const config = readMailConfig();
-  if (config) {
-    const built = passwordChangedLetter(await getLocale(), {
-      email: updated.email,
-      signInUrl: `${config.appUrl}/login`,
-      resetUrl: `${config.appUrl}/forgot-password`,
-      logoUrl: mailLogoUrl(config.appUrl),
-    });
-    await deliverAccountLetter({
-      to: updated.email,
-      subject: built.subject,
-      letter: built.letter,
-    });
-  }
-
+  await sendPasswordChangedEmail(updated.email);
   return { id: updated.id, sessionVersion: updated.sessionVersion };
+}
+
+/** Confirmation that the password changed. No reset token is included. */
+export async function sendPasswordChangedEmail(email: string): Promise<void> {
+  const config = readMailConfig();
+  if (!config) {
+    return;
+  }
+  const built = passwordChangedLetter(await getLocale(), {
+    email,
+    signInUrl: `${config.appUrl}/login`,
+    resetUrl: `${config.appUrl}/forgot-password`,
+    logoUrl: mailLogoUrl(config.appUrl),
+  });
+  await deliverAccountLetter({
+    to: email,
+    subject: built.subject,
+    letter: built.letter,
+  });
 }
