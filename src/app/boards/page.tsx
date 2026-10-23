@@ -1,13 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BoardsList } from "@/components/boards-list";
-import { OwnerLogoutButton } from "@/components/owner-logout-button";
-import { SiteHeaderSlot } from "@/components/site-header-slot";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
 import { getParticipantBoardDestination } from "@/lib/board-navigation";
 import { getAccount } from "@/lib/account-session";
-import { hasPermission } from "@/lib/platform-permissions";
 import { prisma } from "@/lib/prisma";
 
 export default async function BoardsPage() {
@@ -63,14 +59,6 @@ export default async function BoardsPage() {
           <h1>{t.boardsPage.title}</h1>
           <p className="boards-page-role">{account.displayName}</p>
         </div>
-        <SiteHeaderSlot>
-          {hasPermission(account.role, "admin.users.read") ? (
-            <Link className="button" href="/admin">
-              {t.boardsPage.admin}
-            </Link>
-          ) : null}
-          <OwnerLogoutButton iconOnly />
-        </SiteHeaderSlot>
         <p className="lede boards-page-lede">{t.boardsPage.lede}</p>
       </div>
 

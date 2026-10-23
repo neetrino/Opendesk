@@ -1,199 +1,128 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import {
-  setBoardDisabledAction,
-  setUserDisabledAction,
-  setUserRoleAction,
-} from "@/lib/admin-actions";
-import { getAccount } from "@/lib/account-session";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
-import { hasPermission } from "@/lib/platform-permissions";
+import {
+  auditActionLabel,
+  countCreatedInLastWeek,
+  formatAdminWhen,
+} from "@/lib/admin-view";
 import { prisma } from "@/lib/prisma";
 
-type AdminPageProps = {
-  searchParams: Promise<{ notice?: string }>;
-};
-
-export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const account = await getAccount();
-  if (!account || !hasPermission(account.role, "admin.users.read")) {
-    redirect("/boards");
-  }
-
-  const { notice } = await searchParams;
+export default async function AdminDashboardPage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const dateLocale =
-    locale === "ru" ? "ru-RU" : locale === "hy" ? "hy-AM" : "en-US";
 
-  const [users, boards, audit] = await Promise.all([
+  const [
+    accounts,
+    active,
+    disabled,
+    admins,
+    unconfirmed,
+    boards,
+    closedBoards,
+    seats,
+    createdThisWeek,
+    recentUsers,
+    recentAudit,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { disabledAt: null } }),
+    prisma.user.count({ where: { disabledAt: { not: null } } }),
+    prisma.user.count({
+      where: { role: "platform_admin", disabledAt: null },
+    }),
+    prisma.user.count({
+      where: { emailVerifiedAt: null, disabledAt: null },
+    }),
+    prisma.board.count(),
+    prisma.board.count({ where: { disabledAt: { not: null } } }),
+    prisma.participant.count(),
+    countCreatedInLastWeek(),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
+      take: 5,
       select: {
         id: true,
-        email: true,
         displayName: true,
+        email: true,
         role: true,
-        disabledAt: true,
         createdAt: true,
-        _count: { select: { ownedBoards: true, participants: true } },
-      },
-    }),
-    prisma.board.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        disabledAt: true,
-        createdAt: true,
-        owner: { select: { email: true, displayName: true } },
-        _count: { select: { participants: true } },
       },
     }),
     prisma.adminAudit.findMany({
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 5,
       select: {
         id: true,
         action: true,
-        targetType: true,
-        targetId: true,
         createdAt: true,
         actor: { select: { email: true } },
       },
     }),
   ]);
 
-  const noticeText =
-    notice === "lastAdmin"
-      ? t.errors.lastAdmin
-      : notice === "roleDenied"
-        ? t.errors.roleChangeDenied
-        : notice === "invalid"
-          ? t.errors.validation
-          : null;
+  const stats = [
+    [t.adminPage.statAccounts, accounts],
+    [t.adminPage.statActive, active],
+    [t.adminPage.statDisabled, disabled],
+    [t.adminPage.statAdmins, admins],
+    [t.adminPage.statUnconfirmed, unconfirmed],
+    [t.adminPage.statBoards, boards],
+    [t.adminPage.statClosedBoards, closedBoards],
+    [t.adminPage.statSeats, seats],
+    [t.adminPage.statNewAccounts, createdThisWeek.accounts],
+    [t.adminPage.statNewBoards, createdThisWeek.boards],
+  ] as const;
 
   return (
-    <section className="boards-page admin-page">
-      <div className="boards-page-top">
-        <div className="boards-page-heading">
-          <h1>{t.adminPage.title}</h1>
-          <p className="boards-page-role">{t.adminPage.eyebrow}</p>
-        </div>
-        <p className="lede boards-page-lede">
-          <Link href="/boards">{t.adminPage.back}</Link>
-        </p>
-      </div>
-      {noticeText ? <p className="form-error">{noticeText}</p> : null}
+    <section className="admin-section">
+      <header className="admin-section-head">
+        <h1>{t.adminPage.dashboardTitle}</h1>
+        <p className="lede">{t.adminPage.dashboardLede}</p>
+      </header>
+      <ul className="admin-stats">
+        {stats.map(([label, value]) => (
+          <li key={label} className="admin-stat">
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </li>
+        ))}
+      </ul>
 
-      <h2 className="boards-list-group-title">{t.adminPage.users}</h2>
-      {users.length === 0 ? (
+      <h2 className="boards-list-group-title">{t.adminPage.recentUsers}</h2>
+      {recentUsers.length === 0 ? (
         <p className="muted">{t.adminPage.emptyUsers}</p>
       ) : (
         <ul className="admin-list">
-          {users.map((user) => (
+          {recentUsers.map((user) => (
             <li key={user.id} className="admin-row">
               <div>
                 <strong>{user.displayName}</strong>
                 <p className="muted">{user.email}</p>
-                <p className="muted">
-                  {user.role === "platform_admin"
-                    ? t.adminPage.roleAdmin
-                    : t.adminPage.roleMember}
-                  {" · "}
-                  {user.disabledAt ? t.adminPage.disabled : t.adminPage.active}
-                  {" · "}
-                  {t.adminPage.boardsCount
-                    .replace("{owned}", String(user._count.ownedBoards))
-                    .replace("{joined}", String(user._count.participants))}
-                </p>
               </div>
-              <div className="admin-row-actions">
-                <form action={setUserDisabledAction}>
-                  <input type="hidden" name="userId" value={user.id} />
-                  <input
-                    type="hidden"
-                    name="disabled"
-                    value={user.disabledAt ? "false" : "true"}
-                  />
-                  <button className="button" type="submit">
-                    {user.disabledAt ? t.adminPage.enable : t.adminPage.disable}
-                  </button>
-                </form>
-                <form action={setUserRoleAction}>
-                  <input type="hidden" name="userId" value={user.id} />
-                  <input
-                    type="hidden"
-                    name="role"
-                    value={user.role === "platform_admin" ? "member" : "platform_admin"}
-                  />
-                  <button className="button" type="submit">
-                    {user.role === "platform_admin"
-                      ? t.adminPage.removeAdmin
-                      : t.adminPage.makeAdmin}
-                  </button>
-                </form>
-              </div>
+              <p className="muted">
+                {user.role === "platform_admin"
+                  ? t.adminPage.roleAdmin
+                  : t.adminPage.roleMember}
+                {" · "}
+                {formatAdminWhen(user.createdAt, locale)}
+              </p>
             </li>
           ))}
         </ul>
       )}
 
-      <h2 className="boards-list-group-title">{t.adminPage.boards}</h2>
-      {boards.length === 0 ? (
-        <p className="muted">{t.adminPage.emptyBoards}</p>
-      ) : (
-        <ul className="admin-list">
-          {boards.map((board) => (
-            <li key={board.id} className="admin-row">
-              <div>
-                <strong>{board.title}</strong>
-                <p className="muted">
-                  {board.owner
-                    ? `${board.owner.displayName} · ${board.owner.email}`
-                    : t.adminPage.noOwner}
-                  {" · "}
-                  {board.disabledAt ? t.adminPage.disabled : t.adminPage.active}
-                  {" · "}
-                  {board.createdAt.toLocaleString(dateLocale, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </p>
-              </div>
-              <form action={setBoardDisabledAction}>
-                <input type="hidden" name="boardId" value={board.id} />
-                <input
-                  type="hidden"
-                  name="disabled"
-                  value={board.disabledAt ? "false" : "true"}
-                />
-                <button className="button" type="submit">
-                  {board.disabledAt ? t.adminPage.enable : t.adminPage.disable}
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <h2 className="boards-list-group-title">{t.adminPage.audit}</h2>
-      {audit.length === 0 ? (
+      <h2 className="boards-list-group-title">{t.adminPage.recentAudit}</h2>
+      {recentAudit.length === 0 ? (
         <p className="muted">{t.adminPage.emptyAudit}</p>
       ) : (
         <ul className="admin-list">
-          {audit.map((event) => (
+          {recentAudit.map((event) => (
             <li key={event.id} className="admin-row">
-              <p>
-                {event.action} · {event.targetType} · {event.actor.email}
-              </p>
-              <p className="muted">
-                {event.createdAt.toLocaleString(dateLocale, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
+              <div>
+                <strong>{auditActionLabel(t.adminPage, event.action)}</strong>
+                <p className="muted">{event.actor.email}</p>
+              </div>
+              <p className="muted">{formatAdminWhen(event.createdAt, locale)}</p>
             </li>
           ))}
         </ul>

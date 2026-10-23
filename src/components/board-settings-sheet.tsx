@@ -5,8 +5,6 @@ import { createPortal } from "react-dom";
 import { BoardAgentAccess } from "@/components/board-agent-access";
 import { BoardSettingsSections } from "@/components/board-settings-sections";
 import { InviteButton } from "@/components/invite-button";
-import { LogoutButton } from "@/components/logout-button";
-import { OwnerLogoutButton } from "@/components/owner-logout-button";
 import {
   ParticipantsList,
   type BoardParticipant,
@@ -143,7 +141,6 @@ export function BoardSettingsSheet({
                             <strong>{displayName}</strong>
                           </span>
                         </p>
-                        {isOwner ? <OwnerLogoutButton /> : <LogoutButton />}
                       </div>
                     </div>
                     <div className="sheet-block">

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Image from "next/image";
 import { DM_Sans, Noto_Sans_Armenian, Syne } from "next/font/google";
+import { AccountHeaderControls } from "@/components/account-header-controls";
 import { BrandLink } from "@/components/brand-link";
 import { InstallAppBanner } from "@/components/install-app-banner";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -106,6 +107,7 @@ export default async function RootLayout({
                   </BrandLink>
                   <div className="site-header-end">
                     <LanguageSwitcher />
+                    <AccountHeaderControls />
                     <div id="site-header-slot" className="site-header-slot" />
                   </div>
                 </div>
