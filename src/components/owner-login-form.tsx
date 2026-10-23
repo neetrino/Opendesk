@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
-import { ownerLoginAction } from "@/lib/actions";
+import { loginAccountAction } from "@/lib/account-actions";
 import { useI18n } from "@/i18n/provider";
 
 export function OwnerLoginForm() {
@@ -12,7 +13,7 @@ export function OwnerLoginForm() {
   function onSubmit(formData: FormData): void {
     setError(null);
     startTransition(async () => {
-      const response = await ownerLoginAction(formData);
+      const response = await loginAccountAction(formData);
       if (response && !response.ok) {
         setError(response.error);
       }
@@ -24,11 +25,11 @@ export function OwnerLoginForm() {
       <label className="field">
         <span>{t.loginPage.loginLabel}</span>
         <input
-          name="login"
-          type="text"
-          autoComplete="username"
+          name="email"
+          type="email"
+          autoComplete="email"
           required
-          maxLength={120}
+          maxLength={200}
         />
       </label>
       <label className="field">
@@ -38,13 +39,18 @@ export function OwnerLoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          maxLength={200}
+          minLength={10}
+          maxLength={128}
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
       <button className="button" type="submit" disabled={isPending}>
         {isPending ? t.loginPage.submitting : t.loginPage.submit}
       </button>
+      <p className="muted">
+        {t.loginPage.noAccount}{" "}
+        <Link href="/register">{t.loginPage.registerCta}</Link>
+      </p>
     </form>
   );
 }

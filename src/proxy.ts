@@ -24,9 +24,11 @@ export function proxy(request: NextRequest) {
   const isSlugJoin = /^\/b\/[^/]+\/[^/]+$/.test(path);
   const isBoardMutation =
     request.method === "POST" && path.startsWith("/b/");
-  const isOwnerLogin = request.method === "POST" && path === "/login";
+  const isCredentialPost =
+    request.method === "POST" &&
+    (path === "/login" || path === "/register");
 
-  if (isOwnerLogin) {
+  if (isCredentialPost) {
     const result = checkRateLimit(`owner-login:${ip}`, 10, JOIN_WINDOW_MS);
     if (!result.allowed) {
       return new NextResponse("Too many attempts. Try again in a minute.", {
@@ -146,6 +148,7 @@ export const config = {
     "/join/:path*",
     "/b/:path*",
     "/login",
+    "/register",
     "/api/attachments/:path*",
     "/api/boards/:path*",
     "/api/owner/last-board",

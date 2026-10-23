@@ -25,16 +25,21 @@ model Board {
   id        String   @id @default(cuid())
   title     String
   slug      String   @unique
-  joinToken String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  joinToken  String    @unique
+  ownerId    String?
+  disabledAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
+  owner        User?            @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   invites      Invite[]
   participants Participant[]
   cards        Card[]
   attachments  Attachment[]
   labels       BoardLabel[]
   agentAccess  BoardAgentAccess?
+
+  @@index([ownerId])
 }
 
 model BoardAgentAccess {
@@ -66,10 +71,12 @@ model Participant {
   boardId     String
   displayName String
   avatarKey   String?
+  userId      String?
   createdAt   DateTime @default(now())
   lastSeenAt  DateTime @default(now())
 
   board            Board              @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user             User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
   invite           Invite?
   cards            Card[]
   comments         Comment[]
@@ -79,7 +86,9 @@ model Participant {
 
   @@index([boardId])
   @@index([boardId, lastSeenAt])
+  @@index([userId])
   @@unique([boardId, avatarKey])
+  @@unique([boardId, userId])
 }
 
 model Card {
@@ -190,6 +199,45 @@ enum AttachmentKind {
   image
   video
   audio
+}
+
+enum UserRole {
+  member
+  platform_admin
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String
+  displayName      String
+  role             UserRole  @default(member)
+  emailVerifiedAt  DateTime?
+  disabledAt       DateTime?
+  sessionVersion   Int       @default(0)
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  ownedBoards  Board[]
+  participants Participant[]
+  auditEvents  AdminAudit[]
+
+  @@index([role])
+}
+
+model AdminAudit {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
 }
 
 model Attachment {

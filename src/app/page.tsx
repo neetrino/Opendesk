@@ -6,11 +6,11 @@ import {
   getParticipantBoardDestination,
   getRememberedOwnerBoardPath,
 } from "@/lib/board-navigation";
-import { getOwnerSession } from "@/lib/owner-session";
+import { getAccount } from "@/lib/account-session";
 
 export default async function HomePage() {
-  const owner = await getOwnerSession();
-  if (owner) {
+  const account = await getAccount();
+  if (account) {
     redirect((await getRememberedOwnerBoardPath()) ?? "/boards");
   }
 

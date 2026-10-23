@@ -11,6 +11,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["argon2"],
   experimental: {
     // Next.js 15+ defaults dynamic client cache to 0s, so every /boards ↔
     // board navigation refetches RSC. A short session cache keeps empty

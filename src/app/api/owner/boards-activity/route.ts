@@ -1,35 +1,37 @@
 import { NextResponse } from "next/server";
-import { ensureOwnerParticipantsForBoards } from "@/lib/board-access";
+import { getAccount } from "@/lib/account-session";
 import { logger } from "@/lib/logger";
-import { getOwnerSession } from "@/lib/owner-session";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
 /**
- * Compact card cursors for the owner board list: new tasks and unread messages.
+ * Compact card cursors for the signed-in account's boards.
  */
 export async function GET(): Promise<Response> {
-  const owner = await getOwnerSession();
-  if (!owner) {
+  const account = await getAccount();
+  if (!account) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const boards = await prisma.board.findMany({
-      orderBy: { createdAt: "desc" },
-      select: { id: true },
+    const seats = await prisma.participant.findMany({
+      where: {
+        userId: account.id,
+        board: { disabledAt: null },
+      },
+      select: { id: true, boardId: true },
     });
-    const boardIds = boards.map((board) => board.id);
-    if (boardIds.length === 0) {
+    if (seats.length === 0) {
       return NextResponse.json(
         { boards: [] },
         { headers: { "Cache-Control": "private, no-store" } },
       );
     }
 
-    const ownerByBoard = await ensureOwnerParticipantsForBoards(boardIds);
-    const ownerIds = [...new Set(ownerByBoard.values())];
+    const boardIds = seats.map((seat) => seat.boardId);
+    const participantIds = seats.map((seat) => seat.id);
+    const participantByBoard = new Map(seats.map((seat) => [seat.boardId, seat.id]));
 
     const [cards, latestForeign] = await Promise.all([
       prisma.card.findMany({
@@ -42,16 +44,14 @@ export async function GET(): Promise<Response> {
           status: true,
         },
       }),
-      ownerIds.length === 0
-        ? Promise.resolve([])
-        : prisma.comment.groupBy({
-            by: ["cardId"],
-            where: {
-              authorId: { notIn: ownerIds },
-              card: { boardId: { in: boardIds } },
-            },
-            _max: { createdAt: true },
-          }),
+      prisma.comment.groupBy({
+        by: ["cardId"],
+        where: {
+          authorId: { notIn: participantIds },
+          card: { boardId: { in: boardIds } },
+        },
+        _max: { createdAt: true },
+      }),
     ]);
 
     const lastForeignByCard = new Map<string, string>();
@@ -74,17 +74,16 @@ export async function GET(): Promise<Response> {
 
     return NextResponse.json(
       {
-        boards: boards.flatMap((board) => {
-          const participantId = ownerByBoard.get(board.id);
+        boards: boardIds.flatMap((boardId) => {
+          const participantId = participantByBoard.get(boardId);
           if (!participantId) {
             return [];
           }
-
           return [
             {
-              id: board.id,
+              id: boardId,
               participantId,
-              cards: (cardsByBoard.get(board.id) ?? []).map((card) => {
+              cards: (cardsByBoard.get(boardId) ?? []).map((card) => {
                 const lastForeignCommentAt = lastForeignByCard.get(card.id);
                 return {
                   id: card.id,
@@ -98,14 +97,10 @@ export async function GET(): Promise<Response> {
           ];
         }),
       },
-      {
-        headers: {
-          "Cache-Control": "private, no-store",
-        },
-      },
+      { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
-    logger.error("owner boards activity failed", error);
+    logger.error("boards activity failed", error);
     return NextResponse.json({ error: "Unavailable" }, { status: 500 });
   }
 }

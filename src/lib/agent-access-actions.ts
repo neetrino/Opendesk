@@ -12,7 +12,7 @@ import {
 } from "@/lib/board-agent-access";
 import { tErrors } from "@/lib/i18n-errors";
 import { logger } from "@/lib/logger";
-import { requireOwnerSession } from "@/lib/owner-session";
+import { requireBoardAccess } from "@/lib/board-access";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types/actions";
 
@@ -53,7 +53,10 @@ async function withOwnerBoard<T>(
     return { ok: false, error: errors.invalidBoard };
   }
   try {
-    await requireOwnerSession();
+    const access = await requireBoardAccess(id);
+    if (!access.isOwner) {
+      throw new Error("UNAUTHORIZED");
+    }
     const board = await prisma.board.findUnique({
       where: { id },
       select: { id: true },

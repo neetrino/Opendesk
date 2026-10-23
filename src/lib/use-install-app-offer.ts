@@ -1,8 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import {
   INSTALL_BANNER_STORAGE_KEY,
+  INSTALL_BANNER_VISIBLE_MS,
   isInstallBannerDismissed,
   isStandaloneDisplay,
   readIosStandaloneFlag,
@@ -92,7 +93,9 @@ function getServerSnapshot(): InstallBannerMode {
 
 /**
  * Whether to show the Add to Home Screen hint. Android uses the browser
- * install prompt; iOS Safari gets a short Share instruction.
+ * install prompt; iOS Safari gets a short Share instruction. The hint hides
+ * itself after {@link INSTALL_BANNER_VISIBLE_MS}; the dismiss control still
+ * remembers the choice.
  */
 export function useInstallAppOffer(): {
   mode: InstallBannerMode;
@@ -124,6 +127,19 @@ export function useInstallAppOffer(): {
     androidPrompt = null;
     emitChange();
   }
+
+  useEffect(() => {
+    if (mode === "hidden") {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      sessionDismissed = true;
+      emitChange();
+    }, INSTALL_BANNER_VISIBLE_MS);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [mode]);
 
   return { mode, promptInstall, dismiss };
 }

@@ -3,7 +3,7 @@ import { ClaimInviteForm } from "@/components/claim-invite-form";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/locale";
 import { getParticipantBoardDestination } from "@/lib/board-navigation";
-import { getOwnerSession } from "@/lib/owner-session";
+import { getAccount } from "@/lib/account-session";
 import { prisma } from "@/lib/prisma";
 
 type InvitePageProps = {
@@ -12,8 +12,8 @@ type InvitePageProps = {
 
 export default async function InvitePage({ params }: InvitePageProps) {
   const { token } = await params;
-  const owner = await getOwnerSession();
-  if (!owner) {
+  const account = await getAccount();
+  if (!account) {
     const participantBoard = await getParticipantBoardDestination();
     if (participantBoard) {
       redirect(participantBoard.path);
@@ -29,6 +29,18 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
   if (!invite) {
     notFound();
+  }
+
+  if (invite.board.disabledAt) {
+    return (
+      <section className="hero">
+        <div className="invite-panel animate-rise">
+          <p className="eyebrow">{t.invitePage.eyebrow}</p>
+          <h1>{invite.board.title}</h1>
+          <p className="muted">{t.errors.boardClosed}</p>
+        </div>
+      </section>
+    );
   }
 
   if (invite.claimedAt || invite.participantId) {

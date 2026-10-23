@@ -6,7 +6,7 @@ import {
   SESSION_MAX_AGE_SECONDS,
 } from "@/lib/constants";
 import { resolveLastBoardCookieUpdate } from "@/lib/last-board-cookie";
-import { getOwnerSession } from "@/lib/owner-session";
+import { getAccount } from "@/lib/account-session";
 
 export type RememberOwnerLastBoardResult =
   | "updated"
@@ -18,8 +18,8 @@ export type RememberOwnerLastBoardResult =
 export async function rememberOwnerLastBoardPath(
   path: string,
 ): Promise<RememberOwnerLastBoardResult> {
-  const owner = await getOwnerSession();
-  if (!owner) {
+  const account = await getAccount();
+  if (!account) {
     return "unauthorized";
   }
 

@@ -16,6 +16,20 @@ export type Dictionary = {
     passwordLabel: string;
     submit: string;
     submitting: string;
+    noAccount: string;
+    registerCta: string;
+  };
+  registerPage: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    nameLabel: string;
+    emailLabel: string;
+    passwordLabel: string;
+    submit: string;
+    submitting: string;
+    hasAccount: string;
+    loginCta: string;
   };
   boardsPage: {
     eyebrow: string;
@@ -35,6 +49,9 @@ export type Dictionary = {
     logoutConfirm: string;
     logoutConfirmHint: string;
     logoutCancel: string;
+    owned: string;
+    invited: string;
+    admin: string;
     newTasksAria: string;
     newMessagesAria: string;
   };
@@ -133,6 +150,10 @@ export type Dictionary = {
     agentAccessDisableYes: string;
     agentAccessDisabled: string;
     agentAccessCancel: string;
+    saveAccount: string;
+    saveAccountHint: string;
+    saveAccountSubmit: string;
+    saveAccountSubmitting: string;
   };
   columns: {
     new: string;
@@ -162,8 +183,13 @@ export type Dictionary = {
   joinPage: {
     eyebrow: string;
     joinLede: string;
+    accountJoinLede: string;
+    accountHint: string;
+    accountNameHint: string;
     nameLabel: string;
     namePlaceholder: string;
+    emailLabel: string;
+    passwordLabel: string;
     joining: string;
     join: string;
   };
@@ -300,6 +326,27 @@ export type Dictionary = {
     dismiss: string;
     dismissAria: string;
   };
+  adminPage: {
+    eyebrow: string;
+    title: string;
+    users: string;
+    boards: string;
+    audit: string;
+    roleMember: string;
+    roleAdmin: string;
+    active: string;
+    disabled: string;
+    boardsCount: string;
+    noOwner: string;
+    disable: string;
+    enable: string;
+    makeAdmin: string;
+    removeAdmin: string;
+    emptyUsers: string;
+    emptyBoards: string;
+    emptyAudit: string;
+    back: string;
+  };
   errors: {
     validation: string;
     createOrganizer: string;
@@ -346,6 +393,17 @@ export type Dictionary = {
     labelNotFound: string;
     updateLabel: string;
     deleteLabel: string;
+    emailTaken: string;
+    emailInvalid: string;
+    passwordShort: string;
+    accountFields: string;
+    nameTaken: string;
+    nameClaimed: string;
+    accountLocked: string;
+    claimFailed: string;
+    boardClosed: string;
+    lastAdmin: string;
+    roleChangeDenied: string;
   };
 };
 
@@ -355,23 +413,37 @@ export const en: Dictionary = {
   },
   home: {
     eyebrow: "Shared boards",
-    lede: "Open a board link and enter your name — same name rejoins. Owners sign in to create boards and see all of them.",
-    loginCta: "Owner sign in",
+    lede: "Open a board link and enter your name — the same name rejoins. Sign in to keep your boards.",
+    loginCta: "Sign in",
     boardsCta: "My boards",
   },
   loginPage: {
-    eyebrow: "Owner",
+    eyebrow: "Account",
     title: "Sign in",
-    lede: "Use the owner login from your environment to manage all boards.",
-    loginLabel: "Login",
+    lede: "Email and password. The same sign-in opens your boards, and the admin area if your role allows it.",
+    loginLabel: "Email",
     passwordLabel: "Password",
     submit: "Sign in",
     submitting: "Signing in…",
+    noAccount: "No account yet?",
+    registerCta: "Create one",
+  },
+  registerPage: {
+    eyebrow: "Account",
+    title: "Create account",
+    lede: "Email and password. You can still open a board by name without an account.",
+    nameLabel: "Your name",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    submit: "Create account",
+    submitting: "Creating…",
+    hasAccount: "Already have an account?",
+    loginCta: "Sign in",
   },
   boardsPage: {
-    eyebrow: "Owner",
-    title: "All boards",
-    lede: "Create boards and open any of them without joining by name.",
+    eyebrow: "Account",
+    title: "Your boards",
+    lede: "Boards you created, and boards you joined.",
     empty: "No boards yet. Create the first one.",
     searchLabel: "Search boards",
     searchPlaceholder: "Search boards…",
@@ -383,9 +455,12 @@ export const en: Dictionary = {
     copyLink: "Copy link",
     createdAt: "Created",
     logout: "Log out",
-    logoutConfirm: "Log out of the owner account?",
-    logoutConfirmHint: "You will need to sign in again to manage boards.",
+    logoutConfirm: "Log out of your account?",
+    logoutConfirmHint: "You will need to sign in again to see your boards.",
     logoutCancel: "Stay",
+    owned: "Yours",
+    invited: "Invited",
+    admin: "Admin",
     newTasksAria: "{n} new tasks",
     newMessagesAria: "{n} with new messages",
   },
@@ -492,6 +567,10 @@ export const en: Dictionary = {
     agentAccessDisableYes: "Turn off",
     agentAccessDisabled: "Agent access is off",
     agentAccessCancel: "Cancel",
+    saveAccount: "Save to account",
+    saveAccountHint: "Email and password. A new mailbox creates an account. An existing one links this seat if the password matches.",
+    saveAccountSubmit: "Save",
+    saveAccountSubmitting: "Saving…",
   },
   columns: {
     new: "New",
@@ -522,8 +601,13 @@ export const en: Dictionary = {
     eyebrow: "Board link",
     joinLede:
       "Enter your name. Use the same name as before to continue as yourself — unlimited times.",
+    accountJoinLede: "Pick the name for your seat on this board.",
+    accountHint: "Optional: add email and password to create an account and keep this seat.",
+    accountNameHint: "If this name is already on the board, choose another. It will not take someone else's seat.",
     nameLabel: "Your name on the board",
     namePlaceholder: "How should we call you",
+    emailLabel: "Email",
+    passwordLabel: "Password",
     joining: "Joining…",
     join: "Open board",
   },
@@ -662,6 +746,27 @@ export const en: Dictionary = {
     dismiss: "Not now",
     dismissAria: "Dismiss install hint",
   },
+  adminPage: {
+    eyebrow: "Platform",
+    title: "Admin",
+    users: "People",
+    boards: "Boards",
+    audit: "Recent changes",
+    roleMember: "Member",
+    roleAdmin: "Admin",
+    active: "Active",
+    disabled: "Disabled",
+    boardsCount: "{owned} owned · {joined} seats",
+    noOwner: "No owner yet",
+    disable: "Disable",
+    enable: "Enable",
+    makeAdmin: "Make admin",
+    removeAdmin: "Remove admin",
+    emptyUsers: "No accounts yet.",
+    emptyBoards: "No boards yet.",
+    emptyAudit: "No admin actions yet.",
+    back: "Back to boards",
+  },
   errors: {
     validation: "Validation error",
     createOrganizer: "Could not create organizer",
@@ -709,5 +814,16 @@ export const en: Dictionary = {
     labelNotFound: "Label not found",
     updateLabel: "Could not update the label",
     deleteLabel: "Could not delete the label",
+    emailTaken: "This email is already registered",
+    emailInvalid: "Enter a valid email",
+    passwordShort: "Password must be at least 10 characters",
+    accountFields: "Enter both email and password, or leave both empty",
+    nameTaken: "That name is already on this board. Choose another.",
+    nameClaimed: "This name belongs to an account. Sign in to use it.",
+    accountLocked: "Too many attempts. Try again in 15 minutes.",
+    claimFailed: "This seat is already linked to an account",
+    boardClosed: "This board is closed",
+    lastAdmin: "The last admin cannot be removed or disabled",
+    roleChangeDenied: "This role change is not allowed",
   },
 };

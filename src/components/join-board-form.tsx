@@ -39,7 +39,7 @@ export function JoinBoardForm({ token }: JoinBoardFormProps) {
   return (
     <form action={onSubmit} className="create-form animate-rise">
       <input type="hidden" name="token" value={token} />
-      <label className="field">
+          <label className="field">
         <span>{t.joinPage.nameLabel}</span>
         <input
           name="displayName"
@@ -48,6 +48,21 @@ export function JoinBoardForm({ token }: JoinBoardFormProps) {
           maxLength={40}
           placeholder={t.joinPage.namePlaceholder}
           autoFocus
+        />
+      </label>
+      <p className="muted">{t.joinPage.accountHint}</p>
+      <label className="field">
+        <span>{t.joinPage.emailLabel}</span>
+        <input name="email" type="email" maxLength={200} autoComplete="email" />
+      </label>
+      <label className="field">
+        <span>{t.joinPage.passwordLabel}</span>
+        <input
+          name="password"
+          type="password"
+          minLength={10}
+          maxLength={128}
+          autoComplete="new-password"
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
