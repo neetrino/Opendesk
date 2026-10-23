@@ -1,5 +1,8 @@
 export const INSTALL_BANNER_STORAGE_KEY = "opendesk.installBanner.dismissed";
 
+/** How long the install hint stays on screen before it hides itself. */
+export const INSTALL_BANNER_VISIBLE_MS = 10_000;
+
 const IOS_ALT_BROWSER = /crios|fxios|edgios|opios|opt\//;
 
 export function isInstallBannerDismissed(value: string | null): boolean {
