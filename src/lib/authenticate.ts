@@ -15,7 +15,8 @@ export type AuthenticatedUser = {
 
 export type AuthenticateResult =
   | { ok: true; user: AuthenticatedUser }
-  | { ok: false; reason: "invalid" | "locked" };
+  | { ok: false; reason: "invalid" | "locked" }
+  | { ok: false; reason: "unverified"; user: AuthenticatedUser };
 
 /**
  * One failure message for a bad password, an unknown mailbox, and a disabled
@@ -35,6 +36,7 @@ export async function authenticate(
       role: true,
       passwordHash: true,
       disabledAt: true,
+      emailVerifiedAt: true,
       sessionVersion: true,
       failedLoginCount: true,
       lockedUntil: true,
@@ -72,14 +74,16 @@ export async function authenticate(
     });
   }
 
-  return {
-    ok: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      displayName: user.displayName,
-      role: user.role,
-      sessionVersion: user.sessionVersion,
-    },
+  const account = {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role,
+    sessionVersion: user.sessionVersion,
   };
+  if (!user.emailVerifiedAt) {
+    return { ok: false, reason: "unverified", user: account };
+  }
+
+  return { ok: true, user: account };
 }

@@ -551,6 +551,23 @@ textarea {
   margin: 0 0 0.75rem;
 }
 
+.auth-stack {
+  display: grid;
+  gap: 0.85rem;
+  align-content: start;
+}
+
+.auth-stack .field,
+.create-form .button,
+.create-form .button-secondary {
+  width: 100%;
+  margin-top: 0.15rem;
+}
+
+.auth-stack .field {
+  margin-bottom: 0;
+}
+
 .save-link-title {
   margin: 0.25rem 0 0.5rem;
   font-size: 1.35rem;

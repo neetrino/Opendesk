@@ -3,7 +3,9 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { setAccountCookie, clearAccountCookie } from "@/lib/account-session";
+import { finishNewAccount, resendVerificationEmail } from "@/lib/account-mail";
 import { authenticate } from "@/lib/authenticate";
+import { setPendingEmailCookie } from "@/lib/pending-email";
 import { normalizeEmail } from "@/lib/account-link";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
 import { hashPassword } from "@/lib/password";
@@ -51,6 +53,9 @@ export async function loginAccountAction(
 
   const result = await authenticate(parsed.data.email, parsed.data.password);
   if (!result.ok) {
+    if (result.reason === "unverified") {
+      return { ok: false, error: errors.emailUnverified, code: "unverified" };
+    }
     return {
       ok: false,
       error: result.reason === "locked" ? errors.accountLocked : errors.invalidCredentials,
@@ -81,6 +86,7 @@ export async function registerAccountAction(
   }
 
   const email = normalizeEmail(parsed.data.email);
+  let userId: string;
   try {
     const passwordHash = await hashPassword(parsed.data.password);
     const user = await prisma.user.create({
@@ -90,12 +96,9 @@ export async function registerAccountAction(
         displayName: parsed.data.displayName,
         role: "member",
       },
-      select: { id: true, sessionVersion: true },
+      select: { id: true },
     });
-    await setAccountCookie({
-      userId: user.id,
-      sessionVersion: user.sessionVersion,
-    });
+    userId = user.id;
   } catch (error) {
     if (isUniqueConflict(error)) {
       return { ok: false, error: errors.emailTaken };
@@ -103,7 +106,12 @@ export async function registerAccountAction(
     throw error;
   }
 
-  redirect("/boards");
+  const sent = await finishNewAccount({
+    userId,
+    email,
+    displayName: parsed.data.displayName,
+  });
+  redirect(sent ? "/check-email" : "/check-email?notice=delayed");
 }
 
 /**
@@ -148,6 +156,7 @@ export async function claimGuestAccountAction(
   });
 
   if (!existing) {
+    let userId: string;
     try {
       const passwordHash = await hashPassword(parsed.data.password);
       const user = await prisma.$transaction(async (tx) => {
@@ -158,7 +167,7 @@ export async function claimGuestAccountAction(
             displayName: participant.displayName,
             role: "member",
           },
-          select: { id: true, sessionVersion: true },
+          select: { id: true },
         });
         const linked = await tx.participant.updateMany({
           where: { id: participant.id, userId: null },
@@ -169,10 +178,7 @@ export async function claimGuestAccountAction(
         }
         return created;
       });
-      await setAccountCookie({
-        userId: user.id,
-        sessionVersion: user.sessionVersion,
-      });
+      userId = user.id;
     } catch (error) {
       if (error instanceof Error && error.message === "CLAIM_CONFLICT") {
         return { ok: false, error: errors.claimFailed };
@@ -182,15 +188,32 @@ export async function claimGuestAccountAction(
       }
       throw error;
     }
-    redirect("/boards");
+    const sent = await finishNewAccount({
+      userId,
+      email,
+      displayName: participant.displayName,
+    });
+    redirect(sent ? "/check-email" : "/check-email?notice=delayed");
   }
 
   const auth = await authenticate(email, parsed.data.password);
   if (!auth.ok) {
-    return {
-      ok: false,
-      error: auth.reason === "locked" ? errors.accountLocked : errors.invalidCredentials,
-    };
+    if (auth.reason !== "unverified") {
+      return {
+        ok: false,
+        error: auth.reason === "locked" ? errors.accountLocked : errors.invalidCredentials,
+      };
+    }
+    const linked = await prisma.participant.updateMany({
+      where: { id: participant.id, userId: null },
+      data: { userId: auth.user.id },
+    });
+    if (linked.count !== 1) {
+      return { ok: false, error: errors.claimFailed };
+    }
+    await setPendingEmailCookie(email);
+    const sent = await resendVerificationEmail(email);
+    redirect(sent === "sent" ? "/check-email" : "/check-email?notice=delayed");
   }
 
   const linked = await prisma.participant.updateMany({

@@ -85,6 +85,7 @@ async function ensurePlatformAdmin(prisma: PrismaClient) {
       passwordHash,
       displayName: OWNER_PARTICIPANT_NAME,
       role: "platform_admin",
+      emailVerifiedAt: new Date(),
     },
   });
   console.info("Created platform admin", created.email);

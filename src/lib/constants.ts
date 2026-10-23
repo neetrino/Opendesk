@@ -28,6 +28,13 @@ export const MAX_EMAIL_LENGTH = 200;
 /** Failed password checks before a temporary lock. */
 export const LOGIN_FAILURE_LIMIT = 10;
 export const LOGIN_LOCK_MS = 15 * 60 * 1000;
+/** Confirmation letter stays valid for a day; a newer letter replaces it. */
+export const VERIFY_EMAIL_TTL_MS = 24 * 60 * 60 * 1000;
+/** Password reset letter stays valid for one hour. */
+export const RESET_PASSWORD_TTL_MS = 60 * 60 * 1000;
+/** Remembers the address on the check-email screen. Not an account session. */
+export const PENDING_EMAIL_COOKIE_NAME = "opendesk_pending_email";
+export const PENDING_EMAIL_MAX_AGE_SECONDS = 60 * 60;
 /** Card title cap; longer detail belongs in the thread. */
 export const MAX_TITLE_LENGTH = 45;
 export const MAX_COMMENT_LENGTH = 2000;
