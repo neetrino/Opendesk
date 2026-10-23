@@ -46,6 +46,8 @@ pnpm dev
 | `R2_ACCESS_KEY_ID` | R2 S3 API token |
 | `R2_SECRET_ACCESS_KEY` | R2 secret |
 | `R2_BUCKET_NAME` | bucket name |
+| `RESEND_API_KEY` | Resend API key |
+| `RESEND_FROM_EMAIL` | sender on a domain verified in Resend |
 | `DATABASE_CONNECTION_LIMIT` | `1` |
 | `DATABASE_SESSION_OPTIONS` | `false` |
 
