@@ -1,131 +1,94 @@
-import {
-  assignBoardAvatar,
-  nextBoardAvatarKey,
-} from "@/lib/assign-board-avatars";
+import "server-only";
+
 import { OWNER_PARTICIPANT_NAME } from "@/lib/constants";
 import { touchParticipantLastSeen } from "@/lib/participant-activity";
 import { prisma } from "@/lib/prisma";
-import { getOwnerSession } from "@/lib/owner-session";
+import { getAccount, type AccountContext } from "@/lib/account-session";
 import { getSession, type SessionPayload } from "@/lib/session";
 
 export type BoardAccess = SessionPayload & {
   isOwner: boolean;
 };
 
-/** Ensure a stable Owner participant exists for env-owner mutations. */
-export async function ensureOwnerParticipant(
+type Seat = {
+  id: string;
+  displayName: string;
+  avatarKey: string | null;
+};
+
+/**
+ * Seat for this account on this board.
+ * The legacy "Owner" guest row is linked only when this account owns the board.
+ */
+export async function resolveAccountSeat(
   boardId: string,
-): Promise<{ id: string; displayName: string; avatarKey: string | null }> {
-  const existing = await prisma.participant.findFirst({
+  account: AccountContext,
+  ownerId: string | null,
+): Promise<Seat | null> {
+  const linked = await prisma.participant.findFirst({
+    where: { boardId, userId: account.id },
+    select: { id: true, displayName: true, avatarKey: true },
+  });
+  if (linked) {
+    return linked;
+  }
+  if (ownerId !== account.id) {
+    return null;
+  }
+
+  const legacy = await prisma.participant.findFirst({
     where: {
       boardId,
-      displayName: {
-        equals: OWNER_PARTICIPANT_NAME,
-        mode: "insensitive",
-      },
+      userId: null,
+      displayName: { equals: OWNER_PARTICIPANT_NAME, mode: "insensitive" },
     },
     orderBy: { createdAt: "asc" },
     select: { id: true, displayName: true, avatarKey: true },
   });
-
-  if (existing) {
-    if (existing.avatarKey) {
-      return existing;
-    }
-    const avatarKey = await assignBoardAvatar(boardId, existing.id);
-    return { ...existing, avatarKey };
+  if (!legacy) {
+    return null;
   }
 
-  const avatarKey = await nextBoardAvatarKey(
-    prisma,
-    boardId,
-    `${boardId}:${OWNER_PARTICIPANT_NAME}`,
-  );
-  return prisma.participant.create({
-    data: {
-      boardId,
-      displayName: OWNER_PARTICIPANT_NAME,
-      avatarKey,
-    },
-    select: { id: true, displayName: true, avatarKey: true },
+  const claimed = await prisma.participant.updateMany({
+    where: { id: legacy.id, userId: null },
+    data: { userId: account.id },
   });
-}
-
-/** Stable Owner participant ids for every board, creating missing rows. */
-export async function ensureOwnerParticipantsForBoards(
-  boardIds: string[],
-): Promise<Map<string, string>> {
-  const byBoard = new Map<string, string>();
-  if (boardIds.length === 0) {
-    return byBoard;
+  if (claimed.count !== 1) {
+    return prisma.participant.findFirst({
+      where: { boardId, userId: account.id },
+      select: { id: true, displayName: true, avatarKey: true },
+    });
   }
-
-  const existing = await prisma.participant.findMany({
-    where: {
-      boardId: { in: boardIds },
-      displayName: {
-        equals: OWNER_PARTICIPANT_NAME,
-        mode: "insensitive",
-      },
-    },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, boardId: true },
-  });
-
-  for (const row of existing) {
-    if (!byBoard.has(row.boardId)) {
-      byBoard.set(row.boardId, row.id);
-    }
-  }
-
-  const missing = boardIds.filter((boardId) => !byBoard.has(boardId));
-  if (missing.length === 0) {
-    return byBoard;
-  }
-
-  await prisma.participant.createMany({
-    data: missing.map((boardId) => ({
-      boardId,
-      displayName: OWNER_PARTICIPANT_NAME,
-    })),
-  });
-
-  const created = await prisma.participant.findMany({
-    where: {
-      boardId: { in: missing },
-      displayName: {
-        equals: OWNER_PARTICIPANT_NAME,
-        mode: "insensitive",
-      },
-    },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, boardId: true },
-  });
-
-  for (const row of created) {
-    if (!byBoard.has(row.boardId)) {
-      byBoard.set(row.boardId, row.id);
-    }
-  }
-
-  return byBoard;
+  return legacy;
 }
 
 /**
- * Participant session for this board, or env owner (get-or-create Owner participant).
+ * Account seat on this board, or the guest cookie for this board.
+ * `isOwner` is board ownership, not the platform role.
  */
 export async function requireBoardAccess(
   boardId: string,
 ): Promise<BoardAccess> {
-  const owner = await getOwnerSession();
-  if (owner) {
-    const participant = await ensureOwnerParticipant(boardId);
-    await touchParticipantLastSeen(prisma, participant.id);
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+    select: { id: true, ownerId: true, disabledAt: true },
+  });
+  if (!board || board.disabledAt) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  const account = await getAccount();
+  if (account) {
+    const seat = await resolveAccountSeat(board.id, account, board.ownerId);
+    if (!seat) {
+      throw new Error("UNAUTHORIZED");
+    }
+    await touchParticipantLastSeen(prisma, seat.id);
     return {
       boardId,
-      participantId: participant.id,
-      displayName: participant.displayName,
-      isOwner: true,
+      participantId: seat.id,
+      displayName: seat.displayName,
+      isOwner: board.ownerId === account.id,
     };
   }
 
@@ -134,15 +97,31 @@ export async function requireBoardAccess(
     throw new Error("UNAUTHORIZED");
   }
 
-  await touchParticipantLastSeen(prisma, session.participantId);
-  return { ...session, isOwner: false };
+  const participant = await prisma.participant.findFirst({
+    where: { id: session.participantId, boardId },
+    select: { id: true, displayName: true },
+  });
+  if (!participant) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  await touchParticipantLastSeen(prisma, participant.id);
+  return {
+    boardId,
+    participantId: participant.id,
+    displayName: participant.displayName,
+    isOwner: false,
+  };
 }
 
 export async function canAccessBoard(boardId: string): Promise<boolean> {
-  const owner = await getOwnerSession();
-  if (owner) {
+  try {
+    await requireBoardAccess(boardId);
     return true;
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return false;
+    }
+    throw error;
   }
-  const session = await getSession();
-  return Boolean(session && session.boardId === boardId);
 }

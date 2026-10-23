@@ -88,8 +88,12 @@
 - `Attachment` — id, boardId, cardId, commentId?, authorId, objectKey, filename, contentType, byteSize, kind (`image` \| `video` \| `audio`)
 - Last-read непрочитанных ответов и новых задач — `localStorage` на устройстве участника, не таблица БД. Пока доска открыта, `GET /api/boards/{boardId}/activity` отдаёт курсоры карточек (создание + чужие комментарии). Список `/boards` читает `GET /api/owner/boards-activity` и показывает компактные счётчики новых задач и сообщений.
 - Список доски: первые 10 карточек в каждой колонке без истории чата; дальше по скроллу колонки. Чат карточки: последние 20 сообщений при открытии, старше — по скроллу вверх; поиск по `q` (`GET /api/boards/{boardId}/cards`, `GET /api/boards/{boardId}/cards/{cardId}/comments`)
-- Экспорт для агента: владелец в настройках доски скачивает Markdown-файл со всеми задачами, статусами, метками и чатами (`GET /api/boards/{boardId}/export`, только owner-сессия; до 1000 сообщений на задачу)
-- `BoardAgentAccess` — один ключ на доску (`keyHash` SHA-256, `keyPrefix`). Владелец включает его в шестерёнке шапки и копирует JSON для `.cursor/mcp.json`. `POST /api/mcp` (Bearer `od_…`) открывает только эту доску: `list_tasks`, `get_task`, `set_status` (`in_progress` \| `answered`)
+- Экспорт для агента: владелец доски (`Board.ownerId`) скачивает Markdown (`GET /api/boards/{boardId}/export`; до 1000 сообщений на задачу)
+- `User` — email, argon2id `passwordHash`, `role` (`member` | `platform_admin`), `sessionVersion`, `failedLoginCount`, `lockedUntil`, `disabledAt`, `emailVerifiedAt` (письма пока не отправляются)
+- `Board.ownerId` — владелец-аккаунт (nullable, пока seed не проставил); `Board.disabledAt` закрывает доску для всех
+- `Participant.userId` — необязательная связь с аккаунтом. Гость без `userId` входит по имени. Привязанное имя по имени больше не занять
+- `AdminAudit` — кто отключил пользователя или доску и кто сменил роль
+- `BoardAgentAccess` — один ключ на доску (`keyHash` SHA-256, `keyPrefix`). Владелец доски включает его в шестерёнке шапки и копирует JSON для `.cursor/mcp.json`. `POST /api/mcp` (Bearer `od_…`) открывает только эту доску: `list_tasks`, `get_task`, `set_status` (`in_progress` \| `answered`)
 
 **Колонки:** `new` → `in_progress` → `answered` → `done`
 
@@ -99,12 +103,12 @@
 
 | # | Параметр | Решение | Статус | Заметка |
 |---|----------|---------|--------|---------|
-| 5.1 | Решение | Owner env login + permanent join link + signed cookies | ✅ | owner: `OWNER_*`; участник: имя + cookie |
+| 5.1 | Решение | Аккаунт email+пароль + гостевой вход по имени | ✅ | роль `member` / `platform_admin`; гость без User |
 | 5.2 | Провайдеры | — | ➖ | |
-| 5.3 | Сессии | HTTP-only signed cookies | ✅ | `opendesk_owner` + `opendesk_session`; `opendesk_last_board` записывается после успешного рендера доски и не предоставляет доступ |
-| 5.4 | RBAC | owner vs participant | ✅ | создание досок и удаление задач только owner; ключ агента — отдельный, только чтение и `in_progress`/`answered` |
-| 5.5 | Email verify | не нужно | ➖ | |
-| 5.6 | Password reset | не нужно | ➖ | пароль owner только в env |
+| 5.3 | Сессии | HTTP-only signed cookies | ✅ | `opendesk_account` (`userId`, `sessionVersion`) + `opendesk_session`; `opendesk_last_board` только навигация |
+| 5.4 | RBAC | роль платформы и владелец доски | ✅ | доски создаёт любой аккаунт; настройки, удаление задач, ключ агента и экспорт — у `Board.ownerId`; `/admin` — у `platform_admin` |
+| 5.5 | Email verify | поле есть, писем нет | ➖ | `emailVerifiedAt` пустое, пока нет почтового сервиса |
+| 5.6 | Password reset | не сейчас | ➖ | без писем сброс небезопасен; 10 ошибок запирают вход на 15 минут |
 
 ---
 
@@ -163,7 +167,7 @@
 | 10.2 | CSRF | ✅ | Server Actions |
 | 10.3 | Helmet | ➖ | |
 | 10.4 | Валидация входа | ✅ | Zod |
-| 10.5 | argon2 | ➖ | |
+| 10.5 | argon2 | ✅ | argon2id, пароли аккаунтов |
 | 10.6 | Rate limiting | ✅ | |
 | 10.7 | Secrets в env | ✅ | |
 
@@ -184,4 +188,4 @@
 
 ## Резюме
 
-Размер **A** подтверждён. Stack: Next.js + Prisma + Postgres, owner env login + participant join-cookie, без multi-user.
+Размер **A** подтверждён. Stack: Next.js + Prisma + Postgres. Аккаунт с ролью и гостевой вход по имени.

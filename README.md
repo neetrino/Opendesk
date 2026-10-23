@@ -1,6 +1,6 @@
 # OpenDesk
 
-Минимальная Kanban-доска по постоянной ссылке `/b/{slug}/{joinToken}`. Участники входят по имени; один owner-аккаунт из env создаёт доски и видит все.
+Минимальная Kanban-доска по постоянной ссылке `/b/{slug}/{joinToken}`. Гость входит по имени. Аккаунт с почтой и паролем видит свои доски и доски, куда его пригласили.
 
 ## Стек
 
@@ -8,15 +8,15 @@
 - Tailwind CSS 4
 - Prisma 7 + PostgreSQL (Neon)
 - Server Actions + Zod
-- Participant: join link + signed cookie (same name = same participant)
-- Owner: `OWNER_LOGIN` / `OWNER_PASSWORD` + separate signed cookie
+- Guest: join link + signed cookie (same unclaimed name = same participant)
+- Account: email + password, role `member` or `platform_admin`
 
 ## Быстрый старт (local)
 
 ```bash
 cp .env.example .env
 # В .env: Neon DATABASE_URL + SESSION_SECRET (openssl rand -hex 32)
-# + OWNER_LOGIN / OWNER_PASSWORD
+# + ADMIN_EMAIL / ADMIN_PASSWORD (first admin, used by db:seed)
 # + R2_* for photo/video attachments (see .env.example CORS notes)
 
 pnpm install
@@ -25,7 +25,7 @@ pnpm db:seed             # опционально
 pnpm dev
 ```
 
-Откройте [http://localhost:3000](http://localhost:3000) → `/login` для owner.
+Откройте [http://localhost:3000](http://localhost:3000) → `/login` или `/register`. После `pnpm db:seed` первый админ входит почтой из `ADMIN_EMAIL`.
 
 На телефоне (HTTPS или localhost): Android — «Установить» в баннере или меню Chrome; iPhone Safari — Поделиться → На экран «Домой». Со страницы доски иконка открывает эту доску. Офлайн и push не входят.
 
@@ -39,8 +39,8 @@ pnpm dev
 |----------|--------|
 | `DATABASE_URL` | Neon URL (`sslmode=require`) |
 | `SESSION_SECRET` | `openssl rand -hex 32` |
-| `OWNER_LOGIN` | owner login |
-| `OWNER_PASSWORD` | strong password |
+| `ADMIN_EMAIL` | first admin email (`pnpm db:seed`) |
+| `ADMIN_PASSWORD` | at least 10 characters |
 | `APP_URL` | `https://<your-app>.vercel.app` |
 | `R2_ACCOUNT_ID` | Cloudflare account id |
 | `R2_ACCESS_KEY_ID` | R2 S3 API token |

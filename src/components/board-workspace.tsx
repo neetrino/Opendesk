@@ -14,6 +14,7 @@ import type { BoardLabelView } from "@/lib/labels";
 import { BoardSettingsMenu } from "@/components/board-settings-menu";
 import { LogoutButton } from "@/components/logout-button";
 import { OwnerLogoutButton } from "@/components/owner-logout-button";
+import { SaveAccountForm } from "@/components/save-account-form";
 import { SiteHeaderSlot } from "@/components/site-header-slot";
 import { ParticipantsPanel } from "@/components/participants-panel";
 import type { Locale } from "@/i18n/config";
@@ -46,6 +47,7 @@ type BoardWorkspaceProps = {
     avatarKey: string | null;
   };
   isOwner: boolean;
+  showSaveAccount: boolean;
   attachmentsEnabled: boolean;
 };
 
@@ -55,6 +57,7 @@ export function BoardWorkspace({
   t,
   currentUser,
   isOwner,
+  showSaveAccount,
   attachmentsEnabled,
 }: BoardWorkspaceProps) {
   return (
@@ -88,10 +91,15 @@ export function BoardWorkspace({
                 slug={board.slug}
                 joinToken={board.joinToken}
               />
+              {showSaveAccount ? <SaveAccountForm /> : null}
               {isOwner ? <BoardSettingsMenu boardId={board.id} /> : null}
             </div>
             <SiteHeaderSlot>
-              {isOwner ? <OwnerLogoutButton iconOnly /> : <LogoutButton iconOnly />}
+              {isOwner || !showSaveAccount ? (
+                <OwnerLogoutButton iconOnly />
+              ) : (
+                <LogoutButton iconOnly />
+              )}
             </SiteHeaderSlot>
           </header>
           <KanbanBoard

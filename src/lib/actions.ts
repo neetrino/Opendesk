@@ -2,29 +2,24 @@
 
 import type { Card } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import {
-  AVATAR_POOL_EXHAUSTED,
-  nextBoardAvatarKey,
-} from "@/lib/assign-board-avatars";
+import { nextBoardAvatarKey } from "@/lib/assign-board-avatars";
 import { requireBoardAccess } from "@/lib/board-access";
 import { resolveMovePlacement } from "@/lib/card-position";
 import { moveBoardCard } from "@/lib/move-board-card";
 import {
-  activeParticipantWhere,
-  decideJoinParticipantSlot,
   visibleParticipantFilter,
 } from "@/lib/participant-activity";
+import { getAccount, requireAccount, setAccountCookie } from "@/lib/account-session";
+import { normalizeEmail } from "@/lib/account-link";
 import { allocateBoardSlug } from "@/lib/allocate-board-slug";
 import { mapZodMessage, tErrors } from "@/lib/i18n-errors";
+import {
+  AVATAR_POOL_EXHAUSTED,
+  joinBoardByName,
+} from "@/lib/join-board";
 import { buildJoinPath } from "@/lib/join-url";
 import { logger } from "@/lib/logger";
-import {
-  clearOwnerSessionCookie,
-  requireOwnerSession,
-  setOwnerSessionCookie,
-  verifyOwnerCredentials,
-} from "@/lib/owner-session";
+import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { revalidateBoardPath } from "@/lib/revalidate-board";
 import { clearSessionCookie, setSessionCookie } from "@/lib/session";
@@ -46,46 +41,14 @@ import {
 } from "@/lib/validation";
 import type { ActionResult } from "@/types/actions";
 
-const ownerLoginSchema = z.object({
-  login: z.string().trim().min(1).max(120),
-  password: z.string().min(1).max(200),
-});
-
-export async function ownerLoginAction(
-  formData: FormData,
-): Promise<ActionResult> {
-  const errors = await tErrors();
-  const parsed = ownerLoginSchema.safeParse({
-    login: formData.get("login"),
-    password: formData.get("password"),
-  });
-
-  if (!parsed.success) {
-    return { ok: false, error: errors.invalidCredentials };
-  }
-
-  if (!verifyOwnerCredentials(parsed.data.login, parsed.data.password)) {
-    return { ok: false, error: errors.invalidCredentials };
-  }
-
-  await clearSessionCookie();
-  await setOwnerSessionCookie();
-  redirect("/boards");
-}
-
-export async function logoutOwnerAction(): Promise<void> {
-  await clearSessionCookie();
-  await clearOwnerSessionCookie();
-  redirect("/login");
-}
-
 export async function createBoardAction(
   formData: FormData,
 ): Promise<ActionResult<{ boardId: string; joinToken: string; slug: string }>> {
   const errors = await tErrors();
 
+  let account: Awaited<ReturnType<typeof requireAccount>>;
   try {
-    await requireOwnerSession();
+    account = await requireAccount();
   } catch {
     return { ok: false, error: errors.unauthorized };
   }
@@ -103,12 +66,29 @@ export async function createBoardAction(
 
   try {
     const slug = await allocateBoardSlug(parsed.data.title);
-    const board = await prisma.board.create({
-      data: {
-        title: parsed.data.title,
-        slug,
-        joinToken: createJoinToken(),
-      },
+    const board = await prisma.$transaction(async (tx) => {
+      const created = await tx.board.create({
+        data: {
+          title: parsed.data.title,
+          slug,
+          joinToken: createJoinToken(),
+          ownerId: account.id,
+        },
+      });
+      const avatarKey = await nextBoardAvatarKey(
+        tx,
+        created.id,
+        `${created.id}:${account.id}`,
+      );
+      await tx.participant.create({
+        data: {
+          boardId: created.id,
+          displayName: account.displayName,
+          userId: account.id,
+          avatarKey,
+        },
+      });
+      return created;
     });
 
     return {
@@ -139,7 +119,7 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
   const invite = await prisma.invite.findUnique({
     where: { token: parsed.data.token },
     include: {
-      board: { select: { slug: true, joinToken: true } },
+      board: { select: { slug: true, joinToken: true, disabledAt: true } },
     },
   });
 
@@ -147,52 +127,21 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
     throw new Error(errors.inviteNotFound);
   }
 
-  if (invite.claimedAt || invite.participantId) {
-    throw new Error(errors.inviteUsed);
+  if (invite.claimedAt || invite.participantId || invite.board.disabledAt) {
+    throw new Error(invite.board.disabledAt ? errors.boardClosed : errors.inviteUsed);
   }
 
+  const account = await getAccount();
   let participant: { id: string; displayName: string };
   try {
-    participant = await prisma.$transaction(async (tx) => {
-      const participantCount = await tx.participant.count({
-        where: activeParticipantWhere(invite.boardId),
-      });
-      // Soft cap: two concurrent creates can both pass the count.
-      if (decideJoinParticipantSlot(false, participantCount) === "full") {
-        throw new Error("BOARD_FULL");
-      }
-
-      const avatarKey = await nextBoardAvatarKey(
-        tx,
-        invite.boardId,
-        `${invite.boardId}:${parsed.data.displayName}`,
-      );
-      const created = await tx.participant.create({
-        data: {
-          boardId: invite.boardId,
-          displayName: parsed.data.displayName,
-          avatarKey,
-        },
-      });
-
-      const claimed = await tx.invite.updateMany({
-        where: {
-          id: invite.id,
-          claimedAt: null,
-          participantId: null,
-        },
-        data: {
-          claimedAt: new Date(),
-          participantId: created.id,
-        },
-      });
-
-      if (claimed.count !== 1) {
-        throw new Error("INVITE_CLAIM_CONFLICT");
-      }
-
-      return created;
+    const joined = await joinBoardByName({
+      boardId: invite.boardId,
+      displayName: parsed.data.displayName,
+      accountUserId: account?.id ?? null,
+      register: null,
+      inviteId: invite.id,
     });
+    participant = joined.participant;
   } catch (error) {
     if (
       error instanceof Error &&
@@ -200,6 +149,12 @@ export async function claimInviteAction(formData: FormData): Promise<void> {
         error.message === AVATAR_POOL_EXHAUSTED)
     ) {
       throw new Error(errors.boardFull);
+    }
+    if (error instanceof Error && error.message === "NAME_CLAIMED") {
+      throw new Error(errors.nameClaimed);
+    }
+    if (error instanceof Error && error.message === "NAME_TAKEN") {
+      throw new Error(errors.nameTaken);
     }
     if (error instanceof Error && error.message === "INVITE_CLAIM_CONFLICT") {
       throw new Error(errors.inviteUsed);
@@ -236,63 +191,29 @@ export async function joinBoardByTokenAction(
 
   const board = await prisma.board.findUnique({
     where: { joinToken: parsed.data.token },
-    select: { id: true, slug: true, joinToken: true },
+    select: { id: true, slug: true, joinToken: true, disabledAt: true },
   });
 
-  if (!board) {
-    throw new Error(errors.inviteNotFound);
+  if (!board || board.disabledAt) {
+    throw new Error(board?.disabledAt ? errors.boardClosed : errors.inviteNotFound);
   }
 
+  const email = normalizeEmail(parsed.data.email);
+  const password = parsed.data.password;
+  const passwordHash =
+    email.length > 0 && password.length > 0 ? await hashPassword(password) : null;
+
   let participant: { id: string; displayName: string };
+  let linkedUser: { id: string; sessionVersion: number } | null = null;
   try {
-    participant = await prisma.$transaction(async (tx) => {
-      const existing = await tx.participant.findFirst({
-        where: {
-          boardId: board.id,
-          displayName: {
-            equals: parsed.data.displayName,
-            mode: "insensitive",
-          },
-        },
-        orderBy: { createdAt: "asc" },
-      });
-
-      const activeCount = existing
-        ? 0
-        : await tx.participant.count({
-            where: activeParticipantWhere(board.id),
-          });
-      const decision = decideJoinParticipantSlot(Boolean(existing), activeCount);
-      if (decision === "rejoin" && existing) {
-        const avatarKey =
-          existing.avatarKey ??
-          (await nextBoardAvatarKey(tx, board.id, existing.id));
-        await tx.participant.update({
-          where: { id: existing.id },
-          data: {
-            lastSeenAt: new Date(),
-            avatarKey,
-          },
-        });
-        return existing;
-      }
-      if (decision === "full") {
-        throw new Error("BOARD_FULL");
-      }
-
-      const avatarKey = await nextBoardAvatarKey(
-        tx,
-        board.id,
-        `${board.id}:${parsed.data.displayName}`,
-      );
-      return tx.participant.create({
-        data: {
-          boardId: board.id,
-          displayName: parsed.data.displayName,
-          avatarKey,
-        },
-      });
+    const joined = await joinBoardByName({
+      boardId: board.id,
+      displayName: parsed.data.displayName,
+      accountUserId: null,
+      register: passwordHash ? { email, passwordHash } : null,
     });
+    participant = joined.participant;
+    linkedUser = joined.user;
   } catch (error) {
     if (
       error instanceof Error &&
@@ -300,6 +221,12 @@ export async function joinBoardByTokenAction(
         error.message === AVATAR_POOL_EXHAUSTED)
     ) {
       throw new Error(errors.boardFull);
+    }
+    if (error instanceof Error && error.message === "NAME_CLAIMED") {
+      throw new Error(errors.nameClaimed);
+    }
+    if (error instanceof Error && error.message === "EMAIL_TAKEN") {
+      throw new Error(errors.emailTaken);
     }
     logger.error("joinBoardByTokenAction failed", error);
     throw new Error(errors.joinFailed);
@@ -310,7 +237,68 @@ export async function joinBoardByTokenAction(
     participantId: participant.id,
     displayName: participant.displayName,
   });
+  if (linkedUser) {
+    await setAccountCookie({
+      userId: linkedUser.id,
+      sessionVersion: linkedUser.sessionVersion,
+    });
+  }
 
+  redirect(buildJoinPath(board.slug, board.joinToken));
+}
+
+export async function joinBoardAsAccountAction(
+  formData: FormData,
+): Promise<void> {
+  const errors = await tErrors();
+  const account = await requireAccount();
+  const parsed = joinBoardSchema.safeParse({
+    token: formData.get("token"),
+    displayName: formData.get("displayName"),
+    email: "",
+    password: "",
+  });
+  if (!parsed.success) {
+    throw new Error(await mapZodMessage(parsed.error.issues[0]?.message));
+  }
+
+  const board = await prisma.board.findUnique({
+    where: { joinToken: parsed.data.token },
+    select: { id: true, slug: true, joinToken: true, disabledAt: true },
+  });
+  if (!board || board.disabledAt) {
+    throw new Error(board?.disabledAt ? errors.boardClosed : errors.inviteNotFound);
+  }
+
+  let participant: { id: string; displayName: string };
+  try {
+    const joined = await joinBoardByName({
+      boardId: board.id,
+      displayName: parsed.data.displayName,
+      accountUserId: account.id,
+      register: null,
+    });
+    participant = joined.participant;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message === "BOARD_FULL" ||
+        error.message === AVATAR_POOL_EXHAUSTED)
+    ) {
+      throw new Error(errors.boardFull);
+    }
+    if (error instanceof Error && error.message === "NAME_TAKEN") {
+      throw new Error(errors.nameTaken);
+    }
+    logger.error("joinBoardAsAccountAction failed", error);
+    throw new Error(errors.joinFailed);
+  }
+
+  await setSessionCookie({
+    boardId: board.id,
+    participantId: participant.id,
+    displayName: participant.displayName,
+  });
   redirect(buildJoinPath(board.slug, board.joinToken));
 }
 

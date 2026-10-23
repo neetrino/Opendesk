@@ -8,6 +8,8 @@ export const CARD_STATUSES: ReadonlyArray<CardStatus> = [
 ] as const;
 
 export const SESSION_COOKIE_NAME = "opendesk_session";
+export const ACCOUNT_COOKIE_NAME = "opendesk_account";
+/** Previous env-owner cookie. No longer issued; left so old browsers simply fail closed. */
 export const OWNER_COOKIE_NAME = "opendesk_owner";
 /** Navigation hint only; access is always revalidated from an authenticated session. */
 export const LAST_BOARD_COOKIE_NAME = "opendesk_last_board";
@@ -20,6 +22,12 @@ export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 export const OWNER_PARTICIPANT_NAME = "Owner";
 
 export const MAX_DISPLAY_NAME_LENGTH = 40;
+export const MIN_PASSWORD_LENGTH = 10;
+export const MAX_PASSWORD_LENGTH = 128;
+export const MAX_EMAIL_LENGTH = 200;
+/** Failed password checks before a temporary lock. */
+export const LOGIN_FAILURE_LIMIT = 10;
+export const LOGIN_LOCK_MS = 15 * 60 * 1000;
 /** Card title cap; longer detail belongs in the thread. */
 export const MAX_TITLE_LENGTH = 45;
 export const MAX_COMMENT_LENGTH = 2000;

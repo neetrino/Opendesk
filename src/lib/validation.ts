@@ -9,8 +9,11 @@ import {
   MAX_COMMENT_ATTACHMENTS,
   MAX_COMMENT_LENGTH,
   MAX_DISPLAY_NAME_LENGTH,
+  MAX_EMAIL_LENGTH,
   MAX_LABEL_NAME_LENGTH,
+  MAX_PASSWORD_LENGTH,
   MAX_TITLE_LENGTH,
+  MIN_PASSWORD_LENGTH,
 } from "@/lib/constants";
 
 export const createBoardSchema = z.object({
@@ -21,14 +24,34 @@ export const createBoardSchema = z.object({
     .max(80, "titleLong"),
 });
 
-export const joinBoardSchema = z.object({
-  token: z.string().trim().min(10).max(128),
-  displayName: z
-    .string()
-    .trim()
-    .min(1, "nameRequired")
-    .max(MAX_DISPLAY_NAME_LENGTH, "nameLong"),
-});
+export const joinBoardSchema = z
+  .object({
+    token: z.string().trim().min(10).max(128),
+    displayName: z
+      .string()
+      .trim()
+      .min(1, "nameRequired")
+      .max(MAX_DISPLAY_NAME_LENGTH, "nameLong"),
+    email: z.string().trim().max(MAX_EMAIL_LENGTH).optional().default(""),
+    password: z.string().max(MAX_PASSWORD_LENGTH).optional().default(""),
+  })
+  .superRefine((value, ctx) => {
+    const email = value.email;
+    const password = value.password;
+    if (email.length === 0 && password.length === 0) {
+      return;
+    }
+    if (email.length === 0 || password.length === 0) {
+      ctx.addIssue({ code: "custom", message: "accountFields" });
+      return;
+    }
+    if (!z.string().email().safeParse(email).success) {
+      ctx.addIssue({ code: "custom", message: "emailInvalid" });
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      ctx.addIssue({ code: "custom", message: "passwordShort" });
+    }
+  });
 
 /** Legacy one-time invite claim — same shape as permanent join. */
 export const claimInviteSchema = joinBoardSchema;

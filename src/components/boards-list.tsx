@@ -16,7 +16,8 @@ export type BoardsListBoard = {
 };
 
 type BoardsListProps = {
-  boards: BoardsListBoard[];
+  owned: BoardsListBoard[];
+  invited: BoardsListBoard[];
 };
 
 function PlusIcon() {
@@ -38,7 +39,7 @@ function PlusIcon() {
   );
 }
 
-export function BoardsList({ boards }: BoardsListProps) {
+export function BoardsList({ owned, invited }: BoardsListProps) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -46,15 +47,44 @@ export function BoardsList({ boards }: BoardsListProps) {
   const closeCreate = useCallback(() => {
     setCreateOpen(false);
   }, []);
-  const visibleBoards = useMemo(
-    () => filterBoardsByQuery(boards, query),
-    [boards, query],
+  const visibleOwned = useMemo(
+    () => filterBoardsByQuery(owned, query),
+    [owned, query],
   );
+  const visibleInvited = useMemo(
+    () => filterBoardsByQuery(invited, query),
+    [invited, query],
+  );
+  const hasBoards = owned.length + invited.length > 0;
+  const visibleCount = visibleOwned.length + visibleInvited.length;
+
+  function renderGroup(title: string, boards: BoardsListBoard[]) {
+    if (boards.length === 0) {
+      return null;
+    }
+    return (
+      <section className="boards-list-group">
+        <h2 className="boards-list-group-title">{title}</h2>
+        <ul className="boards-list">
+          {boards.map((board) => (
+            <BoardListItem
+              key={board.id}
+              title={board.title}
+              slug={board.slug}
+              joinToken={board.joinToken}
+              createdAtLabel={board.createdAtLabel}
+              inbox={inboxCountsFor(countsByBoardId, board.id)}
+            />
+          ))}
+        </ul>
+      </section>
+    );
+  }
 
   return (
     <div className="boards-list-panel">
       <div className="boards-list-toolbar">
-        {boards.length > 0 ? (
+        {hasBoards ? (
           <div className="boards-list-search" role="search">
             <label className="visually-hidden" htmlFor="boards-search">
               {t.boardsPage.searchLabel}
@@ -85,23 +115,11 @@ export function BoardsList({ boards }: BoardsListProps) {
           <PlusIcon />
         </button>
       </div>
-      {boards.length > 0 && visibleBoards.length === 0 ? (
+      {hasBoards && visibleCount === 0 ? (
         <p className="boards-list-empty">{t.boardsPage.searchEmpty}</p>
       ) : null}
-      {visibleBoards.length > 0 ? (
-        <ul className="boards-list">
-          {visibleBoards.map((board) => (
-            <BoardListItem
-              key={board.id}
-              title={board.title}
-              slug={board.slug}
-              joinToken={board.joinToken}
-              createdAtLabel={board.createdAtLabel}
-              inbox={inboxCountsFor(countsByBoardId, board.id)}
-            />
-          ))}
-        </ul>
-      ) : null}
+      {renderGroup(t.boardsPage.owned, visibleOwned)}
+      {renderGroup(t.boardsPage.invited, visibleInvited)}
       <div className="board-dock" role="toolbar" aria-label={t.boardsPage.dockAria}>
         <div className="board-dock-actions">
           <button

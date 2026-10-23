@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { LogoutIcon } from "@/components/logout-icon";
-import { logoutOwnerAction } from "@/lib/actions";
+import { logoutAccountAction } from "@/lib/account-actions";
 import { useI18n } from "@/i18n/provider";
 
 type OwnerLogoutButtonProps = {
@@ -24,7 +24,7 @@ export function OwnerLogoutButton({
 
   return (
     <>
-      <form id={formId} action={logoutOwnerAction} className="board-logout">
+      <form id={formId} action={logoutAccountAction} className="board-logout">
         <button
           type="button"
           className={iconOnly ? "board-logout-btn is-icon" : "board-logout-btn"}
